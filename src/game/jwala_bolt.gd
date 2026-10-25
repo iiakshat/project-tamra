@@ -1,11 +1,13 @@
 class_name JwalaBolt
 extends Area2D
-## JWALA: a bolt of fire. Burns anything with a burn() method (guards, smoke-thorns)
+## JWALA: a bolt of fire. Wounds guards (`damage` hit points; a brute's shield only
+## staggers from the front), burns anything else with a burn() method (smoke-thorns)
 ## and fizzles on rock.
 
 var dir := 1
 var speed := 950.0
 var max_range := 900.0
+var damage := 2
 var color := Color(1.0, 0.48, 0.18)
 
 var _travelled := 0.0
@@ -52,7 +54,9 @@ func _physics_process(delta: float) -> void:
 func _on_body_entered(body: Node) -> void:
 	if _done:
 		return
-	if body.has_method("burn"):
+	if body is Smokebound:
+		body.fire_hit(damage, dir)
+	elif body.has_method("burn"):
 		body.burn()
 	_fizzle()
 

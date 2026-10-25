@@ -8,6 +8,8 @@ signal quit_to_menu
 signal restart_requested(level_id: String)
 
 const PERF_INTERVAL := 10.0
+## Seconds a mantra hint stays over the hero after repeated deaths in one spot.
+const HINT_SECONDS := 6.0
 
 var level_id := ""
 var data: Dictionary
@@ -33,6 +35,10 @@ var _rng := RandomNumberGenerator.new()
 var trial_mod := ""
 var _perf_timer := 0.0
 var _min_fps := 1000.0
+var _death_xs: Array = []
+var _hint: MantraHint
+var _arrow: GoalArrow
+var _gate: GoalGate
 
 
 ## start_x >= 0 drops the hero at that x instead of the spawn (debug and testing).
@@ -73,6 +79,9 @@ func _ready() -> void:
 	player.position = _checkpoint if _start_x < 0.0 else Vector2(_start_x, 200)
 	world.add_child(player)
 	player.died.connect(_on_player_died)
+	_hint = MantraHint.new()
+	_hint.position = Vector2(0, -215)
+	player.add_child(_hint)
 
 	camera = Camera2D.new()
 	camera.position = Vector2(0, -90)
@@ -125,6 +134,11 @@ func _ready() -> void:
 	touch.stroke_started.connect(_on_stroke_started)
 	touch.stroke_finished.connect(_on_stroke_finished)
 
+	if data.has("goal"):
+		_arrow = GoalArrow.new()
+		_arrow.goal = GameConfig.vec(data["goal"])
+		add_child(_arrow)
+
 	_rebuild_recognizer()
 	Game.mantras_changed.connect(_rebuild_recognizer)
 	Sfx.scene("level")
@@ -170,6 +184,11 @@ func _notification(what: int) -> void:
 		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT:
 			if is_inside_tree() and not get_tree().paused and not _done:
 				toggle_pause()
+
+
+## Below this y the hero is lost to the pit.
+func kill_plane() -> float:
+	return _kill_y
 
 
 func active_decoys() -> Array:
@@ -261,13 +280,43 @@ func _on_copy_log() -> void:
 func _on_player_died(cause: String) -> void:
 	_deaths += 1
 	Engine.time_scale = 1.0
-	Services.analytics.log_event("level_fail", {"level": level_id, "cause": cause, "x": int(player.global_position.x)})
+	var at := player.global_position
+	Services.analytics.log_event("level_fail", {"level": level_id, "cause": cause, "x": int(at.x)})
 	hud.flash_death()
+	var hint := _hint_after_death(at, cause)
 	await get_tree().create_timer(1.0, false).timeout
 	if not is_inside_tree():
 		return
+	_respawn()
+	if hint != "":
+		_hint.show_for(hint, HINT_SECONDS)
+
+
+## Second death within HintFinder.SPOT px: name the mantra that crosses this stretch.
+func _hint_after_death(at: Vector2, cause: String) -> String:
+	_death_xs.append(at.x)
+	if HintFinder.deaths_near(_death_xs, at.x) < 2:
+		return ""
+	var known: Array = []
+	for id in Game.mantra_cfg:
+		if Game.grimoire.is_learned(id):
+			known.append(id)
+	var barriers: Array = []
+	for b in get_tree().get_nodes_in_group("burnable"):
+		barriers.append(b.global_position.x)
+	var id := HintFinder.mantra_for(data, at, cause, known, barriers, Game.player_cfg, Game.mantra_cfg)
+	if id != "":
+		Services.analytics.log_event("death_hint", {"level": level_id, "x": int(at.x), "mantra": id})
+	return id
+
+
+## Back to the last lamp. Guards who gave chase return to their posts, so a respawn
+## never lands next to a spear.
+func _respawn() -> void:
 	player.respawn(_checkpoint)
 	camera.reset_smoothing()
+	for e in enemies():
+		e.return_to_post()
 
 
 func _on_restart() -> void:
@@ -275,12 +324,12 @@ func _on_restart() -> void:
 		restart_requested.emit(level_id)
 		return
 	toggle_pause()
-	player.respawn(_checkpoint)
-	camera.reset_smoothing()
+	_respawn()
 
 
 func _on_checkpoint(at: Vector2) -> void:
 	_checkpoint = at
+	player.refill_prana()
 	GameLog.info("level", "checkpoint", {"x": int(at.x), "time": int(_time)})
 
 
@@ -298,15 +347,38 @@ func _on_goal() -> void:
 	if _done:
 		return
 	_done = true
-	player.controls_enabled = false
+	player.enter_gate(_gate.global_position.x)
 	touch.release_all()
 	Engine.time_scale = 1.0
+	_calm_world()
 	var outcome := Game.complete_level(level_id, _time, _embers, _embers_total, _deaths, trial_mod)
 	Services.analytics.log_event("level_complete", {"level": level_id, "time": int(_time), "deaths": _deaths,
 		"embers": _embers, "banked": outcome["banked"], "stars": outcome["stars"], "trial": trial_mod})
-	await get_tree().create_timer(0.9, false).timeout
+	# He walks into the doorway (at most ~1.6 s), the light swallows him, then results.
+	var waited := 0.0
+	while waited < 1.6 and not player.at_gate():
+		await get_tree().physics_frame
+		if not is_inside_tree():
+			return
+		waited += get_physics_process_delta_time()
+	_gate.swallow()
+	create_tween().tween_property(player, "modulate:a", 0.0, 0.5)
+	await get_tree().create_timer(0.8, false).timeout
 	if is_inside_tree():
 		hud.show_results(outcome, _time, _embers, _embers_total, _deaths, Game.next_level(level_id) != "" and trial_mod == "")
+
+
+## The level is won: guards stand down and every bolt in the air fades. Hazards
+## cannot hurt the hero any more (Player.finishing).
+func _calm_world() -> void:
+	for e in enemies():
+		e.stand_down()
+	for b in get_tree().get_nodes_in_group("bolts"):
+		b.pop()
+	if _arrow != null:
+		_arrow.visible = false
+	for d in active_decoys():
+		d.dispel()
 
 
 func _build_geometry(size: Vector2, rim: Color) -> void:
@@ -407,7 +479,7 @@ func _build_entities() -> void:
 		var s := Smokebound.new()
 		s.level = self
 		s.kind = str(e.get("type", "soldier"))
-		s.max_hp = int(e.get("hp", 2 if s.kind == "archer" else 3))
+		s.max_hp = int(e.get("hp", Smokebound.default_hp(s.kind, str(data.get("chapter", "")))))
 		s.position = Vector2(float(e.get("x", 0)), float(e.get("y", 600)))
 		s.patrol_min = float(e.get("min", s.position.x - 200))
 		s.patrol_max = float(e.get("max", s.position.x + 200))
@@ -425,3 +497,4 @@ func _build_entities() -> void:
 		gate.position = GameConfig.vec(data["goal"])
 		gate.reached.connect(_on_goal)
 		world.add_child(gate)
+		_gate = gate

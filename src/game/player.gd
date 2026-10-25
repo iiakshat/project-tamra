@@ -20,6 +20,8 @@ var hearts := 3
 var facing := 1
 var alive := true
 var controls_enabled := true
+## Set at the goal gate: no input, no harm, he walks himself into the doorway.
+var finishing := false
 var shield_time := 0.0
 var puppet: Puppet
 
@@ -43,7 +45,14 @@ var _idle_time := 0.0
 var _pant_left := 0
 var _pant_timer := 0.0
 var _screamed := false
+var _scream_check := 0.0
 var _breathing := false
+## Seconds since the current jump left the ground (-1: not in a jump rise). A release
+## before `jump_min_hold` is remembered and applied then, so a quick tap on the touch
+## pad still rises about three quarters of a full jump.
+var _jump_t := -1.0
+var _cut_pending := false
+var _walk_to := 0.0
 
 
 func setup(config: Dictionary, hearts_max: int, prana_max: float = -1.0) -> void:
@@ -52,6 +61,11 @@ func setup(config: Dictionary, hearts_max: int, prana_max: float = -1.0) -> void
 	hearts = hearts_max
 	max_prana = prana_max if prana_max > 0.0 else float(config.get("prana_max", 100.0))
 	prana = max_prana
+
+
+## Full prana (checkpoints): traversal mantras must always be castable after a rest.
+func refill_prana() -> void:
+	add_prana(max_prana)
 
 
 func spend_prana(cost: float) -> bool:
@@ -96,6 +110,9 @@ func _num(key: String, fallback: float) -> float:
 func _physics_process(delta: float) -> void:
 	if not alive:
 		return
+	if finishing:
+		_walk_into_gate(delta)
+		return
 	var dir := 0.0
 	if controls_enabled:
 		dir = Input.get_axis("move_left", "move_right")
@@ -107,7 +124,7 @@ func _physics_process(delta: float) -> void:
 		accel = _num("air_accel", 1900.0)
 	velocity.x = move_toward(velocity.x, dir * _num("run_speed", 330.0), accel * delta)
 
-	var gravity := _num("gravity", 2300.0)
+	var gravity := _num("gravity", 2400.0)
 	if velocity.y > 0.0:
 		gravity *= _num("fall_gravity_mult", 1.4)
 	velocity.y = minf(velocity.y + gravity * delta, _num("max_fall", 1300.0))
@@ -121,15 +138,17 @@ func _physics_process(delta: float) -> void:
 	else:
 		_buffer -= delta
 	if _buffer > 0.0 and _coyote > 0.0:
-		velocity.y = -_num("jump_velocity", 860.0)
+		velocity.y = -_num("jump_velocity", 1050.0)
 		_buffer = 0.0
 		_coyote = 0.0
+		_jump_t = 0.0
+		# A buffered tap may already be released by the time the jump starts.
+		_cut_pending = not Input.is_action_pressed("jump")
 		puppet.jumped()
 		Sfx.play("jump", global_position)
 		Sfx.play("vo_jump", global_position)
 		Fx.burst(get_parent(), global_position, Color(0.5, 0.4, 0.35, 0.6), 10, 90.0, false, 0.4)
-	if Input.is_action_just_released("jump") and velocity.y < 0.0:
-		velocity.y *= _num("jump_cut", 0.45)
+	_update_jump_cut(delta)
 
 	if dir != 0.0 and _strike_t < 0.0:
 		facing = 1 if dir > 0.0 else -1
@@ -138,6 +157,37 @@ func _physics_process(delta: float) -> void:
 	_fall_speed = velocity.y
 	move_and_slide()
 	_after_move(delta)
+
+
+## Variable jump height: letting go early trims the rise, but never below the height
+## reached by holding for `jump_min_hold` seconds.
+func _update_jump_cut(delta: float) -> void:
+	if _jump_t < 0.0:
+		return
+	if velocity.y >= 0.0:
+		_jump_t = -1.0
+		_cut_pending = false
+		return
+	_jump_t += delta
+	if Input.is_action_just_released("jump"):
+		_cut_pending = true
+	if _cut_pending and _jump_t >= _num("jump_min_hold", 0.13):
+		velocity.y *= _num("jump_cut", 0.7)
+		_jump_t = -1.0
+		_cut_pending = false
+
+
+## Height of a jump released after `hold` seconds (a long hold gives the full apex).
+## Mirrors _update_jump_cut; the level tests use it to keep step-ups tap-friendly.
+static func jump_rise(cfg: Dictionary, hold: float) -> float:
+	var g := float(cfg.get("gravity", 2400.0))
+	var v := float(cfg.get("jump_velocity", 1050.0))
+	var t := maxf(hold, float(cfg.get("jump_min_hold", 0.13)))
+	if t >= v / g:
+		return v * v / (2.0 * g)
+	var risen := v * t - 0.5 * g * t * t
+	var v_cut := (v - g * t) * float(cfg.get("jump_cut", 0.7))
+	return risen + v_cut * v_cut / (2.0 * g)
 
 
 func _after_move(delta: float) -> void:
@@ -159,11 +209,7 @@ func _after_move(delta: float) -> void:
 	_update_strike(delta)
 	_update_prana(delta)
 	_update_breath(delta, on_floor)
-	if on_floor:
-		_screamed = false
-	elif not _screamed and velocity.y > 650.0 and not _ground_below(900.0):
-		_screamed = true
-		Sfx.play("vo_fall", global_position)
+	_update_scream(delta, on_floor)
 
 
 func _update_prana(delta: float) -> void:
@@ -203,9 +249,55 @@ func _update_breath(delta: float, on_floor: bool) -> void:
 		Sfx.loop("breath_idle", breathe)
 
 
-func _ground_below(depth: float) -> bool:
-	var query := PhysicsRayQueryParameters2D.create(global_position, global_position + Vector2(0, depth), 1)
-	return not get_world_2d().direct_space_state.intersect_ray(query).is_empty()
+## The fall scream is for a fall into a pit, never for a jump that lands: it plays at
+## most once per fall, and only when no reachable arc lands on anything.
+func _update_scream(delta: float, on_floor: bool) -> void:
+	if on_floor:
+		_screamed = false
+		_scream_check = 0.0
+		return
+	if _screamed or velocity.y < 450.0:
+		return
+	_scream_check -= delta
+	if _scream_check > 0.0:
+		return
+	_scream_check = 0.1
+	if _doomed():
+		_screamed = true
+		Sfx.play("vo_fall", global_position)
+
+
+## True when every arc the hero can still steer (drift as now, full left, full right)
+## falls past the kill plane without meeting a floor. Rays hit ledges and platforms on
+## the world layer; a wall in the way ends that arc.
+func _doomed() -> bool:
+	if level == null:
+		return false
+	var kill := level.kill_plane()
+	var space := get_world_2d().direct_space_state
+	var g := _num("gravity", 2400.0) * _num("fall_gravity_mult", 1.4)
+	var run := _num("run_speed", 330.0)
+	var step := 0.05
+	for vx in [velocity.x, -run, run]:
+		var p := global_position
+		var v := Vector2(vx, velocity.y)
+		var t := 0.0
+		var blocked := false
+		while t < 2.5 and p.y < kill and not blocked:
+			v.y = minf(v.y + g * step, _num("max_fall", 1300.0))
+			var next := p + v * step
+			for off in [-12.0, 12.0]:
+				var q := PhysicsRayQueryParameters2D.create(p + Vector2(off, -4.0), next + Vector2(off, 0.0), 1)
+				var hit := space.intersect_ray(q)
+				if hit.is_empty():
+					continue
+				var normal: Vector2 = hit["normal"]
+				if normal.y < -0.5:
+					return false
+				blocked = true
+			p = next
+			t += step
+	return true
 
 
 func _process(delta: float) -> void:
@@ -258,16 +350,44 @@ func _update_strike(delta: float) -> void:
 			Game.vibrate(30)
 
 
-## UDAAN: a burst of lift, usable in mid-air.
+## The level is won: control is taken away and nothing can hurt him any more.
+func enter_gate(x: float) -> void:
+	finishing = true
+	controls_enabled = false
+	_walk_to = x
+	_strike_t = -1.0
+	_pant_left = 0
+	puppet.relax()
+
+
+func at_gate() -> bool:
+	return finishing and absf(global_position.x - _walk_to) < 8.0 and is_on_floor()
+
+
+func _walk_into_gate(delta: float) -> void:
+	var dx := _walk_to - global_position.x
+	var want := 0.0
+	if absf(dx) > 6.0:
+		want = signf(dx) * _num("run_speed", 330.0) * 0.55
+		facing = 1 if dx > 0.0 else -1
+	velocity.x = move_toward(velocity.x, want, _num("ground_accel", 2600.0) * delta)
+	velocity.y = minf(velocity.y + _num("gravity", 2400.0) * delta, _num("max_fall", 1300.0))
+	move_and_slide()
+	_was_on_floor = is_on_floor()
+
+
+## UDAAN: a burst of lift, usable in mid-air. Releasing the jump pad never trims it.
 func udaan(lift: float) -> void:
 	velocity.y = -lift
 	_coyote = 0.0
+	_jump_t = -1.0
+	_cut_pending = false
 	puppet.jumped()
 	Fx.burst(get_parent(), global_position, Color(1.0, 0.9, 0.55), 20, 200.0)
 
 
 func take_hit(from_x: float) -> void:
-	if not alive or _invulnerable > 0.0 or shield_time > 0.0:
+	if not alive or finishing or _invulnerable > 0.0 or shield_time > 0.0:
 		return
 	hearts -= 1
 	hearts_changed.emit(hearts, max_hearts)
@@ -287,7 +407,7 @@ func take_hit(from_x: float) -> void:
 
 
 func die(cause: String) -> void:
-	if not alive:
+	if not alive or finishing:
 		return
 	alive = false
 	velocity = Vector2.ZERO
@@ -313,6 +433,9 @@ func respawn(at: Vector2) -> void:
 	shield_time = 0.0
 	_invulnerable = 1.0
 	_strike_t = -1.0
+	_jump_t = -1.0
+	_cut_pending = false
+	_screamed = false
 	puppet.restore()
 	prana = max_prana
 	prana_changed.emit(prana, max_prana)

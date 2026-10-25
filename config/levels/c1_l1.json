@@ -46,9 +46,9 @@
     {"x": 680, "width": 340, "text": "Tap JUMP. Hold to leap higher."},
     {"x": 2380, "width": 220, "glyph": "line", "text": "Draw a line across the chasm."},
     {"x": 3100, "width": 220, "text": "Orbs restore your prana."},
-    {"x": 3340, "width": 320, "glyph": "v", "text": "STRIKE three times, or draw V."},
+    {"x": 3340, "width": 320, "glyph": "v", "text": "STRIKE twice, or draw V."},
     {"x": 4680, "width": 260, "glyph": "bolt", "text": "Draw a bolt to burn thorns."},
-    {"x": 6450, "width": 300, "text": "Fire fells a guard instantly."}
+    {"x": 6450, "width": 300, "text": "One fire bolt fells a guard."}
   ],
   "goal": [7600, 420]
 }

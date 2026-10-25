@@ -2,10 +2,12 @@ extends "res://tests/test_case.gd"
 ## Guards the data files: everything referenced must exist, and every level must be
 ## physically completable with the player's jump and the mantras known by then.
 
-const JUMP_RISE := 150.0  # tallest step-up a plain jump is trusted with (apex is ~160)
-const UDAAN_RISE := 380.0  # jump, then UDAAN at the top (apex is ~400)
+## Tallest step-up a plain jump is trusted with. A quick tap on the touch pad rises
+## ~172 px and a held jump ~230 px, so every required step-up works with a sloppy tap.
+const JUMP_RISE := 170.0
+const UDAAN_RISE := 400.0  # jump, then UDAAN at the top (apex is ~460)
 const SETU_MAX_SLOPE := 40.0
-const ENEMY_TYPES := ["soldier", "archer"]
+const ENEMY_TYPES := ["soldier", "archer", "brute"]
 const MAX_PROMPT_WORDS := 6
 
 
@@ -199,8 +201,8 @@ func _can_move(a: Dictionary, b: Dictionary, obstacles: Array, player: Dictionar
 		return true
 	if known.has("setu"):
 		# The bridge climbs what a jump cannot, at up to 40°; a jump covers the rest.
-		var jump_rise := minf(rise, 140.0)
-		var need := maxf(0.0, rise - 140.0)
+		var jump_rise := minf(rise, JUMP_RISE)
+		var need := maxf(0.0, rise - JUMP_RISE)
 		var run := maxf(need / tan(deg_to_rad(SETU_MAX_SLOPE)), dx - maxf(0.0, _reach(player, jump_rise, 0.0)))
 		if sqrt(run * run + need * need) <= setu_len:
 			return true
@@ -356,7 +358,105 @@ func test_level_data_is_sane() -> void:
 			else:
 				var lo := float(e.get("min", ex - 200))
 				var hi := float(e.get("max", ex + 200))
-				check(lo <= ex and ex <= hi, "%s: soldier at x=%d starts inside its patrol" % [id, ex])
-				# Chasing carries a soldier LEASH px past his patrol; he must not walk off.
-				check(_on_surface(level, ["ground", "platforms"], lo - Smokebound.LEASH, hi + Smokebound.LEASH, ey),
-					"%s: soldier at x=%d stays on one surface while chasing" % [id, ex])
+				check(lo <= ex and ex <= hi, "%s: %s at x=%d starts inside its patrol" % [id, kind, ex])
+				# Guards stop at pit edges while chasing, but the patrol itself must be solid.
+				check(_on_surface(level, ["ground", "platforms"], lo, hi, ey),
+					"%s: %s at x=%d patrols one surface" % [id, kind, ex])
+
+
+# --- Feel: jump, prana, enemies ------------------------------------------------------
+
+
+## Steps the jump frame by frame the way Player does (gravity, then the deferred cut).
+func _simulated_rise(player: Dictionary, hold: float) -> float:
+	var dt := 1.0 / 60.0
+	var g := float(player["gravity"])
+	var vy := 0.0
+	var y := 0.0
+	var t := 0.0
+	var cut_done := false
+	var top := 0.0
+	for i in 240:
+		vy += g * (float(player["fall_gravity_mult"]) if vy > 0.0 else 1.0) * dt
+		if i == 0:
+			vy = -float(player["jump_velocity"])
+		if vy < 0.0 and not cut_done:
+			t += dt
+			if t >= hold and t >= float(player["jump_min_hold"]):
+				vy *= float(player["jump_cut"])
+				cut_done = true
+		y += vy * dt
+		top = minf(top, y)
+	return -top
+
+
+func test_jump_reach_margin() -> void:
+	var player := GameConfig.read("player")
+	var full := Player.jump_rise(player, 10.0)
+	var tap := Player.jump_rise(player, 0.0)
+	check(full >= 220.0 and full <= 250.0, "full jump apex %d px is about 230" % full)
+	check(tap >= JUMP_RISE, "a quick tap rises %d px, at least the %d px step-up rule" % [tap, JUMP_RISE])
+	check(tap >= 0.72 * full, "a tap keeps %d%% of the full jump" % int(100.0 * tap / full))
+	check(full - JUMP_RISE >= 50.0, "step-ups keep a %d px margin below a full jump" % int(full - JUMP_RISE))
+	check(absf(HintFinder.tap_rise(player) - tap) < 0.5, "HintFinder and Player agree on the tap height")
+	# Frame-stepped, as on a phone at 60 fps (a tap is released on the first frame).
+	var sim_tap := _simulated_rise(player, 0.0)
+	var sim_full := _simulated_rise(player, 10.0)
+	check(sim_tap >= JUMP_RISE - 5.0, "simulated tap rises %d px" % sim_tap)
+	check(absf(sim_full - full) < 20.0, "simulated full jump %d px matches %d" % [sim_full, full])
+	# A plain step-up of JUMP_RISE still leaves room to move sideways onto the ledge.
+	check(_reach(player, JUMP_RISE, 0.0) >= 120.0, "a %d px step-up allows a %d px run-in" % [JUMP_RISE, _reach(player, JUMP_RISE, 0.0)])
+	check(_jump_distance(player) * 0.9 >= 230.0, "a flat running jump clears %d px" % int(_jump_distance(player) * 0.9))
+
+
+func test_prana_regen_config() -> void:
+	var player := GameConfig.read("player")
+	var mantras := GameConfig.read("mantras")
+	var regen := float(player["prana_regen"])
+	check(regen >= 1.2 and regen <= 2.0, "prana regen %.1f/s is slow (owner: refill slower)" % regen)
+	check(float(player["prana_regen_delay"]) >= 2.0, "prana waits at least 2 s after a cast")
+	check_eq(int(mantras["jwala"]["prana"]), 25, "JWALA costs 25 prana")
+	# Spamming JWALA is out: a full bar holds four bolts, regen alone gives one per 15 s.
+	check(float(player["prana_max"]) / float(mantras["jwala"]["prana"]) <= 4.0, "a full bar holds at most 4 JWALA")
+	check(float(mantras["jwala"]["prana"]) / regen >= 12.0, "regen alone gives JWALA at most every 12 s")
+	# Traversal must stay castable: a full bar (every checkpoint refills it) covers a
+	# DRISHTI reveal plus a SETU bridge plus an UDAAN leap.
+	var trip := float(mantras["drishti"]["prana"]) + float(mantras["setu"]["prana"]) + float(mantras["udaan"]["prana"])
+	check(trip <= float(player["prana_max"]), "full prana covers DRISHTI + SETU + UDAAN (%d)" % trip)
+
+
+func test_jwala_damage_rule() -> void:
+	var mantras := GameConfig.read("mantras")
+	var fire := int(mantras["jwala"]["damage"])
+	check_eq(fire, 2, "JWALA deals 2 damage")
+	check(Smokebound.default_hp("soldier", "c1") <= fire, "a chapter 1 soldier falls to one JWALA")
+	check(Smokebound.default_hp("soldier", "c2") > fire, "later soldiers survive one JWALA")
+	check(Smokebound.default_hp("archer", "c3") <= fire, "an archer falls to one JWALA")
+	check_eq(Smokebound.default_hp("brute", "c2"), 5, "brutes have 5 HP")
+	# No instakill: one bolt leaves a 3 HP soldier standing; a brute's shield holds.
+	check_eq(3 - Smokebound.fire_damage("soldier", -1, 1, fire), 1, "JWALA takes 2 of a 3 HP soldier")
+	check_eq(Smokebound.fire_damage("soldier", 1, 1, fire), fire, "JWALA hits a soldier from behind too")
+	check_eq(Smokebound.fire_damage("brute", -1, 1, fire), 0, "fire from the front only staggers a brute")
+	check_eq(Smokebound.fire_damage("brute", 1, 1, fire), fire, "fire from behind wounds a brute")
+	check_eq(Smokebound.fire_damage("archer", -1, 1, fire), fire, "archers have no shield")
+	# Brutes only from chapter 2.
+	for id in _levels_in_order():
+		var level := GameConfig.level(id)
+		for e in level.get("enemies", []):
+			if str(e.get("type", "")) == "brute":
+				check(str(level.get("chapter", "")) != "c1", "%s: no brutes in chapter 1" % id)
+
+
+func test_hint_finder() -> void:
+	var player := GameConfig.read("player")
+	var mantras := GameConfig.read("mantras")
+	var all: Array = mantras.keys()
+	check_eq(HintFinder.deaths_near([1000.0, 1300.0, 3000.0], 1200.0), 2, "two deaths near x=1200")
+	check_eq(HintFinder.mantra_for(GameConfig.level("c2_l1"), Vector2(1300, 960), "fall", all, [], player, mantras),
+		"drishti", "c2_l1 first maya pit wants DRISHTI")
+	check_eq(HintFinder.mantra_for(GameConfig.level("c1_l1"), Vector2(2800, 960), "fall", ["setu", "jwala"], [], player, mantras),
+		"setu", "c1_l1 chasm wants SETU")
+	check_eq(HintFinder.mantra_for(GameConfig.level("c1_l1"), Vector2(2800, 960), "fall", ["jwala"], [], player, mantras),
+		"", "no hint for a mantra not learned")
+	check_eq(HintFinder.mantra_for(GameConfig.level("c1_l1"), Vector2(4700, 600), "hit", ["jwala", "setu"], [4950.0], player, mantras),
+		"jwala", "a standing thorn wall wants JWALA")

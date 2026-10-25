@@ -85,6 +85,7 @@ func _execute(id: String, m: Dictionary, result: Dictionary) -> String:
 			bolt.dir = p.facing
 			bolt.speed = float(m.get("speed", 950.0))
 			bolt.max_range = float(m.get("range", 900.0))
+			bolt.damage = int(m.get("damage", 2))
 			bolt.color = color
 			bolt.position = p.global_position + Vector2(p.facing * 26.0, -55.0)
 			level.world.add_child(bolt)
