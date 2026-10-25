@@ -20,9 +20,9 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
 
 - **Phase 1, vertical slice built:** Chapter 1 Level 1 "The Ash Pits", title screen, story intro, HUD, pause, results, save, analytics stub. Three mantras are live in the level (SETU, CHHAYA, JWALA). KAVACH and DRISHTI are coded but unlocked in later levels.
 - **Verified locally:** 17 automated tests pass. Headless smoke runs are clean. Screenshots confirm rendering and all three mantras working end to end.
+- **CI verified (2026-10-25):** the "Android build" workflow passes (tests plus signed debug APK, about 1.5 min). The APK is 55 MB because it is a debug build covering both arm64 and armv7. Release AAB per-device downloads will be much smaller. Local copy: `../builds/project-tamra-debug.apk`.
 - **Not yet verified:**
-  - The Android export: the CI workflow is written but has not run yet (no GitHub remote).
-  - Feel on a real phone.
+  - Feel on a real phone (the owner is testing the first APK).
   - Performance on low-end devices.
 - All art is procedural (code-drawn). No image or audio files yet.
 - **Diagnostics:** the `GameLog` autoload writes `user://logs/game.log` and flushes every line, so the log survives a crash. It captures every engine error and warning, plus analytics events, a perf sample every 10 s, and device and GPU info. A crashed previous session is flagged and kept as `game.prev.log`. Testers send logs without USB: **Pause → "Copy debug log"** (or the button on the title screen), then paste into any chat. Debug builds show a red error counter on the HUD.
