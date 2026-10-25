@@ -1,0 +1,16 @@
+{
+  "title": "PROJECT TAMRA",
+  "subtitle": "working title",
+  "tagline": "An asura's road out of the ash.",
+  "max_hearts": 3,
+  "gesture_min_score": 0.78,
+  "slowmo_while_drawing": 0.35,
+  "chapters": [
+    {
+      "id": "c1",
+      "name": "The Ash Pits",
+      "story": "c1_intro",
+      "levels": ["c1_l1"]
+    }
+  ]
+}

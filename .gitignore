@@ -1,0 +1,25 @@
+# Secrets: never commit
+.env
+.env.*
+*.keystore
+*.jks
+google-services.json
+export_credentials.cfg
+
+# Godot
+.godot/
+*.import.tmp
+
+# Build output
+build/
+*.apk
+*.aab
+*.idsig
+
+# Discarded prototype (film-IP name, not shipped)
+ra_html.html
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/

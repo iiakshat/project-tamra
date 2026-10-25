@@ -1,0 +1,50 @@
+{
+  "setu": {
+    "gesture": "line",
+    "label": "SETU",
+    "meaning": "bridge",
+    "cooldown": 2.5,
+    "duration": 5.0,
+    "length": 420,
+    "color": "#ffc35a",
+    "hint": "Draw a straight line toward where you want the bridge."
+  },
+  "chhaya": {
+    "gesture": "v",
+    "label": "CHHAYA",
+    "meaning": "shadow",
+    "cooldown": 6.0,
+    "duration": 4.0,
+    "speed": 240,
+    "color": "#6fe8ff",
+    "hint": "Draw a V. Your shadow-double runs ahead and fools guards."
+  },
+  "jwala": {
+    "gesture": "bolt",
+    "label": "JWALA",
+    "meaning": "flame",
+    "cooldown": 1.2,
+    "speed": 950,
+    "range": 900,
+    "color": "#ff7a2e",
+    "hint": "Draw a lightning bolt to hurl fire."
+  },
+  "kavach": {
+    "gesture": "circle",
+    "label": "KAVACH",
+    "meaning": "armour",
+    "cooldown": 8.0,
+    "duration": 3.0,
+    "color": "#ffe9a8",
+    "hint": "Draw a circle to raise a shield."
+  },
+  "drishti": {
+    "gesture": "triangle",
+    "label": "DRISHTI",
+    "meaning": "sight",
+    "cooldown": 6.0,
+    "duration": 5.0,
+    "color": "#9dffcf",
+    "hint": "Draw a triangle to see through illusions."
+  }
+}

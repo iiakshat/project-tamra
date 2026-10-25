@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="62%" r="70%">
+      <stop offset="0" stop-color="#ffd38a"/>
+      <stop offset="0.35" stop-color="#f07a2a"/>
+      <stop offset="0.75" stop-color="#6b1218"/>
+      <stop offset="1" stop-color="#1a0610"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="url(#sky)"/>
+  <!-- original horned silhouette, shadow-puppet style -->
+  <g fill="#0a0407">
+    <path d="M128 70 l-10 22 -14 -16 4 26 -22 -6 16 18 h52 l16 -18 -22 6 4 -26 -14 16z"/>
+    <circle cx="128" cy="112" r="20"/>
+    <path d="M96 140 q32 -14 64 0 l10 50 -24 -6 -4 52 h-12 l-2 -40 -2 40 h-12 l-4 -52 -24 6z"/>
+  </g>
+  <circle cx="134" cy="110" r="4" fill="#ffcf7a"/>
+</svg>

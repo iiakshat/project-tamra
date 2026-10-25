@@ -1,0 +1,49 @@
+{
+  "id": "c1_l1",
+  "name": "The Ash Pits",
+  "chapter": "c1",
+  "palette": "ember",
+  "size": [7300, 720],
+  "kill_y": 950,
+  "camera_bottom": 780,
+  "spawn": [120, 600],
+  "mantras": ["setu", "chhaya", "jwala"],
+
+  "ground": [
+    [0, 600, 1400],
+    [900, 530, 220],
+    [1580, 600, 1020],
+    [3100, 600, 1300],
+    [4560, 600, 1100],
+    [6400, 420, 900]
+  ],
+  "platforms": [
+    [1850, 490, 170],
+    [2080, 390, 170],
+    [5720, 520, 150],
+    [5930, 430, 150],
+    [6140, 340, 180]
+  ],
+  "maya_false": [],
+  "maya_hidden": [],
+
+  "barriers": [[4950, 600, 230]],
+  "enemies": [
+    {"x": 3900, "y": 600, "min": 3600, "max": 4250},
+    {"x": 5300, "y": 600, "min": 5150, "max": 5500}
+  ],
+  "checkpoints": [[2350, 600], [3250, 600], [4700, 600], [5600, 600]],
+  "embers": [
+    [600, 540], [1010, 470], [1935, 440], [2165, 330], [2850, 545],
+    [3850, 470], [4480, 520], [5250, 545], [6000, 370], [6800, 360]
+  ],
+  "prompts": [
+    {"x": 80, "width": 420, "text": "Use the arrow pads to move (A / D on a keyboard)."},
+    {"x": 620, "width": 400, "text": "Tap JUMP. Hold it to leap higher."},
+    {"x": 2380, "width": 300, "glyph": "line", "text": "Stand at the edge. Draw a straight line toward the far side to cast SETU, a bridge of light."},
+    {"x": 3260, "width": 340, "glyph": "v", "text": "A Smokebound guard. Draw a V to cast CHHAYA. Your shadow-double will lure him away."},
+    {"x": 4700, "width": 300, "glyph": "bolt", "text": "Smoke-thorns block the path. Draw a lightning bolt to cast JWALA."},
+    {"x": 5600, "width": 300, "text": "JWALA burns the Smokebound too. Climb to the ember gate."}
+  ],
+  "goal": [7100, 420]
+}

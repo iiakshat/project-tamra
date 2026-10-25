@@ -1,0 +1,14 @@
+{
+  "run_speed": 330,
+  "ground_accel": 2600,
+  "ground_decel": 3200,
+  "air_accel": 1900,
+  "gravity": 2300,
+  "fall_gravity_mult": 1.4,
+  "max_fall": 1300,
+  "jump_velocity": 860,
+  "jump_cut": 0.45,
+  "coyote_time": 0.1,
+  "jump_buffer": 0.12,
+  "invulnerable_after_hit": 1.2
+}
