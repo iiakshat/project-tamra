@@ -68,6 +68,8 @@ func test_audio_budget() -> void:
 	var total := 0
 	for sub in ["foley", "synth", "ui"]:
 		var dir := "res://audio/%s/" % sub
+		if not DirAccess.dir_exists_absolute(dir):
+			continue
 		for f in DirAccess.get_files_at(dir):
 			if f.ends_with(".ogg") or f.ends_with(".wav"):
 				total += FileAccess.get_file_as_bytes(dir + f).size()

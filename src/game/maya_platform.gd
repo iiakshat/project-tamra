@@ -1,7 +1,7 @@
 class_name MayaPlatform
 extends StaticBody2D
-## Illusions. "false" platforms look solid but are not; "hidden" ones are real but
-## invisible and only solid while revealed. DRISHTI (sight) shows the truth for a while:
+## Illusions. "false" platforms look solid but are not (they waver faintly every few
+## seconds); "hidden" ones are real but invisible and only solid while revealed. DRISHTI (sight) shows the truth for a while:
 ## real stones glow cyan, lies flicker red and fade.
 
 var kind := "false"
@@ -44,6 +44,10 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _revealed and kind == "false":
 		_aura.modulate.a = 0.4 + 0.6 * absf(sin(Time.get_ticks_msec() * 0.012))
+	elif kind == "false":
+		# A fair tell: every few seconds a lie wavers like heat haze.
+		var t := fmod(Time.get_ticks_msec() * 0.001 + position.x * 0.0007, 3.2)
+		_visual.modulate.a = 1.0 - 0.35 * maxf(0.0, sin(t * PI / 0.5)) if t < 0.5 else 1.0
 
 
 func set_revealed(on: bool) -> void:

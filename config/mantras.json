@@ -27,15 +27,15 @@
   },
   "jwala": {
     "gesture": "bolt",
-    "prana": 20,
+    "prana": 25,
     "label": "JWALA",
     "meaning": "flame",
-    "description": "Fire. Burns thorns and guards.",
+    "description": "Fire. Burns thorns, wounds guards.",
     "unlock": {"level": "c1_l1"},
     "cooldown": 1.4,
     "speed": 950,
     "range": 900,
-    "damage": 3,
+    "damage": 2,
     "color": "#ff7a2e"
   },
   "udaan": {

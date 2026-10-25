@@ -3,6 +3,7 @@ extends SceneTree
 ## Run from the project root, then re-import:
 ##   godot --headless --path . --script res://tools/synth_audio.gd
 ##   godot --headless --path . --import
+## Add `-- --only=footstep,ui_tap` to write only those sounds (base names).
 ## Seeds are fixed, so output is reproducible. Loops are rendered so their ends join
 ## without a click, and their .import files are set to loop forward.
 
@@ -17,7 +18,8 @@ const MAX_SECONDS := {
 	"enemy_dazed": 1.1, "cast_setu": 1.5, "bridge_fade": 1.0, "cast_chhaya": 1.3,
 	"cast_kavach": 2.0, "cast_drishti": 1.5, "cast_udaan": 1.2, "cast_tarang": 1.3,
 	"cast_bandhan": 1.3, "barrier_burn": 1.7, "ember_pickup": 0.55, "checkpoint": 1.6,
-	"goal": 2.4, "mantra_learned": 2.3,
+	"goal": 2.4, "mantra_learned": 2.3, "footstep": 0.22, "land": 0.35, "ui_tap": 0.3,
+	"ui_back": 0.35, "strike_hit": 0.3,
 }
 
 enum { LOW, BAND, HIGH }
@@ -32,11 +34,24 @@ const DHA := 880.0
 var rate := DEFAULT_RATE
 var rng := RandomNumberGenerator.new()
 var _written: Array[String] = []
+var _only: PackedStringArray = []
 
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	var t0 := Time.get_ticks_msec()
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--only="):
+			_only = a.trim_prefix("--only=").split(",", false)
+	# Soft foley and UI (round 4: the owner heard the old Kenney clicks as "utensils").
+	for v in 6:
+		_save("footstep_%d" % v, footstep(v))
+	for v in 4:
+		_save("land_%d" % v, land(v))
+	for v in 3:
+		_save("ui_tap_%d" % v, ui_tap(v))
+	for v in 2:
+		_save("ui_back_%d" % v, ui_back(v))
 	for v in 3:
 		_save("strike_swing_%d" % v, strike_swing(v))
 		_save("strike_hit_%d" % v, strike_hit(v))
@@ -65,7 +80,7 @@ func _initialize() -> void:
 	_save("cast_tarang", cast_tarang())
 	_save("cast_bandhan", cast_bandhan())
 	_save("barrier_burn", barrier_burn())
-	var scale := [SA * 2.0, RE * 2.0, GA * 2.0, PA * 2.0, DHA * 2.0]
+	var scale := [SA, RE, GA, PA, DHA]
 	for v in scale.size():
 		_save("ember_pickup_%d" % v, ember_pickup(scale[v]))
 	_save("checkpoint", checkpoint())
@@ -91,16 +106,67 @@ func strike_swing(v: int) -> PackedFloat32Array:
 	return finish(b, 0.8)
 
 
+## Staff on leather: a muffled thud with a soft slap, no bright click or ring.
 func strike_hit(v: int) -> PackedFloat32Array:
 	_seed("strike_hit", v)
-	var b := buf(0.35)
-	var k := rng.randf_range(0.9, 1.15)
-	thump(b, 0.0, 170.0 * k, 55.0, 1.0, 0.09)
-	noise(b, 0.0, 0.08, HIGH, func(_u: float) -> float: return 1500.0, 0.7,
+	var b := buf(0.3)
+	var k := rng.randf_range(0.9, 1.12)
+	thump(b, 0.0, 150.0 * k, 58.0, 1.0, 0.075)
+	noise(b, 0.0, 0.16, LOW, func(u: float) -> float: return lerpf(900.0, 260.0, u) * k, 0.7,
+		func(u: float) -> float: return 0.75 * exp(-u * 7.0))
+	noise(b, 0.0, 0.04, BAND, func(_u: float) -> float: return 520.0 * k, 0.9,
+		func(u: float) -> float: return 0.3 * (1.0 - u))
+	return finish(reverb(b, 0.08, 0.5, 0.6, 0.2), 0.9)
+
+
+## A bare foot on packed ash: a low pad and a little grit, never a click.
+func footstep(v: int) -> PackedFloat32Array:
+	_seed("footstep", v)
+	var b := buf(0.2)
+	var k := rng.randf_range(0.85, 1.15)
+	thump(b, 0.0, 95.0 * k, 55.0, 0.55, 0.03)
+	noise(b, 0.0, 0.14, LOW, func(u: float) -> float: return lerpf(800.0, 300.0, u) * k, 0.7,
+		func(u: float) -> float: return 0.55 * exp(-u * 6.0))
+	var toe := rng.randf_range(0.025, 0.05)
+	noise(b, toe, 0.06, BAND, func(_u: float) -> float: return 1100.0 * k, 0.7,
+		func(u: float) -> float: return 0.12 * env(u, 0.2, 2.0))
+	return finish(b, 0.55)
+
+
+## Landing: a soft body thud into dust.
+func land(v: int) -> PackedFloat32Array:
+	_seed("land", v)
+	var b := buf(0.32)
+	var k := rng.randf_range(0.9, 1.1)
+	thump(b, 0.0, 110.0 * k, 45.0, 0.9, 0.07)
+	noise(b, 0.0, 0.26, LOW, func(u: float) -> float: return lerpf(1100.0, 280.0, u) * k, 0.7,
 		func(u: float) -> float: return 0.6 * exp(-u * 5.0))
-	noise(b, 0.0, 0.25, BAND, func(_u: float) -> float: return 700.0 * k, 1.0,
-		func(u: float) -> float: return 0.6 * exp(-u * 6.0))
-	return finish(reverb(b, 0.12, 0.6, 0.4), 0.95)
+	return finish(b, 0.7)
+
+
+## UI tap: a muted tabla stroke (dayan "na"), a touch higher for each variant.
+func ui_tap(v: int) -> PackedFloat32Array:
+	_seed("ui_tap", v)
+	var b := buf(0.3)
+	var f: float = [392.0, 415.0, 440.0][v % 3]
+	tone(b, 0.0, f, 0.6, 0.002, 0.08, f * 0.97, 0.05)
+	tone(b, 0.0, f * 2.0, 0.22, 0.002, 0.05)
+	tone(b, 0.0, f * 3.0, 0.08, 0.002, 0.03)
+	noise(b, 0.0, 0.015, LOW, func(_u: float) -> float: return 2200.0, 0.7,
+		func(u: float) -> float: return 0.15 * (1.0 - u))
+	return finish(reverb(b, 0.1, 0.5, 0.5, 0.15), 0.55)
+
+
+## UI back: the bass drum's "ge", a soft low stroke that bends down.
+func ui_back(v: int) -> PackedFloat32Array:
+	_seed("ui_back", v)
+	var b := buf(0.35)
+	var f := 150.0 + v * 12.0
+	tone(b, 0.0, f, 0.7, 0.003, 0.12, f * 0.78, 0.14)
+	tone(b, 0.0, f * 2.0, 0.15, 0.003, 0.06)
+	noise(b, 0.0, 0.03, LOW, func(_u: float) -> float: return 500.0, 0.7,
+		func(u: float) -> float: return 0.2 * (1.0 - u))
+	return finish(reverb(b, 0.1, 0.5, 0.5, 0.15), 0.6)
 
 
 func land_heavy(v: int) -> PackedFloat32Array:
@@ -372,14 +438,16 @@ func barrier_burn() -> PackedFloat32Array:
 	return finish(reverb(b, 0.25, 0.75, 0.4, 0.6), 0.9)
 
 
+## Pickup: a soft chime with harmonic partials (a struck bowl heard from afar), no
+## bright transient, so a run of embers does not clatter.
 func ember_pickup(f: float) -> PackedFloat32Array:
 	_seed("ember_pickup", int(f))
 	var b := buf(0.6)
-	bell(b, 0.0, f, 0.8, 0.28)
-	tone(b, 0.0, f * 2.0, 0.15, 0.002, 0.08)
-	noise(b, 0.0, 0.03, HIGH, func(_u: float) -> float: return 6000.0, 0.7,
-		func(u: float) -> float: return 0.2 * (1.0 - u))
-	return finish(reverb(b, 0.2, 0.6, 0.3, 0.3), 0.7)
+	tone(b, 0.0, f, 0.55, 0.008, 0.3)
+	tone(b, 0.0, f * 1.004, 0.2, 0.008, 0.3)
+	tone(b, 0.0, f * 2.0, 0.12, 0.008, 0.16)
+	tone(b, 0.0, f * 3.0, 0.04, 0.008, 0.08)
+	return finish(reverb(b, 0.22, 0.6, 0.4, 0.3), 0.6)
 
 
 func checkpoint() -> PackedFloat32Array:
@@ -713,6 +781,8 @@ func _seed(name: String, variant: int) -> void:
 
 func _save(name: String, b: PackedFloat32Array, loop: bool = false) -> void:
 	var base := name.rstrip("0123456789").trim_suffix("_")
+	if not _only.is_empty() and not _only.has(base):
+		return
 	if MAX_SECONDS.has(base):
 		b = cap_length(b, MAX_SECONDS[base])
 	var data := PackedByteArray()

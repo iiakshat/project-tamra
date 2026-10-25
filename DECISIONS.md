@@ -2,6 +2,16 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-25 — Round 4 feel: higher, forgiving jump; difficulty from enemies, not pixels
+Owner device test of 0.3.0: "couldn't jump to the upper platform", "villains just stand idle", repeated pit deaths. Cause: apex was ~160 px while levels asked for 150 px step-ups, and `jump_cut` 0.45 halved a short touch tap.
+- **Jump:** apex ~230 px (gravity 2400, jump 1050). Releasing early still trims the jump, but never before 0.13 s, so a quick tap rises ~172 px (75%). Cut 0.7. Coyote 0.12 s, buffer 0.15 s. Releasing the jump pad no longer trims UDAAN.
+- **Level rule:** a required plain step-up is at most 170 px (tap height), checked by `tests/test_config.gd`. Difficulty comes from enemies, timing and hazards. Maya pits that killed the owner got honest stones or warnings; long stretches got extra lamps.
+- **Guidance:** an edge arrow points to the gate while it is off screen. Two deaths within 400 px show the sign of the mantra that crosses that stretch, derived from level data (`src/core/hint_finder.gd`).
+- **Enemies:** soldiers see 520 px ahead and notice the hero 250 px behind (375 when he runs), chase at 230 px/s up to 650 px past their patrol, stop at pit edges, hop 130 px ledges, wind up 0.4 s, sometimes thrust twice, and after one stagger keep attacking through further hits for 1.4 s (no more stun-locking with the staff). Archers fire every 1.7 s, lead the hero by half his motion, and hop back or bash when he closes in. New **brute**: 5 HP, slow, ground slam with a 0.8 s red telegraph; its shield turns fire from the front into a stagger only. After a respawn, living guards return to their posts. Contact still does no damage.
+- **JWALA:** 2 damage, not an instakill. Chapter 1 guards have 2 HP (one bolt), later guards 3. Prana regen slowed to 1.6/s after 2.5 s; JWALA costs 25; checkpoints refill prana so traversal mantras stay castable.
+- **Goal gate:** reaching it ends danger at once. The hero walks into the doorway and the light takes him, then results show. Guards stand down and bolts vanish (the owner was killed behind the results screen).
+Changes if: retention or level-fail analytics show the new enemies are too punishing (tune windup, chase speed, combo chance first).
+
 ## 2026-10-25 — Prana: mantras cost energy
 The owner asked whether unlimited casting was intended (it wasn't). Their log showed Mirror Marsh cleared in 23 s with JWALA spam. Each mantra now costs Prana (max 100, regenerates 3/s after 1.5 s idle). Orbs and defeated guards refill it. Staff strikes matter again.
 

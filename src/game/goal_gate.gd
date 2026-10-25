@@ -5,6 +5,7 @@ extends Area2D
 signal reached
 
 var _done := false
+var _inner: Sprite2D
 
 
 func _ready() -> void:
@@ -21,6 +22,7 @@ func _ready() -> void:
 	inner.position = Vector2(0, -90)
 	inner.z_index = -1
 	add_child(inner)
+	_inner = inner
 	add_child(Fx.glow(Color(0.95, 0.9, 1.0, 0.6), 40.0))
 	for side in [-1.0, 1.0]:
 		var pillar := PackedVector2Array([Vector2(side * 52, 0), Vector2(side * 70, 0), Vector2(side * 66, -150), Vector2(side * 50, -150)])
@@ -66,3 +68,16 @@ func _on_body_entered(body: Node) -> void:
 	Fx.burst(get_parent(), global_position + Vector2(0, -90), Color(0.9, 0.85, 1.0), 60, 360.0, true, 1.0)
 	Sfx.play("goal", global_position)
 	reached.emit()
+
+
+## The doorway swells with light and swallows the hero as he steps through.
+func swallow() -> void:
+	var light := Fx.glow(Color(0.92, 0.88, 1.0, 0.0), 150.0)
+	light.position = Vector2(0, -90)
+	light.z_index = 50
+	add_child(light)
+	var t := create_tween()
+	t.tween_property(light, "modulate:a", 1.0, 0.35)
+	t.parallel().tween_property(_inner, "scale", _inner.scale * 1.6, 0.35)
+	t.tween_property(light, "modulate:a", 0.0, 0.6)
+	Fx.burst(get_parent(), global_position + Vector2(0, -90), Color(0.9, 0.85, 1.0), 40, 260.0, true, 0.9)
