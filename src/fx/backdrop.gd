@@ -13,6 +13,9 @@ var _layers: Array[Parallax2D] = []
 
 func build(width: float, palette_name: String, seed_value: int, quality: String = "high") -> void:
 	colors = Fx.palette(palette_name)
+	LevelArt.theme = palette_name
+	if _build_painted(palette_name):
+		return
 	_add_sky(quality)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -21,6 +24,36 @@ func build(width: float, palette_name: String, seed_value: int, quality: String 
 	_add_layer(width, 0.12, 478.0, Vector2(200, 350), colors["far"], rng, false)
 	_add_layer(width, 0.3, 500.0, Vector2(140, 270), colors["middle"], rng, false)
 	_add_layer(width, 0.6, 530.0, Vector2(110, 220), colors["near"], rng, true)
+
+
+## Painted chapter backdrop (Gemini art in assets/env): a far sky painting and a
+## mid-ground silhouette band, each drifting at its own speed. Returns false when the
+## palette has no painting, so the procedural skyline is used instead.
+func _build_painted(palette_name: String) -> bool:
+	var far_path := "res://assets/env/%s_far.png" % palette_name
+	var mid_path := "res://assets/env/%s_mid.png" % palette_name
+	if not ResourceLoader.exists(far_path):
+		return false
+	var far := PaintedLayer.new()
+	far.texture = load(far_path)
+	far.layer = -95
+	far.scroll = 0.06
+	far.lift = 0.02
+	far.height_frac = 1.12
+	far.bottom_frac = 1.06
+	add_child(far)
+	if ResourceLoader.exists(mid_path):
+		var mid := PaintedLayer.new()
+		mid.texture = load(mid_path)
+		mid.layer = -90
+		mid.scroll = 0.32
+		mid.lift = 0.12
+		mid.height_frac = 0.56
+		mid.bottom_frac = 1.02
+		# Pushed back into the haze so the playfield reads first.
+		mid.tint = {"palace": Color(0.36, 0.33, 0.42), "marsh": Color(0.5, 0.52, 0.56)}.get(palette_name, Color(0.5, 0.47, 0.56))
+		add_child(mid)
+	return true
 
 
 ## Big dark shapes that pass in front of the world. Cheap depth.
@@ -57,6 +90,9 @@ func build_foreground(width: float, seed_value: int) -> void:
 func set_autoscroll(speed: float) -> void:
 	for layer in _layers:
 		layer.autoscroll = Vector2(speed * layer.scroll_scale.x, 0)
+	for child in get_children():
+		if child is PaintedLayer:
+			child.drift = -speed * child.scroll
 
 
 func _add_sky(quality: String) -> void:

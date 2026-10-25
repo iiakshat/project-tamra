@@ -27,3 +27,7 @@ Thumbs.db
 .DS_Store
 .vscode/
 logs.log
+
+# Generated previews and caches
+art_src/out/
+__pycache__/
