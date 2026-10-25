@@ -2,6 +2,12 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-25 — Diagnostics: crash-safe log file, copied to the clipboard from the game
+Owner asked for logging "so you know what broke". We never touch testers' phones, and Android hides app files, so the log is copied to the clipboard from the pause menu or title screen and pasted into any chat app. That needs no USB, no server and no extra permission. Engine errors are captured with Godot's `Logger` API (4.5+). Changes if: a crash-reporting SDK (e.g. Firebase Crashlytics) is added with analytics. Keep the clipboard path anyway; it works offline.
+
+## 2026-10-25 — Sound deferred to after the first APK
+Owner instruction: sound is needed, but getting an installable build comes first.
+
 ## 2026-10-25 — Engine: Godot 4.7.2 with the Compatibility (OpenGL ES 3) renderer
 Small exports, strong 2D, text-based scripts Claude can write and test headless, and free cloud export. The Compatibility renderer instead of Mobile/Vulkan because many low-end Android phones have poor or no Vulkan support. Cost: some effects (2D glow post-processing) are unavailable, so glows are additive sprites. Changes if: a real-device test shows the renderer is the bottleneck.
 

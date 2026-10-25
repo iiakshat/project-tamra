@@ -24,7 +24,9 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
   - The Android export: the CI workflow is written but has not run yet (no GitHub remote).
   - Feel on a real phone.
   - Performance on low-end devices.
-- All art is procedural (code-drawn). No image or audio files yet. No sound at all yet.
+- All art is procedural (code-drawn). No image or audio files yet.
+- **Diagnostics:** the `GameLog` autoload writes `user://logs/game.log` and flushes every line, so the log survives a crash. It captures every engine error and warning, plus analytics events, a perf sample every 10 s, and device and GPU info. A crashed previous session is flagged and kept as `game.prev.log`. Testers send logs without USB: **Pause → "Copy debug log"** (or the button on the title screen), then paste into any chat. Debug builds show a red error counter on the HUD.
+- **PENDING (owner asked, deferred on 2026-10-25): sound effects.** Jumping, running/footsteps, fighting (guard hits, JWALA impacts), mantra casts, pickups, UI, ambience. Do this next after the first APK. Plan: CC0 foley (e.g. Kenney packs) for physical sounds, synthesized tones for magic. Log every file in ASSETS.md.
 - `ra_html.html`: discarded prototype. Git-ignored, reference only.
 
 ## Open decisions (do not assume)
@@ -61,7 +63,8 @@ See `DECISIONS.md` for the reasons.
 ## Git and accounts
 
 - This project uses the GitHub account **iiakshat** (`jakshat569@gmail.com`), set in this repo's **local** config only (no `--global`).
-- No remote exists yet. Create the repo (private) when the owner is ready. The `gh` CLI is not installed.
+- Remote: private repo `iiakshat/project-tamra`. Auth uses `GITHUB_TOKEN` in `.env` (classic PAT, `repo` + `workflow` scopes, owner-created 2026-10-25, expires in about 90 days). Pass it per command via an HTTP header. **Never store it in git config, a remote URL, or output.** The `gh` CLI is not installed; use the REST API.
+- Getting the APK: push to `main`, wait for the "Android build" workflow, then download the `project-tamra-debug-apk` artifact through the API.
 - Never commit keystores, `google-services.json` with real keys, API keys or `.env`. Signing material goes in GitHub Secrets.
 
 ## Art and sound sources

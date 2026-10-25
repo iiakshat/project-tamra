@@ -8,6 +8,7 @@ signal resume_pressed
 signal restart_pressed
 signal menu_pressed
 signal next_pressed
+signal copy_log_pressed
 
 const FAIL_TEXT := {
 	"unrecognized": "The sign was unclear",
@@ -32,6 +33,7 @@ var _pause_button: Button
 var _overlay: Control
 var _flash: ColorRect
 var _tint: ColorRect
+var _error_badge: Label
 
 
 func _ready() -> void:
@@ -67,6 +69,12 @@ func _ready() -> void:
 	_ember_label = UiKit.label("0", 24)
 	ember_row.add_child(_ember_label)
 	_root.add_child(ember_row)
+
+	# Debug builds only: a visible count of logged errors, so testers notice and report.
+	_error_badge = UiKit.label("", 18, Color(1.0, 0.35, 0.3), 4)
+	_error_badge.position = Vector2(30, 112)
+	_error_badge.visible = false
+	_root.add_child(_error_badge)
 
 	_pause_button = UiKit.button("II", 72)
 	_pause_button.custom_minimum_size = Vector2(72, 72)
@@ -118,6 +126,9 @@ func setup(mantra_caster: MantraCaster, mantras: Dictionary, unlocked: Array[Str
 
 
 func _process(_delta: float) -> void:
+	if OS.is_debug_build() and GameLog.error_count > 0:
+		_error_badge.visible = true
+		_error_badge.text = "%d error(s) logged. Pause > Copy debug log" % GameLog.error_count
 	if caster == null:
 		return
 	for slot in _slots:
@@ -185,6 +196,12 @@ func show_pause(on: bool) -> void:
 	box.add_child(_button("Resume", resume_pressed))
 	box.add_child(_button("Restart from checkpoint", restart_pressed))
 	box.add_child(_button("Main menu", menu_pressed))
+	box.add_child(_button("Copy debug log", copy_log_pressed))
+
+
+## Short confirmation message in the middle of the screen.
+func notify(text: String) -> void:
+	_show_toast(text, UiKit.TEXT, 26)
 
 
 func show_results(level_name: String, time: float, embers: int, total: int, has_next: bool) -> void:

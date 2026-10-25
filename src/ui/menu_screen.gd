@@ -98,6 +98,22 @@ func _build_ui() -> void:
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	root.add_child(footer)
 
+	# Lets testers send a log without USB: copy, then paste into any chat app.
+	var report_label := "Something broke? Copy log" if GameLog.previous_session_crashed else "Copy debug log"
+	var report := UiKit.button(report_label, 300)
+	report.custom_minimum_size = Vector2(300, 52)
+	report.add_theme_font_size_override("font_size", 20)
+	report.anchor_top = 1.0
+	report.anchor_bottom = 1.0
+	report.offset_left = 24
+	report.offset_top = -76
+	report.offset_bottom = -24
+	report.pressed.connect(func() -> void:
+		GameLog.copy_report_to_clipboard()
+		report.text = "Copied. Paste it to the developer."
+	)
+	root.add_child(report)
+
 
 func _process(delta: float) -> void:
 	_hero.animate(delta, 0.0, true, 0.0)

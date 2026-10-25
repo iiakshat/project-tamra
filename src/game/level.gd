@@ -27,6 +27,10 @@ var _done := false
 var _reveal_time := 0.0
 var _start_x := -1.0
 var _rng := RandomNumberGenerator.new()
+var _perf_timer := 0.0
+var _min_fps := 1000.0
+
+const PERF_INTERVAL := 10.0
 
 
 ## start_x >= 0 drops the hero at that x instead of the spawn (debug and testing).
@@ -100,6 +104,7 @@ func _ready() -> void:
 	hud.restart_pressed.connect(_on_restart)
 	hud.menu_pressed.connect(func() -> void: quit_to_menu.emit())
 	hud.next_pressed.connect(func() -> void: completed.emit(level_id))
+	hud.copy_log_pressed.connect(_on_copy_log)
 
 	touch = TouchControls.new()
 	touch.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -129,6 +134,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	_sample_performance(delta)
 	if camera != null:
 		var look := Vector2(player.facing * 110.0, 0.0)
 		camera.offset = camera.offset.lerp(look, 1.0 - exp(-2.0 * delta))
@@ -146,6 +152,34 @@ func _notification(what: int) -> void:
 		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT:
 			if is_inside_tree() and not get_tree().paused and not _done:
 				toggle_pause()
+
+
+## Logs frame rate and load every few seconds: the only way to learn how the game
+## runs on phones we never touch.
+func _sample_performance(delta: float) -> void:
+	var fps := Performance.get_monitor(Performance.TIME_FPS)
+	if _time > 2.0 and fps > 0.0:
+		_min_fps = minf(_min_fps, fps)
+	_perf_timer += delta
+	if _perf_timer < PERF_INTERVAL:
+		return
+	_perf_timer = 0.0
+	GameLog.info("perf", "sample", {
+		"fps": int(fps),
+		"min_fps": int(_min_fps),
+		"objects": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
+		"mem_mb": snappedf(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0, 0.1),
+		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
+		"x": int(player.global_position.x),
+	})
+	if fps < 30.0:
+		GameLog.warn("perf", "low frame rate", {"fps": int(fps), "x": int(player.global_position.x)})
+	_min_fps = 1000.0
+
+
+func _on_copy_log() -> void:
+	GameLog.copy_report_to_clipboard()
+	hud.notify("Log copied. Paste it in a message to the developer.")
 
 
 func active_decoys() -> Array:
@@ -216,6 +250,7 @@ func _on_restart() -> void:
 
 func _on_checkpoint(at: Vector2) -> void:
 	_checkpoint = at
+	GameLog.info("level", "checkpoint", {"x": int(at.x), "time": int(_time)})
 
 
 func _on_enemy_burned(at: Vector2) -> void:

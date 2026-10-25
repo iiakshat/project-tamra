@@ -14,8 +14,13 @@ config/quit_on_go_back=false
 
 [autoload]
 
+GameLog="*res://src/autoload/game_log.gd"
 Services="*res://src/autoload/services.gd"
 Game="*res://src/autoload/game.gd"
+
+[debug]
+
+file_logging/enable_file_logging=true
 
 [display]
 

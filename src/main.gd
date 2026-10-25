@@ -14,6 +14,7 @@ var _screen: Node
 
 
 func _ready() -> void:
+	GameLog.log_renderer()
 	var args := _debug_args()
 	if args.has("level"):
 		_start_level(args["level"], float(args.get("x", "-1")))
@@ -79,6 +80,7 @@ func _switch(node: Node) -> void:
 	if _screen != null:
 		_screen.queue_free()
 	_screen = node
+	GameLog.info("screen", node.get_script().get_global_name())
 	add_child(node)
 
 

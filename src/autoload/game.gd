@@ -21,7 +21,7 @@ func _ready() -> void:
 
 func persist() -> void:
 	if not _store.save_data(save):
-		push_error("Saving failed.")
+		GameLog.error("save", "saving failed", {"dir": OS.get_user_data_dir()})
 
 
 func all_levels() -> Array[String]:
