@@ -1,0 +1,50 @@
+{
+  "id": "c2_l1",
+  "name": "Mirror Marsh",
+  "chapter": "c2",
+  "palette": "marsh",
+  "size": [5800, 720],
+  "kill_y": 950,
+  "camera_bottom": 780,
+  "spawn": [150, 560],
+  "teaches": ["drishti"],
+
+  "ground": [
+    [0, 560, 1100],
+    [1650, 560, 900],
+    [3250, 560, 1200],
+    [4450, 480, 1350]
+  ],
+  "platforms": [],
+  "maya_false": [
+    [1180, 540, 140],
+    [2620, 560, 120],
+    [3100, 540, 120]
+  ],
+  "maya_hidden": [
+    [1250, 500, 140],
+    [1450, 470, 150],
+    [2700, 520, 150],
+    [2950, 480, 150],
+    [3600, 400, 140]
+  ],
+
+  "cracked": [],
+  "barriers": [],
+  "enemies": [
+    {"x": 2100, "y": 560, "min": 1850, "max": 2400},
+    {"x": 3700, "y": 560, "min": 3450, "max": 3950},
+    {"x": 4150, "y": 560, "min": 4000, "max": 4350}
+  ],
+  "checkpoints": [[1700, 560], [3300, 560], [4500, 480]],
+  "embers": [
+    [600, 500], [1320, 440], [1520, 410], [2000, 500], [2770, 460],
+    [3020, 420], [3640, 340], [3700, 340], [4800, 420], [5200, 420]
+  ],
+  "prompts": [
+    {"x": 200, "width": 700, "glyph": "triangle", "text": "New mantra: DRISHTI. Some stones here are maya, lies of the marsh. Draw a triangle to see the truth."},
+    {"x": 2450, "width": 200, "glyph": "triangle", "text": "Look before you leap. DRISHTI shows which stones are real."},
+    {"x": 3300, "width": 300, "text": "Hidden stones hold hidden embers."}
+  ],
+  "goal": [5550, 480]
+}

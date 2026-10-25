@@ -7,6 +7,7 @@ const KEYS := {
 	"move_left": [KEY_A, KEY_LEFT],
 	"move_right": [KEY_D, KEY_RIGHT],
 	"jump": [KEY_SPACE, KEY_W, KEY_UP],
+	"attack": [KEY_J, KEY_K, KEY_X],
 	"pause": [KEY_ESCAPE, KEY_P],
 }
 

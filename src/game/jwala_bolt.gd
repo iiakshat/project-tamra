@@ -62,4 +62,5 @@ func _fizzle() -> void:
 		return
 	_done = true
 	Fx.burst(get_parent(), global_position, color, 20, 240.0)
+	Sfx.play("jwala_impact", global_position)
 	queue_free()

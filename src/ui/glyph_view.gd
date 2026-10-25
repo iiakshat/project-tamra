@@ -1,17 +1,30 @@
 class_name GlyphView
 extends Control
-## Draws a mantra gesture. With `animate` on, a bright point traces the stroke the
-## way the player should draw it.
+## Draws a mantra's sign: a canonical glyph, or the player's own custom sign.
+## With `animate` on, a bright point traces the stroke the way it should be drawn.
 
 var glyph := "":
 	set(value):
 		glyph = value
+		queue_redraw()
+## Raw stroke of a custom sign (any coordinates); overrides `glyph` when set.
+var custom: PackedVector2Array = PackedVector2Array():
+	set(value):
+		custom = value
 		queue_redraw()
 var color := UiKit.GOLD
 var animate := false
 var line_width := 4.0
 
 var _t := 0.0
+
+
+## Shows the sign that currently casts `mantra_id` (custom if the player made one).
+func show_mantra(mantra_id: String) -> void:
+	var strokes := Game.save.sign_strokes(mantra_id)
+	custom = strokes[0] if not strokes.is_empty() else PackedVector2Array()
+	glyph = str(Game.mantra_cfg.get(mantra_id, {}).get("gesture", ""))
+	color = GameConfig.color(Game.mantra_cfg.get(mantra_id, {}).get("color", ""), UiKit.GOLD)
 
 
 func _ready() -> void:
@@ -29,7 +42,7 @@ func _draw() -> void:
 	if pts.size() < 2:
 		return
 	draw_polyline(pts, Color(color, 0.3 if animate else 0.9), line_width, true)
-	if glyph == "line":
+	if custom.is_empty() and GlyphShapes.LINES.has(glyph):
 		_arrow(pts[pts.size() - 2], pts[pts.size() - 1], Color(color, 0.3 if animate else 0.9))
 	if animate:
 		var traced := _partial(pts, clampf(_t, 0.0, 1.0))
@@ -39,10 +52,17 @@ func _draw() -> void:
 
 
 func _points() -> PackedVector2Array:
+	var src := custom if not custom.is_empty() else GlyphShapes.canonical(glyph)
 	var out := PackedVector2Array()
+	if src.size() < 2:
+		return out
+	var box := Rect2(src[0], Vector2.ZERO)
+	for p in src:
+		box = box.expand(p)
+	var half := maxf(maxf(box.size.x, box.size.y) / 2.0, 0.001)
 	var r := minf(size.x, size.y) * 0.4
-	for p in GlyphShapes.canonical(glyph):
-		out.append(size / 2.0 + p * r)
+	for p in src:
+		out.append(size / 2.0 + (p - box.get_center()) / half * r)
 	return out
 
 

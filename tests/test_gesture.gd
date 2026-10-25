@@ -1,6 +1,6 @@
 extends "res://tests/test_case.gd"
 
-const SHAPES := ["circle", "triangle", "v", "bolt"]
+const SHAPES := ["circle", "triangle", "v", "caret", "bolt", "square"]
 
 
 ## Turns a canonical glyph into a finger-like stroke: dense points, optional
@@ -62,13 +62,32 @@ func test_line_reports_direction() -> void:
 	check_eq(left.get("direction"), -1, "left direction")
 
 
-func test_taps_and_vertical_lines_are_rejected() -> void:
+func test_taps_are_ignored() -> void:
 	var r := GestureRecognizer.with_default_templates()
-	check_eq(r.recognize(PackedVector2Array([Vector2(10, 10), Vector2(14, 12)])).get("name"), "", "tap")
-	check_eq(r.recognize(_stroke(PackedVector2Array([Vector2(0, -1), Vector2(0, 1)]))).get("name"), "", "vertical line")
+	var tap := r.recognize(PackedVector2Array([Vector2(10, 10), Vector2(14, 12)]))
+	check_eq(tap.get("name"), "", "tap")
+	check_eq(tap.get("score"), 0.0, "tap scores zero so it is not reported as a failed cast")
 
 
-func test_v_and_inverted_v_differ() -> void:
+func test_lines_are_classified_by_angle() -> void:
 	var r := GestureRecognizer.with_default_templates()
-	var inverted := PackedVector2Array([Vector2(-0.8, 1), Vector2(0, -1), Vector2(0.8, 1)])
-	check(r.recognize(_stroke(inverted)).get("name") != "v", "an upside-down V must not cast CHHAYA")
+	check_eq(r.recognize(_stroke(GlyphShapes.canonical("line_up"), 120.0, 0.2, 3.0)).get("name"), "line_up", "upward stroke")
+	check_eq(r.recognize(_stroke(GlyphShapes.canonical("line_down"), 120.0, -0.2, 3.0)).get("name"), "line_down", "downward stroke")
+	# 30 degrees is still a bridge (a ramp), not a leap.
+	var ramp := r.recognize(_stroke(GlyphShapes.canonical("line"), 150.0, -0.52, 3.0))
+	check_eq(ramp.get("name"), "line", "sloped line is still a line")
+	check(ramp.get("end").y < ramp.get("start").y, "endpoints are reported")
+
+
+func test_v_and_caret_differ() -> void:
+	var r := GestureRecognizer.with_default_templates()
+	check_eq(r.recognize(_stroke(GlyphShapes.canonical("caret"))).get("name"), "caret", "caret")
+	check_eq(r.recognize(_stroke(GlyphShapes.canonical("v"))).get("name"), "v", "v")
+
+
+func test_near_misses_report_closest() -> void:
+	var r := GestureRecognizer.with_default_templates()
+	r.min_score = 0.99
+	var res := r.recognize(_stroke(GlyphShapes.canonical("circle"), 110.0, 0.0, 6.0))
+	check_eq(res.get("name"), "", "below threshold")
+	check_eq(res.get("closest"), "circle", "but the closest guess is kept for feedback")

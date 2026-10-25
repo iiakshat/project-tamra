@@ -64,4 +64,5 @@ func _on_body_entered(body: Node) -> void:
 		return
 	_done = true
 	Fx.burst(get_parent(), global_position + Vector2(0, -90), Color(1.0, 0.75, 0.35), 60, 360.0, true, 1.0)
+	Sfx.play("goal", global_position)
 	reached.emit()

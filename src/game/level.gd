@@ -1,11 +1,13 @@
 class_name Level
 extends Node2D
-## Builds a level from config/levels/<id>.json and runs it: checkpoints, death and
-## respawn, mantra input, pause and completion.
+## Builds a level from config/levels/<id>.json and runs it: teaching mantras,
+## checkpoints, death and respawn, mantra input, pause and completion.
 
 signal completed(level_id: String)
 signal quit_to_menu
 signal restart_requested(level_id: String)
+
+const PERF_INTERVAL := 10.0
 
 var level_id := ""
 var data: Dictionary
@@ -30,8 +32,6 @@ var _rng := RandomNumberGenerator.new()
 var _perf_timer := 0.0
 var _min_fps := 1000.0
 
-const PERF_INTERVAL := 10.0
-
 
 ## start_x >= 0 drops the hero at that x instead of the spawn (debug and testing).
 func setup(id: String, start_x: float = -1.0) -> void:
@@ -43,6 +43,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	data = GameConfig.level(level_id)
 	_rng.seed = hash(level_id)
+	var fresh := Game.learn_from_level(level_id)
 	var size := GameConfig.vec(data.get("size"), Vector2(6000, 720))
 	_kill_y = float(data.get("kill_y", 1000.0))
 	var palette := str(data.get("palette", "ember"))
@@ -61,6 +62,7 @@ func _ready() -> void:
 	_build_entities()
 
 	player = Player.new()
+	player.level = self
 	player.setup(Game.player_cfg, int(Game.game_cfg.get("max_hearts", 3)))
 	_checkpoint = GameConfig.vec(data.get("spawn"), Vector2(100, 600))
 	player.position = _checkpoint if _start_x < 0.0 else Vector2(_start_x, 200)
@@ -87,13 +89,12 @@ func _ready() -> void:
 	caster.process_mode = Node.PROCESS_MODE_PAUSABLE
 	caster.level = self
 	caster.cfg = Game.mantra_cfg
-	for id in data.get("mantras", []):
-		caster.unlocked.append(str(id))
+	caster.grimoire = Game.grimoire
 	add_child(caster)
 
 	hud = Hud.new()
 	add_child(hud)
-	hud.setup(caster, Game.mantra_cfg, caster.unlocked)
+	hud.setup(caster, Game.mantra_cfg)
 	hud.set_hearts(player.hearts, player.max_hearts)
 	hud.set_embers(0, _embers_total)
 	player.hearts_changed.connect(hud.set_hearts)
@@ -105,6 +106,8 @@ func _ready() -> void:
 	hud.menu_pressed.connect(func() -> void: quit_to_menu.emit())
 	hud.next_pressed.connect(func() -> void: completed.emit(level_id))
 	hud.copy_log_pressed.connect(_on_copy_log)
+	if not fresh.is_empty():
+		hud.show_learned(fresh)
 
 	touch = TouchControls.new()
 	touch.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -113,9 +116,15 @@ func _ready() -> void:
 	touch.stroke_started.connect(_on_stroke_started)
 	touch.stroke_finished.connect(_on_stroke_finished)
 
-	recognizer = GestureRecognizer.with_default_templates()
-	recognizer.min_score = float(Game.game_cfg.get("gesture_min_score", 0.78))
-	Services.analytics.log_event("level_start", {"level": level_id})
+	_rebuild_recognizer()
+	Game.mantras_changed.connect(_rebuild_recognizer)
+	Sfx.scene("level")
+	Services.analytics.log_event("level_start", {"level": level_id, "learned": Game.save.learned.size()})
+
+
+func _exit_tree() -> void:
+	if Game.mantras_changed.is_connected(_rebuild_recognizer):
+		Game.mantras_changed.disconnect(_rebuild_recognizer)
 
 
 func _physics_process(delta: float) -> void:
@@ -154,6 +163,34 @@ func _notification(what: int) -> void:
 				toggle_pause()
 
 
+func active_decoys() -> Array:
+	return get_tree().get_nodes_in_group("decoys")
+
+
+func enemies() -> Array:
+	return get_tree().get_nodes_in_group("enemies")
+
+
+## Touch positions are in screen space; the world scrolls under the camera.
+func screen_to_world(p: Vector2) -> Vector2:
+	return get_viewport().get_canvas_transform().affine_inverse() * p
+
+
+func reveal_maya(duration: float) -> void:
+	_reveal_time = duration
+	_set_revealed(true)
+
+
+func toggle_pause() -> void:
+	if _done:
+		return
+	var paused := not get_tree().paused
+	get_tree().paused = paused
+	Engine.time_scale = 1.0
+	touch.release_all()
+	hud.show_pause(paused)
+
+
 ## Logs frame rate and load every few seconds: the only way to learn how the game
 ## runs on phones we never touch.
 func _sample_performance(delta: float) -> void:
@@ -177,28 +214,8 @@ func _sample_performance(delta: float) -> void:
 	_min_fps = 1000.0
 
 
-func _on_copy_log() -> void:
-	GameLog.copy_report_to_clipboard()
-	hud.notify("Log copied. Paste it in a message to the developer.")
-
-
-func active_decoys() -> Array:
-	return get_tree().get_nodes_in_group("decoys")
-
-
-func reveal_maya(duration: float) -> void:
-	_reveal_time = duration
-	_set_revealed(true)
-
-
-func toggle_pause() -> void:
-	if _done:
-		return
-	var paused := not get_tree().paused
-	get_tree().paused = paused
-	Engine.time_scale = 1.0
-	touch.release_all()
-	hud.show_pause(paused)
+func _rebuild_recognizer() -> void:
+	recognizer = Game.grimoire.build_recognizer(Game.gesture_min_score())
 
 
 func _set_revealed(on: bool) -> void:
@@ -227,12 +244,17 @@ func cast_stroke(points: PackedVector2Array) -> void:
 	caster.try_gesture(result)
 
 
+func _on_copy_log() -> void:
+	GameLog.copy_report_to_clipboard()
+	hud.notify("Log copied. Paste it in a message to the developer.")
+
+
 func _on_player_died(cause: String) -> void:
 	_deaths += 1
 	Engine.time_scale = 1.0
 	Services.analytics.log_event("level_fail", {"level": level_id, "cause": cause, "x": int(player.global_position.x)})
 	hud.flash_death()
-	await get_tree().create_timer(0.8, false).timeout
+	await get_tree().create_timer(1.0, false).timeout
 	if not is_inside_tree():
 		return
 	player.respawn(_checkpoint)
@@ -253,8 +275,8 @@ func _on_checkpoint(at: Vector2) -> void:
 	GameLog.info("level", "checkpoint", {"x": int(at.x), "time": int(_time)})
 
 
-func _on_enemy_burned(at: Vector2) -> void:
-	Services.analytics.log_event("enemy_burned", {"level": level_id, "x": int(at.x)})
+func _on_enemy_died(at: Vector2, cause: String) -> void:
+	Services.analytics.log_event("enemy_defeated", {"level": level_id, "x": int(at.x), "cause": cause})
 
 
 func _on_ember() -> void:
@@ -269,11 +291,14 @@ func _on_goal() -> void:
 	player.controls_enabled = false
 	touch.release_all()
 	Engine.time_scale = 1.0
-	Game.complete_level(level_id, _time, _embers)
-	Services.analytics.log_event("level_complete", {"level": level_id, "time": int(_time), "deaths": _deaths, "embers": _embers})
+	var outcome := Game.complete_level(level_id, _time, _embers)
+	Services.analytics.log_event("level_complete", {"level": level_id, "time": int(_time), "deaths": _deaths,
+		"embers": _embers, "banked": outcome["banked"]})
 	await get_tree().create_timer(0.9, false).timeout
 	if is_inside_tree():
-		hud.show_results(str(data.get("name", level_id)), _time, _embers, _embers_total, Game.next_level(level_id) != "")
+		var buyable: Array[String] = outcome["buyable"]
+		hud.show_results(str(data.get("name", level_id)), _time, _embers, _embers_total, Game.next_level(level_id) != "",
+			int(outcome["banked"]), buyable)
 
 
 func _build_geometry(size: Vector2, rim: Color) -> void:
@@ -323,6 +348,11 @@ func _build_entities() -> void:
 		barrier.position = Vector2(float(b[0]), float(b[1]))
 		barrier.height = float(b[2])
 		world.add_child(barrier)
+	for c in data.get("cracked", []):
+		var wall := CrackedWall.new()
+		wall.position = Vector2(float(c[0]), float(c[1]))
+		wall.height = float(c[2])
+		world.add_child(wall)
 	for c in data.get("checkpoints", []):
 		var cp := Checkpoint.new()
 		cp.position = GameConfig.vec(c)
@@ -349,7 +379,7 @@ func _build_entities() -> void:
 		s.position = Vector2(float(e.get("x", 0)), float(e.get("y", 600)))
 		s.patrol_min = float(e.get("min", s.position.x - 200))
 		s.patrol_max = float(e.get("max", s.position.x + 200))
-		s.burned.connect(_on_enemy_burned)
+		s.died.connect(_on_enemy_died)
 		world.add_child(s)
 	if data.has("goal"):
 		var gate := GoalGate.new()

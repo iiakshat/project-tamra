@@ -8,9 +8,12 @@ Last updated: 2026-10-25
 
 An offline Android **2D platformer with a story mode**, with **high-end visuals** in a **shadow-puppet + painted-sky** style. The theme is asura-flavoured Indian-epic inspiration: original names, characters and designs. **Gods are never named.** The mythology is evoked, not cited. No server, no forced ads.
 
-- **Hero:** a young asura warrior who refuses the tyrant Smoke King and climbs out of the Ash Pits (a redemption arc).
+- **Hero:** a young asura warrior who refuses the tyrant Smoke King and climbs out of the Ash Pits (a redemption arc). Fights with a copper-banded staff.
 - **Signature mechanics:** **mantra gestures** (draw a sign on screen to cast) and **maya illusions** (decoys, false and hidden platforms).
-- **Controls:** hybrid. Large left/right pads and a jump pad. Drawing anywhere else casts mantras. Time slows while drawing.
+- **Controls:** hybrid. Large left/right pads, a jump pad and a strike pad. Drawing anywhere else casts mantras. Time slows while drawing.
+- **Progression:** 8 mantras. Levels teach some; others are bought with embers in the **Mantra Book**, which also has a practice pad and lets players **record their own sign** for any shape mantra. Only new embers bank, so replays can't farm.
+- **Characters:** Tholu Bommalata-style leather puppets (`src/fx/puppet.gd`): dyed translucent pieces with punched holes, profile faces, crown and fan. Springs drive the joints (lean, squash and stretch, landing dip, recoil). Hair, sash and jewellery are Verlet chains. The puppet falls apart into pieces on death.
+- **Language (owner, 2026-10-25):** voice-over and narration in **Hindi**, with **Sanskrit** used occasionally for effect (mantra invocations, key story beats). On-screen UI text is English for now. Ask the owner before switching UI text to Hindi; that needs a Devanagari font.
 
 Design detail: `docs/GDD.md`. Build, test and release steps: `docs/RELEASE.md`.
 
@@ -18,7 +21,8 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
 
 ## Status
 
-- **Phase 1, vertical slice built:** Chapter 1 Level 1 "The Ash Pits", title screen, story intro, HUD, pause, results, save, analytics stub. Three mantras are live in the level (SETU, CHHAYA, JWALA). KAVACH and DRISHTI are coded but unlocked in later levels.
+- **Phase 1, round 2 (2026-10-25):** 3 levels (c1_l1 Ash Pits, c1_l2 Chain Ladder, c2_l1 Mirror Marsh), 2 chapter stories, 8 mantras, the Mantra Book, combat (strike, guards with telegraphed spear attacks, health), the puppet characters, and SETU drawn as you draw it.
+- Owner's first real-device test (Samsung S-series, 2026-10-25): 120 fps, 0 errors, finished level 1 twice. Their feedback drove this round: short SETU, stickman look, gesture scores of 0.73 to 0.77 just missing the old 0.78 cutoff.
 - **Verified locally:** 17 automated tests pass. Headless smoke runs are clean. Screenshots confirm rendering and all three mantras working end to end.
 - **CI verified (2026-10-25):** the "Android build" workflow passes (tests plus signed debug APK, about 1.5 min). The APK is 55 MB because it is a debug build covering both arm64 and armv7. Release AAB per-device downloads will be much smaller. Local copy: `../builds/project-tamra-debug.apk`.
 - **Not yet verified:**
@@ -48,7 +52,7 @@ See `DECISIONS.md` for the reasons.
 - The Godot editor/CLI lives **outside the repo** at `../_tools/godot/Godot_v4.7.2-stable_win64_console.exe` (shared by future games). There are no Android tools on the laptop; Android builds run in GitHub Actions.
 - Import (after adding or renaming scripts): `godot --headless --path . --import`
 - Tests: `godot --headless --path . --script res://tests/run_tests.gd`
-- Debug args (debug builds only, after `--`): `--level=c1_l1 --x=2500 --hold=move_right --cast=line --frames=N --screenshot=path`. See `src/main.gd`. Use `--fixed-fps 60` for deterministic runs.
+- Debug args (debug builds only, after `--`, always `key=value`): `--level=c1_l1 --x=2500 --hold=move_right --cast=line --frames=N --screenshot=path --preview=puppets --book=1 --story=c2_intro`. See `src/main.gd`. Use `--fixed-fps 60` for deterministic runs. Delete `%APPDATA%\Godot\app_userdata\Project Tamra\save.json` to test as a new player.
 - GDScript gotcha: `:=` on an untyped value (dictionary access, `event.pressed` on an `InputEvent`) is a parse error. Give it an explicit type.
 
 ## Code layout
@@ -71,8 +75,8 @@ See `DECISIONS.md` for the reasons.
 
 1. **Claude's own work:** code-driven effects, procedural silhouettes, UI. This is the current state.
 2. **Internet assets with a clear commercial licence:** CC0 first (Kenney, OpenGameArt CC0, Freesound CC0). Log each one in `ASSETS.md`.
-3. **Gemini image generation** (`GOOGLE_API_KEY` in `.env`). Record the model and prompt in `ASSETS.md`.
-4. **Sarvam** (`SARVAM_API_KEY` in `.env`): Indian-language voice and TTS for story lines.
+3. **Gemini** (`GOOGLE_API_KEY` in `.env`). The owner approved its use for images, characters, scenes and TTS. Record the model and prompt in `ASSETS.md`. Prefer it for painted backdrop layers and story narration. Be careful with character sprites: AI art is hard to keep consistent across animation, and the procedural puppets already animate.
+4. **Sarvam** (`SARVAM_API_KEY` in `.env`): Hindi voice and TTS, a strong fit for Hindi narration.
 
 ## API usage rules (owner instructions)
 

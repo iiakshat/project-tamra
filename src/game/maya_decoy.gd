@@ -26,7 +26,6 @@ func _ready() -> void:
 	aura.position = Vector2(0, -45)
 	add_child(aura)
 	puppet = Puppet.new()
-	puppet.rim = Color(0.5, 0.95, 1.0, 0.9)
 	puppet.build("hero")
 	puppet.modulate = Color(0.55, 0.95, 1.0, 0.6)
 	puppet.face(dir)
@@ -64,4 +63,5 @@ func dispel() -> void:
 	_gone = true
 	remove_from_group("decoys")
 	Fx.burst(get_parent(), global_position + Vector2(0, -40), Color(0.4, 0.9, 1.0), 30, 220.0)
+	Sfx.play("decoy_pop", global_position)
 	queue_free()

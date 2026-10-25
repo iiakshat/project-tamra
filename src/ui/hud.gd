@@ -1,7 +1,8 @@
 class_name Hud
 extends CanvasLayer
-## In-level UI: lamps for health, embers, mantra slots with cooldowns, tutorial
-## prompts, cast feedback, pause and results. Keeps working while the game is paused.
+## In-level UI: lamps for health, embers, learned-mantra slots with cooldowns, tutorial
+## prompts, "new mantra" cards, cast feedback, pause, results and the Mantra Book.
+## Keeps working while the game is paused.
 
 signal pause_pressed
 signal resume_pressed
@@ -9,12 +10,6 @@ signal restart_pressed
 signal menu_pressed
 signal next_pressed
 signal copy_log_pressed
-
-const FAIL_TEXT := {
-	"unrecognized": "The sign was unclear",
-	"locked": "You have not learned that mantra yet",
-	"cooldown": "Not ready yet",
-}
 
 var caster: MantraCaster
 var mantra_cfg: Dictionary
@@ -27,10 +22,13 @@ var _slot_row: HBoxContainer
 var _prompt: PanelContainer
 var _prompt_label: Label
 var _prompt_glyph: GlyphView
+var _card: PanelContainer
+var _card_queue: Array[String] = []
 var _toast: Label
 var _toast_tween: Tween
 var _pause_button: Button
 var _overlay: Control
+var _book: MantraBook
 var _flash: ColorRect
 var _tint: ColorRect
 var _error_badge: Label
@@ -90,15 +88,16 @@ func _ready() -> void:
 	_slot_row = HBoxContainer.new()
 	_slot_row.anchor_left = 1.0
 	_slot_row.anchor_right = 1.0
-	_slot_row.offset_right = -116
-	_slot_row.offset_left = -116
-	_slot_row.offset_top = 18
+	_slot_row.offset_right = -112
+	_slot_row.offset_left = -112
+	_slot_row.offset_top = 22
 	_slot_row.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_slot_row.add_theme_constant_override("separation", 12)
+	_slot_row.add_theme_constant_override("separation", 8)
 	_slot_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_slot_row)
 
 	_build_prompt()
+	_build_card()
 	_toast = UiKit.label("", 44, UiKit.GOLD, 10)
 	_toast.set_anchors_preset(Control.PRESET_CENTER)
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -108,18 +107,31 @@ func _ready() -> void:
 	_toast.offset_bottom = -30
 	_toast.modulate.a = 0.0
 	_root.add_child(_toast)
+	Game.mantras_changed.connect(refresh_slots)
 
 
-func setup(mantra_caster: MantraCaster, mantras: Dictionary, unlocked: Array[String]) -> void:
+func setup(mantra_caster: MantraCaster, mantras: Dictionary) -> void:
 	caster = mantra_caster
 	mantra_cfg = mantras
-	for id in unlocked:
-		var m: Dictionary = mantras.get(id, {})
+	refresh_slots()
+
+
+## One slot per learned mantra, showing the sign that currently casts it.
+func refresh_slots() -> void:
+	for slot in _slots:
+		slot.queue_free()
+	_slots.clear()
+	for id in Game.grimoire.ids():
+		if not Game.grimoire.is_learned(id):
+			continue
+		var m: Dictionary = mantra_cfg.get(id, {})
 		var slot := SlotView.new()
 		slot.id = id
 		slot.glyph = str(m.get("gesture", ""))
+		var strokes := Game.save.sign_strokes(id)
+		slot.custom = strokes[0] if not strokes.is_empty() else PackedVector2Array()
 		slot.color = GameConfig.color(m.get("color", ""), UiKit.GOLD)
-		slot.custom_minimum_size = Vector2(64, 64)
+		slot.custom_minimum_size = Vector2(54, 54)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_slot_row.add_child(slot)
 		_slots.append(slot)
@@ -140,7 +152,7 @@ func _process(_delta: float) -> void:
 
 ## True where a touch belongs to the HUD instead of gameplay.
 func blocks(pos: Vector2) -> bool:
-	if _overlay != null and _overlay.visible:
+	if (_overlay != null and _overlay.visible) or _book != null:
 		return true
 	return _pause_button.get_global_rect().grow(10).has_point(pos)
 
@@ -157,7 +169,12 @@ func set_embers(count: int, total: int) -> void:
 
 func show_prompt(text: String, glyph: String) -> void:
 	_prompt_label.text = text
-	_prompt_glyph.glyph = glyph
+	var id := Game.grimoire.mantra_with_default(glyph)
+	if id != "":
+		_prompt_glyph.show_mantra(id)
+	else:
+		_prompt_glyph.custom = PackedVector2Array()
+		_prompt_glyph.glyph = glyph
 	_prompt_glyph.visible = glyph != ""
 	_prompt.visible = true
 	_prompt.modulate.a = 0.0
@@ -170,13 +187,39 @@ func hide_prompt() -> void:
 	t.tween_callback(func() -> void: _prompt.visible = false)
 
 
+## Announces newly learned mantras one card at a time.
+func show_learned(ids: Array[String]) -> void:
+	_card_queue.append_array(ids)
+	if not _card.visible:
+		_next_card()
+
+
 func on_cast(id: String) -> void:
 	var m: Dictionary = mantra_cfg.get(id, {})
 	_show_toast(str(m.get("label", id.to_upper())), GameConfig.color(m.get("color", ""), UiKit.GOLD), 52)
 
 
-func on_cast_failed(reason: String) -> void:
-	_show_toast(FAIL_TEXT.get(reason, ""), Color(0.85, 0.8, 0.75), 28)
+func on_cast_failed(reason: String, detail: String) -> void:
+	var label := str(mantra_cfg.get(detail, {}).get("label", ""))
+	var text := ""
+	match reason:
+		"unrecognized":
+			text = "Unclear sign. Was that %s? Draw it bigger." % label if label != "" else "The sign was unclear. Draw it bigger and smoother."
+		"locked":
+			text = "You have not learned %s yet. See the Mantra Book." % label
+			Sfx.play("cast_fail")
+		"cooldown":
+			text = "%s is not ready yet" % label
+		"far":
+			text = "Too far. Draw the bridge nearer to you."
+		"unknown":
+			text = "That sign casts nothing."
+	_show_toast(text, Color(0.88, 0.82, 0.76), 26)
+
+
+## Short confirmation message in the middle of the screen.
+func notify(text: String) -> void:
+	_show_toast(text, UiKit.TEXT, 26)
 
 
 func flash_death() -> void:
@@ -194,27 +237,49 @@ func show_pause(on: bool) -> void:
 		return
 	var box := _overlay_box("Paused")
 	box.add_child(_button("Resume", resume_pressed))
+	var book := UiKit.button("Mantra Book", 380)
+	book.pressed.connect(open_book)
+	box.add_child(book)
 	box.add_child(_button("Restart from checkpoint", restart_pressed))
 	box.add_child(_button("Main menu", menu_pressed))
 	box.add_child(_button("Copy debug log", copy_log_pressed))
 
 
-## Short confirmation message in the middle of the screen.
-func notify(text: String) -> void:
-	_show_toast(text, UiKit.TEXT, 26)
-
-
-func show_results(level_name: String, time: float, embers: int, total: int, has_next: bool) -> void:
+func show_results(level_name: String, time: float, embers: int, total: int, has_next: bool,
+		banked: int, buyable: Array[String]) -> void:
 	_clear_overlay()
 	var box := _overlay_box(level_name)
-	box.add_child(_centered(UiKit.label("Cleared in " + UiKit.format_time(time), 30)))
-	box.add_child(_centered(UiKit.label("Embers  %d / %d" % [embers, total], 30, Color(1.0, 0.7, 0.35))))
+	box.add_child(_centered(UiKit.label("Cleared in " + UiKit.format_time(time), 28)))
+	box.add_child(_centered(UiKit.label("Embers  %d / %d" % [embers, total], 28, Color(1.0, 0.7, 0.35))))
+	var bank_text := "+%d to your embers (%d to spend)" % [banked, Game.save.embers_bank] if banked > 0 \
+		else "%d embers to spend" % Game.save.embers_bank
+	box.add_child(_centered(UiKit.label(bank_text, 22, Color(1.0, 0.85, 0.6))))
+	for id in buyable:
+		var m: Dictionary = mantra_cfg.get(id, {})
+		var line := UiKit.label("New in the Mantra Book: %s (%s), %d embers" % [m.get("label", id), m.get("meaning", ""),
+			int(m.get("unlock", {}).get("cost", 0))], 22, GameConfig.color(m.get("color", ""), UiKit.GOLD))
+		box.add_child(_centered(line))
 	if has_next:
 		box.add_child(_button("Continue", next_pressed))
 	else:
-		box.add_child(_centered(UiKit.label("More of the story is coming.", 24, Color(0.9, 0.85, 0.8))))
+		box.add_child(_centered(UiKit.label("More of the story is coming.", 22, Color(0.9, 0.85, 0.8))))
+	var book := UiKit.button("Mantra Book", 380)
+	book.pressed.connect(open_book)
+	box.add_child(book)
 	box.add_child(_button("Play again", restart_pressed))
 	box.add_child(_button("Main menu", menu_pressed))
+
+
+func open_book() -> void:
+	if _book != null:
+		return
+	_book = MantraBook.new()
+	UiKit.full_rect(_book)
+	_root.add_child(_book)
+	_book.closed.connect(func() -> void:
+		_book.queue_free()
+		_book = null
+	)
 
 
 func _build_prompt() -> void:
@@ -224,17 +289,17 @@ func _build_prompt() -> void:
 	_prompt.anchor_right = 0.5
 	_prompt.offset_left = -380
 	_prompt.offset_right = 380
-	_prompt.offset_top = 104
-	_prompt.offset_bottom = 120
+	_prompt.offset_top = 96
+	_prompt.offset_bottom = 112
 	_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_prompt.visible = false
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 18)
 	_prompt_glyph = GlyphView.new()
-	_prompt_glyph.custom_minimum_size = Vector2(96, 96)
+	_prompt_glyph.custom_minimum_size = Vector2(90, 90)
 	_prompt_glyph.animate = true
 	row.add_child(_prompt_glyph)
-	_prompt_label = UiKit.label("", 26, UiKit.TEXT, 4)
+	_prompt_label = UiKit.label("", 25, UiKit.TEXT, 4)
 	_prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt_label.custom_minimum_size = Vector2(560, 0)
 	_prompt_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -242,6 +307,63 @@ func _build_prompt() -> void:
 	row.add_child(_prompt_label)
 	_prompt.add_child(row)
 	_root.add_child(_prompt)
+
+
+func _build_card() -> void:
+	_card = PanelContainer.new()
+	var style := UiKit.panel_style(0.88)
+	style.border_color = UiKit.GOLD
+	style.set_border_width_all(3)
+	_card.add_theme_stylebox_override("panel", style)
+	# Bottom centre, between the move pads and the strike pad, clear of prompts and toasts.
+	_card.anchor_left = 0.5
+	_card.anchor_right = 0.5
+	_card.anchor_top = 1.0
+	_card.anchor_bottom = 1.0
+	_card.offset_left = -275
+	_card.offset_right = 275
+	_card.offset_top = -26
+	_card.offset_bottom = -16
+	_card.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_card.visible = false
+	_root.add_child(_card)
+
+
+func _next_card() -> void:
+	for c in _card.get_children():
+		c.queue_free()
+	if _card_queue.is_empty():
+		_card.visible = false
+		return
+	var id: String = _card_queue.pop_front()
+	var m: Dictionary = mantra_cfg.get(id, {})
+	var color := GameConfig.color(m.get("color", ""), UiKit.GOLD)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	var glyph := GlyphView.new()
+	glyph.custom_minimum_size = Vector2(84, 84)
+	glyph.animate = true
+	glyph.show_mantra(id)
+	row.add_child(glyph)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_child(UiKit.label("NEW MANTRA", 16, Color(1.0, 0.85, 0.6, 0.8), 4))
+	col.add_child(UiKit.label("%s  (%s)" % [m.get("label", id), m.get("meaning", "")], 30, color, 6))
+	var desc := UiKit.label(str(m.get("description", "")), 18, UiKit.TEXT, 4)
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.custom_minimum_size = Vector2(390, 0)
+	col.add_child(desc)
+	row.add_child(col)
+	_card.add_child(row)
+	_card.visible = true
+	_card.modulate.a = 0.0
+	Sfx.play("mantra_learned")
+	var t := create_tween()
+	t.tween_property(_card, "modulate:a", 1.0, 0.3)
+	t.tween_interval(3.4)
+	t.tween_property(_card, "modulate:a", 0.0, 0.4)
+	t.tween_callback(_next_card)
 
 
 func _show_toast(text: String, color: Color, size: int) -> void:
@@ -257,7 +379,7 @@ func _show_toast(text: String, color: Color, size: int) -> void:
 	_toast.scale = Vector2.ONE * 1.25
 	_toast_tween = create_tween().set_parallel()
 	_toast_tween.tween_property(_toast, "scale", Vector2.ONE, 0.2)
-	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5).set_delay(0.7)
+	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5).set_delay(1.1)
 
 
 func _overlay_box(title: String) -> VBoxContainer:
@@ -271,10 +393,12 @@ func _overlay_box(title: String) -> VBoxContainer:
 	panel.add_theme_stylebox_override("panel", UiKit.panel_style())
 	center.add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
+	box.add_theme_constant_override("separation", 10)
 	panel.add_child(box)
-	box.add_child(_centered(UiKit.label(title, 42, UiKit.GOLD, 8)))
+	box.add_child(_centered(UiKit.label(title, 40, UiKit.GOLD, 8)))
 	_root.add_child(_overlay)
+	if _book != null:
+		_root.move_child(_book, -1)
 	return box
 
 
@@ -286,6 +410,7 @@ func _clear_overlay() -> void:
 
 func _button(text: String, sig: Signal) -> Button:
 	var b := UiKit.button(text, 380)
+	b.custom_minimum_size = Vector2(380, 60)
 	b.pressed.connect(func() -> void: sig.emit())
 	return b
 
@@ -319,6 +444,7 @@ class HeartsView extends Control:
 class SlotView extends Control:
 	var id := ""
 	var glyph := ""
+	var custom := PackedVector2Array()
 	var color := Color.WHITE
 	var ratio := 0.0
 
@@ -328,11 +454,16 @@ class SlotView extends Control:
 		var ready := ratio <= 0.0
 		draw_circle(c, r, Color(0.05, 0.02, 0.03, 0.75))
 		draw_arc(c, r, 0.0, TAU, 40, Color(color, 0.85 if ready else 0.3), 2.0, true)
-		var pts := PackedVector2Array()
-		for p in GlyphShapes.canonical(glyph):
-			pts.append(c + p * r * 0.55)
-		if pts.size() >= 2:
-			draw_polyline(pts, Color(color, 1.0 if ready else 0.35), 3.0, true)
+		var src := custom if not custom.is_empty() else GlyphShapes.canonical(glyph)
+		if src.size() >= 2:
+			var box := Rect2(src[0], Vector2.ZERO)
+			for p in src:
+				box = box.expand(p)
+			var half := maxf(maxf(box.size.x, box.size.y) / 2.0, 0.001)
+			var pts := PackedVector2Array()
+			for p in src:
+				pts.append(c + (p - box.get_center()) / half * r * 0.55)
+			draw_polyline(pts, Color(color, 1.0 if ready else 0.35), 2.6, true)
 		if ratio > 0.01:
 			var pie := PackedVector2Array([c])
 			var steps := maxi(2, int(ratio * 32))

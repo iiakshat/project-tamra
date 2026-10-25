@@ -3,14 +3,20 @@
   "subtitle": "working title",
   "tagline": "An asura's road out of the ash.",
   "max_hearts": 3,
-  "gesture_min_score": 0.78,
+  "gesture_min_score": 0.72,
   "slowmo_while_drawing": 0.35,
   "chapters": [
     {
       "id": "c1",
       "name": "The Ash Pits",
       "story": "c1_intro",
-      "levels": ["c1_l1"]
+      "levels": ["c1_l1", "c1_l2"]
+    },
+    {
+      "id": "c2",
+      "name": "Mirror Marsh",
+      "story": "c2_intro",
+      "levels": ["c2_l1"]
     }
   ]
 }

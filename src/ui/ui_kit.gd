@@ -47,6 +47,7 @@ static func button(text: String, min_width: float = 300.0) -> Button:
 	b.add_theme_stylebox_override("hover", hover)
 	b.add_theme_stylebox_override("pressed", pressed)
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.pressed.connect(func() -> void: Sfx.play("ui_click"))
 	return b
 
 

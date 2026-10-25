@@ -1,16 +1,20 @@
 class_name GestureRecognizer
 extends RefCounted
 ## Recognizes single-stroke gestures with the $1 Unistroke method (Wobbrock et al. 2007),
-## kept orientation-sensitive so a V and an upside-down V stay different.
-## Straight lines are detected separately, because $1 handles 1-D shapes poorly.
+## kept orientation-sensitive so a V and a caret (^) stay different.
+## Straight strokes are classified separately (line / line_up / line_down) because $1
+## handles 1-D shapes poorly, and because SETU needs the stroke's actual endpoints.
 
 const SAMPLES := 64
 const SQUARE := 250.0
 const ANGLE_RANGE := 0.4363  # 25 degrees of rotation tolerance
 const ANGLE_STEP := 0.0349   # 2 degrees
 const PHI := 0.6180339887
+const HORIZONTAL_SLOPE := 0.84  # tan(40 deg): flatter than this is a "line"
+const VERTICAL_SLOPE := 0.7     # tan(35 deg): steeper than this is line_up / line_down
+const STRAIGHTNESS := 0.85      # chord / path length for a stroke to count as straight
 
-var min_score := 0.78
+var min_score := 0.72
 var min_size := 40.0  # pixels; smaller strokes are taps, not gestures
 
 var _templates: Array[Dictionary] = []
@@ -18,31 +22,50 @@ var _templates: Array[Dictionary] = []
 
 static func with_default_templates() -> GestureRecognizer:
 	var r := GestureRecognizer.new()
-	for name in ["circle", "triangle", "v", "bolt"]:
-		for pts in GlyphShapes.variants(name):
-			r.add_template(name, pts)
+	for name in GlyphShapes.SHAPES:
+		r.add_shape(name)
 	return r
+
+
+func add_shape(name: String) -> void:
+	for pts in GlyphShapes.variants(name):
+		add_template(name, pts)
 
 
 func add_template(name: String, points: PackedVector2Array) -> void:
 	_templates.append({"name": name, "points": _normalize(points)})
 
 
-## Returns {"name": String, "score": float, "direction": int}.
-## name is "" when nothing matched. direction is only set for lines (+1 right, -1 left).
+func remove_templates(name: String) -> void:
+	_templates = _templates.filter(func(t: Dictionary) -> bool: return t["name"] != name)
+
+
+func has_templates(name: String) -> bool:
+	return _templates.any(func(t: Dictionary) -> bool: return t["name"] == name)
+
+
+## Returns {"name", "score", "direction", "start", "end", "closest"}.
+## name is "" when nothing matched; "closest" is the best guess even then (for feedback).
+## direction (+1 right / -1 left) and start/end are set for straight strokes.
 func recognize(stroke: PackedVector2Array) -> Dictionary:
-	var result := {"name": "", "score": 0.0, "direction": 0}
+	var result := {"name": "", "score": 0.0, "direction": 0, "start": Vector2.ZERO, "end": Vector2.ZERO, "closest": ""}
 	if stroke.size() < 2:
 		return result
 	var box := _bounds(stroke)
 	var longest := maxf(box.size.x, box.size.y)
 	if longest < min_size:
 		return result
-	var line_dir := _line_direction(stroke, box)
-	if line_dir != 0:
-		return {"name": "line", "score": 1.0, "direction": line_dir}
-	if minf(box.size.x, box.size.y) < longest * 0.2:
-		return result  # Too thin to be a 2-D shape (e.g. a vertical line).
+	var first := stroke[0]
+	var last := stroke[stroke.size() - 1]
+	result["start"] = first
+	result["end"] = last
+	var kind := _straight_kind(stroke)
+	if kind != "":
+		result["name"] = kind
+		result["closest"] = kind
+		result["score"] = 1.0
+		result["direction"] = 1 if last.x >= first.x else -1
+		return result
 	var pts := _normalize(stroke)
 	var best := INF
 	var best_name := ""
@@ -53,33 +76,53 @@ func recognize(stroke: PackedVector2Array) -> Dictionary:
 			best_name = t["name"]
 	var score := 1.0 - best / (0.5 * sqrt(2.0 * SQUARE * SQUARE))
 	result["score"] = score
+	result["closest"] = best_name
 	if score >= min_score:
 		result["name"] = best_name
 	return result
 
 
-func _line_direction(stroke: PackedVector2Array, box: Rect2) -> int:
-	if box.size.y > box.size.x * 0.25:
-		return 0
+## "line", "line_up", "line_down" for a straight stroke at a usable angle, else "".
+static func _straight_kind(stroke: PackedVector2Array) -> String:
 	var first := stroke[0]
 	var last := stroke[stroke.size() - 1]
-	if first.distance_to(last) < _path_length(stroke) * 0.8:
-		return 0  # Doubled back on itself; not a clean line.
-	return 1 if last.x > first.x else -1
+	var d := last - first
+	if d.length() < _path_length(stroke) * STRAIGHTNESS:
+		return ""
+	if absf(d.y) <= absf(d.x) * HORIZONTAL_SLOPE:
+		return "line"
+	if absf(d.x) <= absf(d.y) * VERTICAL_SLOPE:
+		return "line_up" if d.y < 0.0 else "line_down"
+	return ""
+
+
+static func is_straight(stroke: PackedVector2Array) -> bool:
+	return stroke.size() >= 2 and _straight_kind(stroke) != ""
+
+
+## Similarity of two raw strokes (0..1), using the same measure as recognition.
+## Used to check that a player's custom sign is drawn consistently.
+func similarity(a: PackedVector2Array, b: PackedVector2Array) -> float:
+	var d := _distance_at_best_angle(_normalize(a), _normalize(b))
+	return 1.0 - d / (0.5 * sqrt(2.0 * SQUARE * SQUARE))
 
 
 func _normalize(points: PackedVector2Array) -> PackedVector2Array:
 	var pts := _resample(points, SAMPLES)
-	var box := _bounds(pts)
-	var w := maxf(box.size.x, 1.0)
-	var h := maxf(box.size.y, 1.0)
 	var centroid := Vector2.ZERO
-	for i in pts.size():
-		pts[i] = Vector2((pts[i].x - box.position.x) * SQUARE / w, (pts[i].y - box.position.y) * SQUARE / h)
-		centroid += pts[i]
+	for p in pts:
+		centroid += p
 	centroid /= pts.size()
+	# Size by RMS distance from the centroid: uniform (a tilted square stays a square)
+	# and rotation-independent (a bounding box grows when a shape tilts), so the
+	# rotation search compares like with like.
+	var sum_sq := 0.0
 	for i in pts.size():
 		pts[i] -= centroid
+		sum_sq += pts[i].length_squared()
+	var k := (SQUARE * 0.5) / maxf(sqrt(sum_sq / pts.size()), 0.001)
+	for i in pts.size():
+		pts[i] *= k
 	return pts
 
 

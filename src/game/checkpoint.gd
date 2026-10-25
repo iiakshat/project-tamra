@@ -43,4 +43,5 @@ func _on_body_entered(body: Node) -> void:
 	_flame.visible = true
 	_flame.scale = Vector2.ZERO
 	Fx.burst(get_parent(), global_position + Vector2(0, -86), Color(1.0, 0.7, 0.3), 20, 160.0)
+	Sfx.play("checkpoint", global_position)
 	reached.emit(global_position)

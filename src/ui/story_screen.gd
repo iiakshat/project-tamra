@@ -64,6 +64,7 @@ func _ready() -> void:
 	_skip.pressed.connect(_finish)
 	ui.add_child(_skip)
 
+	Sfx.scene("story")
 	_lines = GameConfig.read("story").get(story_id, [])
 	Services.analytics.log_event("story_view", {"id": story_id})
 	_next()
@@ -84,6 +85,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_typing.kill()
 		_label.visible_ratio = 1.0
 	else:
+		Sfx.play("page_turn")
 		_next()
 
 

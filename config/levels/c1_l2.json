@@ -1,0 +1,48 @@
+{
+  "id": "c1_l2",
+  "name": "The Chain Ladder",
+  "chapter": "c1",
+  "palette": "ember",
+  "size": [6600, 720],
+  "kill_y": 950,
+  "camera_bottom": 780,
+  "spawn": [150, 600],
+  "teaches": ["udaan"],
+
+  "ground": [
+    [0, 600, 1000],
+    [1000, 390, 600],
+    [1600, 600, 1300],
+    [3300, 600, 300],
+    [3800, 250, 700],
+    [4950, 520, 1650]
+  ],
+  "platforms": [
+    [3640, 470, 140],
+    [4560, 330, 140],
+    [4760, 420, 140]
+  ],
+  "maya_false": [],
+  "maya_hidden": [],
+
+  "cracked": [],
+  "barriers": [[5250, 520, 220]],
+  "enemies": [
+    {"x": 2000, "y": 600, "min": 1800, "max": 2250},
+    {"x": 2600, "y": 600, "min": 2400, "max": 2800},
+    {"x": 4200, "y": 250, "min": 3950, "max": 4400},
+    {"x": 5600, "y": 520, "min": 5400, "max": 5900}
+  ],
+  "checkpoints": [[1650, 600], [3400, 600], [3850, 250], [5000, 520]],
+  "embers": [
+    [600, 540], [1300, 330], [1450, 330], [2200, 440], [3100, 470],
+    [3700, 410], [4000, 190], [4630, 280], [5500, 460], [6100, 460]
+  ],
+  "prompts": [
+    {"x": 200, "width": 600, "glyph": "line_up", "text": "New mantra: UDAAN. Draw a line straight up to leap high, even in mid-air."},
+    {"x": 1650, "width": 300, "text": "Two Smokebound. Three STRIKES fell a guard. When a spear glints, step back, then hit."},
+    {"x": 3350, "width": 280, "glyph": "line_up", "text": "Jump, then draw UDAAN at the top of your jump to climb the cliff."},
+    {"x": 4950, "width": 260, "glyph": "bolt", "text": "Burn the thorns. Fire fells a guard in one hit."}
+  ],
+  "goal": [6350, 520]
+}

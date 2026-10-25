@@ -52,6 +52,7 @@ func burn() -> void:
 	_burnt = true
 	remove_from_group("burnable")
 	_shape.set_deferred("disabled", true)
+	Sfx.play("barrier_burn", global_position)
 	for i in 4:
 		Fx.burst(get_parent(), global_position + Vector2(0, -height * (0.15 + 0.22 * i)), Color(1.0, 0.5, 0.15), 30, 280.0, true, 0.9)
 	var t := create_tween()

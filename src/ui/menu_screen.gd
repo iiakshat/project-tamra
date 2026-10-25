@@ -6,6 +6,14 @@ signal begin_pressed
 signal continue_pressed(level_id: String)
 
 var _hero: Puppet
+var _ui_root: Control
+
+
+func open_book() -> void:
+	var mb := MantraBook.new()
+	UiKit.full_rect(mb)
+	_ui_root.add_child(mb)
+	mb.closed.connect(mb.queue_free)
 
 
 func _ready() -> void:
@@ -40,6 +48,7 @@ func _ready() -> void:
 	holder.add_child(_hero)
 
 	_build_ui()
+	Sfx.scene("menu")
 
 
 func _build_ui() -> void:
@@ -86,6 +95,12 @@ func _build_ui() -> void:
 	begin.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	begin.pressed.connect(func() -> void: begin_pressed.emit())
 	buttons.add_child(begin)
+	if not Game.save.learned.is_empty():
+		var book := UiKit.button("Mantra Book", 340)
+		book.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		book.pressed.connect(open_book)
+		buttons.add_child(book)
+	_ui_root = root
 
 	var footer := UiKit.label("Plays fully offline.  No forced ads.", 18, Color(0.95, 0.8, 0.7, 0.6), 4)
 	footer.anchor_top = 1.0

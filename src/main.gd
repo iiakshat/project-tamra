@@ -16,12 +16,16 @@ var _screen: Node
 func _ready() -> void:
 	GameLog.log_renderer()
 	var args := _debug_args()
-	if args.has("level"):
+	if args.has("preview"):
+		_switch(PuppetPreview.new())
+	elif args.has("level"):
 		_start_level(args["level"], float(args.get("x", "-1")))
 	elif args.has("story"):
 		_show_story(args["story"], "")
 	else:
 		show_menu()
+		if args.has("book"):
+			(_screen as MenuScreen).open_book()
 	if args.has("hold"):
 		Input.action_press(args["hold"])
 	if args.has("cast"):
@@ -70,6 +74,12 @@ func _on_level_completed(id: String) -> void:
 	var nxt := Game.next_level(id)
 	if nxt == "":
 		show_menu()
+		return
+	# Entering a new chapter: tell its story first, once.
+	var chapter := Game.chapter_of(nxt)
+	var story := str(chapter.get("story", ""))
+	if chapter != Game.chapter_of(id) and story != "" and not Game.save.story_seen.has(story):
+		_show_story(story, nxt)
 	else:
 		_start_level(nxt)
 

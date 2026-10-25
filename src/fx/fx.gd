@@ -16,10 +16,58 @@ const PALETTES := {
 		"middle": Color(0.18, 0.05, 0.07),
 		"near": Color(0.085, 0.03, 0.04),
 	},
+	"marsh": {
+		"top": Color(0.02, 0.03, 0.08),
+		"mid": Color(0.08, 0.15, 0.27),
+		"horizon": Color(0.42, 0.74, 0.82),
+		"sun": Color(0.88, 0.95, 1.0),
+		"rim": Color(0.55, 0.9, 1.0),
+		"far": Color(0.11, 0.2, 0.3),
+		"middle": Color(0.06, 0.11, 0.17),
+		"near": Color(0.03, 0.05, 0.08),
+	},
 }
 
 static var _glow: Texture2D
 static var _additive: CanvasItemMaterial
+static var _leather: Texture2D
+
+
+## Faint fibre grain for puppet leather. Multiplied with each piece's colour so the
+## translucent hide looks backlit and uneven instead of flat vector fill.
+static func leather_texture() -> Texture2D:
+	if _leather == null:
+		var noise := FastNoiseLite.new()
+		noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+		noise.frequency = 0.09
+		noise.fractal_octaves = 3
+		noise.seed = 7
+		var img := noise.get_seamless_image(64, 64)
+		img.convert(Image.FORMAT_RGBA8)
+		for y in 64:
+			for x in 64:
+				var v := 0.8 + img.get_pixel(x, y).r * 0.2
+				img.set_pixel(x, y, Color(v, v * 0.97, v * 0.93))
+		_leather = ImageTexture.create_from_image(img)
+	return _leather
+
+
+## Closed Catmull-Rom curve through the points: organic outlines from a few control points.
+static func smooth(points: PackedVector2Array, steps: int = 4) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var n := points.size()
+	for i in n:
+		var p0 := points[(i - 1 + n) % n]
+		var p1 := points[i]
+		var p2 := points[(i + 1) % n]
+		var p3 := points[(i + 2) % n]
+		for s in steps:
+			var t := float(s) / steps
+			var t2 := t * t
+			var t3 := t2 * t
+			out.append(0.5 * ((2.0 * p1) + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2
+				+ (3.0 * p1 - p0 - 3.0 * p2 + p3) * t3))
+	return out
 
 
 static func palette(name: String) -> Dictionary:

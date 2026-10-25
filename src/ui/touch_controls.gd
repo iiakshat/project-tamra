@@ -7,8 +7,8 @@ extends CanvasLayer
 signal stroke_started
 signal stroke_finished(points: PackedVector2Array)
 
-const ACTIONS := {"left": "move_left", "right": "move_right", "jump": "jump"}
-const RADIUS := {"left": 78.0, "right": 78.0, "jump": 92.0}
+const ACTIONS := {"left": "move_left", "right": "move_right", "jump": "jump", "strike": "attack"}
+const RADIUS := {"left": 78.0, "right": 78.0, "jump": 92.0, "strike": 68.0}
 const HIT_SLOP := 1.25
 const TRAIL_POINTS := 90
 
@@ -49,6 +49,7 @@ func centers() -> Dictionary:
 		"left": Vector2(115, s.y - 115),
 		"right": Vector2(285, s.y - 115),
 		"jump": Vector2(s.x - 130, s.y - 130),
+		"strike": Vector2(s.x - 300, s.y - 92),
 	}
 
 
@@ -98,6 +99,7 @@ func _on_down(index: int, pos: Vector2) -> void:
 		_stroke = PackedVector2Array([pos])
 		_trail.points = _stroke
 		_trail.modulate.a = 1.0
+		Sfx.play("stroke_start")
 		stroke_started.emit()
 		return
 	_roles[index] = role
@@ -160,3 +162,7 @@ class PadView extends Control:
 					draw_colored_polygon(PackedVector2Array([center + Vector2(s, 0), center + Vector2(-s * 0.7, -s), center + Vector2(-s * 0.7, s)]), ink)
 				"jump":
 					draw_colored_polygon(PackedVector2Array([center + Vector2(0, -s * 1.1), center + Vector2(s, s * 0.5), center + Vector2(-s, s * 0.5)]), ink)
+				"strike":
+					# A staff and the arc of its swing.
+					draw_line(center + Vector2(-s, s), center + Vector2(s, -s), ink, 5.0, true)
+					draw_arc(center + Vector2(-s * 0.4, s * 0.4), s * 1.3, -PI * 0.55, -PI * 0.05, 12, ink, 2.5, true)

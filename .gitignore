@@ -19,6 +19,9 @@ build/
 # Discarded prototype (film-IP name, not shipped)
 ra_html.html
 
+# Claude Code local state and agent worktrees
+.claude/
+
 # OS / editor
 Thumbs.db
 .DS_Store

@@ -34,5 +34,6 @@ func _on_body_entered(body: Node) -> void:
 	if not body is Player:
 		return
 	Fx.burst(get_parent(), global_position, Color(1.0, 0.7, 0.3), 18, 180.0)
+	Sfx.play("ember_pickup", global_position)
 	collected.emit()
 	queue_free()

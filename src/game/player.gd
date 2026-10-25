@@ -6,9 +6,14 @@ extends CharacterBody2D
 signal died(cause: String)
 signal hearts_changed(hearts: int, max_hearts: int)
 
-const SIZE := Vector2(30, 78)
+const SIZE := Vector2(30, 88)
+const STRIKE_COOLDOWN := 0.42
+const STRIKE_WINDOW := Vector2(0.08, 0.2)  # seconds after the swing starts when it can hit
+const STRIKE_REACH := 84.0
+const STEP_DISTANCE := 46.0
 
 var cfg: Dictionary
+var level: Level
 var max_hearts := 3
 var hearts := 3
 var facing := 1
@@ -21,6 +26,12 @@ var _invulnerable := 0.0
 var _coyote := 0.0
 var _buffer := 0.0
 var _shield: Node2D
+var _was_on_floor := true
+var _fall_speed := 0.0
+var _step_acc := 0.0
+var _strike_t := -1.0
+var _strike_cool := 0.0
+var _struck: Array[Node] = []
 
 
 func setup(config: Dictionary, hearts_max: int) -> void:
@@ -39,9 +50,9 @@ func _ready() -> void:
 	shape.shape = rect
 	shape.position = Vector2(0, -SIZE.y / 2.0)
 	add_child(shape)
-	# Warm aura so the black silhouette still reads against black rock.
-	var aura := Fx.glow(Color(1.0, 0.5, 0.22, 0.32), 95.0)
-	aura.position = Vector2(0, -48)
+	# Warm backlight: the leather puppet glows like a lamp is behind the screen.
+	var aura := Fx.glow(Color(1.0, 0.55, 0.25, 0.3), 100.0)
+	aura.position = Vector2(0, -55)
 	add_child(aura)
 	puppet = Puppet.new()
 	puppet.build("hero")
@@ -60,8 +71,9 @@ func _physics_process(delta: float) -> void:
 	var dir := 0.0
 	if controls_enabled:
 		dir = Input.get_axis("move_left", "move_right")
+	var on_floor := is_on_floor()
 	var accel: float
-	if is_on_floor():
+	if on_floor:
 		accel = _num("ground_accel", 2600.0) if dir != 0.0 else _num("ground_decel", 3200.0)
 	else:
 		accel = _num("air_accel", 1900.0)
@@ -72,7 +84,7 @@ func _physics_process(delta: float) -> void:
 		gravity *= _num("fall_gravity_mult", 1.4)
 	velocity.y = minf(velocity.y + gravity * delta, _num("max_fall", 1300.0))
 
-	if is_on_floor():
+	if on_floor:
 		_coyote = _num("coyote_time", 0.1)
 	else:
 		_coyote -= delta
@@ -84,14 +96,38 @@ func _physics_process(delta: float) -> void:
 		velocity.y = -_num("jump_velocity", 860.0)
 		_buffer = 0.0
 		_coyote = 0.0
+		puppet.jumped()
+		Sfx.play("jump", global_position)
+		Fx.burst(get_parent(), global_position, Color(0.5, 0.4, 0.35, 0.6), 10, 90.0, false, 0.4)
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= _num("jump_cut", 0.45)
 
-	if dir != 0.0:
+	if dir != 0.0 and _strike_t < 0.0:
 		facing = 1 if dir > 0.0 else -1
+	if controls_enabled and Input.is_action_just_pressed("attack"):
+		strike()
+	_fall_speed = velocity.y
 	move_and_slide()
+	_after_move(delta)
+
+
+func _after_move(delta: float) -> void:
+	var on_floor := is_on_floor()
+	if on_floor and not _was_on_floor and _fall_speed > 200.0:
+		puppet.landed(_fall_speed)
+		Sfx.play("land_heavy" if _fall_speed > 1100.0 else "land", global_position)
+		if _fall_speed > 700.0:
+			Fx.burst(get_parent(), global_position, Color(0.5, 0.4, 0.35, 0.6), 14, 140.0, false, 0.45)
+	_was_on_floor = on_floor
+	if on_floor and absf(velocity.x) > 60.0:
+		_step_acc += absf(velocity.x) * delta
+		if _step_acc >= STEP_DISTANCE:
+			_step_acc = 0.0
+			Sfx.play("footstep", global_position)
 	_invulnerable = maxf(0.0, _invulnerable - delta)
 	shield_time = maxf(0.0, shield_time - delta)
+	_strike_cool = maxf(0.0, _strike_cool - delta)
+	_update_strike(delta)
 
 
 func _process(delta: float) -> void:
@@ -101,11 +137,51 @@ func _process(delta: float) -> void:
 	_shield.rotation += delta * 2.5
 	if alive:
 		var blink := _invulnerable > 0.0 and fmod(_invulnerable, 0.16) < 0.08
-		puppet.modulate.a = 0.4 if blink else 1.0
+		puppet.modulate.a = 0.45 if blink else 1.0
 
 
 func hitbox() -> Rect2:
 	return Rect2(global_position + Vector2(-SIZE.x / 2.0, -SIZE.y), SIZE)
+
+
+## Staff swing. Hits each guard in reach once per swing.
+func strike() -> void:
+	if not alive or _strike_cool > 0.0:
+		return
+	_strike_cool = STRIKE_COOLDOWN
+	_strike_t = 0.0
+	_struck.clear()
+	puppet.strike()
+	Sfx.play("strike_swing", global_position)
+
+
+func _update_strike(delta: float) -> void:
+	if _strike_t < 0.0:
+		return
+	_strike_t += delta
+	if _strike_t > STRIKE_WINDOW.y:
+		_strike_t = -1.0
+		return
+	if _strike_t < STRIKE_WINDOW.x or level == null:
+		return
+	var reach := Rect2(global_position + Vector2(-10.0 if facing > 0 else -STRIKE_REACH, -100.0), Vector2(STRIKE_REACH + 10.0, 95.0))
+	for e in level.enemies():
+		if _struck.has(e) or not e.is_alive():
+			continue
+		if reach.intersects(e.hitbox()):
+			_struck.append(e)
+			e.damage(1, global_position.x, "strike")
+			Sfx.play("strike_hit", e.global_position)
+			Fx.burst(get_parent(), e.global_position + Vector2(0, -60), Color(1.0, 0.85, 0.55), 14, 220.0)
+			Game.vibrate(30)
+
+
+## UDAAN: a burst of lift, usable in mid-air.
+func udaan(lift: float) -> void:
+	velocity.y = -lift
+	_coyote = 0.0
+	puppet.jumped()
+	Fx.burst(get_parent(), global_position, Color(1.0, 0.9, 0.55), 20, 200.0)
 
 
 func take_hit(from_x: float) -> void:
@@ -118,7 +194,10 @@ func take_hit(from_x: float) -> void:
 	if away == 0.0:
 		away = -facing
 	velocity = Vector2(away * 380.0, -420.0)
-	puppet.flash(Color(1.0, 0.35, 0.25))
+	puppet.hit(away)
+	Sfx.play("hurt", global_position)
+	Services.analytics.log_event("player_hit", {"x": int(global_position.x), "hearts": hearts,
+		"level": level.level_id if level != null else ""})
 	Game.vibrate(70)
 	if hearts <= 0:
 		die("hit")
@@ -129,8 +208,12 @@ func die(cause: String) -> void:
 		return
 	alive = false
 	velocity = Vector2.ZERO
-	Fx.burst(get_parent(), global_position + Vector2(0, -40), Color(1.0, 0.45, 0.2), 36, 260.0)
-	create_tween().tween_property(puppet, "modulate:a", 0.0, 0.25)
+	Fx.burst(get_parent(), global_position + Vector2(0, -45), Color(1.0, 0.45, 0.2), 30, 240.0)
+	if cause != "fall":
+		puppet.shatter(get_parent(), global_position.y)
+	else:
+		puppet.visible = false
+	Sfx.play("death", global_position)
 	Game.vibrate(120)
 	died.emit(cause)
 
@@ -142,24 +225,27 @@ func respawn(at: Vector2) -> void:
 	alive = true
 	shield_time = 0.0
 	_invulnerable = 1.0
-	puppet.modulate = Color.WHITE
+	_strike_t = -1.0
+	puppet.restore()
 	hearts_changed.emit(hearts, max_hearts)
+	Sfx.play("respawn", global_position)
 
 
 func _make_shield() -> Node2D:
 	var root := Node2D.new()
-	root.position = Vector2(0, -42)
+	root.position = Vector2(0, -48)
 	root.visible = false
+	root.z_index = 40
 	var ring := Line2D.new()
-	ring.points = Fx.ellipse(Vector2.ZERO, Vector2(56, 56), 32)
+	ring.points = Fx.ellipse(Vector2.ZERO, Vector2(62, 62), 32)
 	ring.closed = true
 	ring.width = 3.0
 	ring.default_color = Color(1.0, 0.86, 0.5, 0.85)
 	ring.material = Fx.additive()
 	root.add_child(ring)
-	root.add_child(Fx.glow(Color(1.0, 0.8, 0.45, 0.25), 70.0))
+	root.add_child(Fx.glow(Color(1.0, 0.8, 0.45, 0.25), 75.0))
 	for i in 6:
 		var mote := Fx.glow(Color(1.0, 0.9, 0.6), 7.0)
-		mote.position = Vector2.from_angle(TAU * i / 6.0) * 56.0
+		mote.position = Vector2.from_angle(TAU * i / 6.0) * 62.0
 		root.add_child(mote)
 	return root

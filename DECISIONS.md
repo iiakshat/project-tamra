@@ -2,6 +2,24 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-25 — SETU builds where you draw
+Owner reported "drew a longer line, got a shorter bridge". It was a fixed 420 px bridge. Now the bridge follows the stroke's position, length (80 to 540 px) and slope (up to 40°, so it can be a ramp), anchored at the end nearer the hero, within 700 px. That's more expressive, and it is what the player expects.
+
+## 2026-10-25 — Gesture cutoff 0.78 -> 0.72, RMS-normalized matching
+Owner's log showed failures at 0.73 to 0.77. Strokes are now sized by RMS distance from their centroid (rotation-independent), so tilted shapes match. The recognizer also reports the closest guess, so feedback can say "Was that KAVACH?".
+
+## 2026-10-25 — Mantra progression: levels teach, embers buy, players can re-sign
+Answers "let users unlock and create their own casts". The Grimoire (`src/core/grimoire.gd`) holds the rules and is unit tested. A custom sign replaces the default (each mantra has one sign, which keeps it learnable). Signs are rejected if they are straight lines, inconsistent, or too close to another mantra's sign. Not done yet: element and form spell crafting. That's a much bigger design, worth doing only if players use custom signs.
+
+## 2026-10-25 — Combat: telegraphed spear thrusts, no contact damage
+Touching a guard no longer hurts. Guards wind up (spear glint plus sound) and thrust; a strike interrupts the wind-up. That's fairer on a touchscreen, and it gives fighting a rhythm: read, dodge, punish.
+
+## 2026-10-25 — Characters: Tholu Bommalata leather puppets, procedural
+The owner found the silhouettes "stickman, AI-looking". Coloured, perforated, jointed leather puppets are an authentic Indian art form and fit the shadow-play theme. Being procedural, they animate with physics at no asset cost. AI-generated sprites were considered and deferred, because consistency across animation is the hard part.
+
+## 2026-10-25 — Ledges stay one-way
+Owner noticed the hero passing up through a floating ledge. That's intended (standard platformer one-way ledges). The owner was told and can ask for solid ledges.
+
 ## 2026-10-25 — Diagnostics: crash-safe log file, copied to the clipboard from the game
 Owner asked for logging "so you know what broke". We never touch testers' phones, and Android hides app files, so the log is copied to the clipboard from the pause menu or title screen and pasted into any chat app. That needs no USB, no server and no extra permission. Engine errors are captured with Godot's `Logger` API (4.5+). Changes if: a crash-reporting SDK (e.g. Firebase Crashlytics) is added with analytics. Keep the clipboard path anyway; it works offline.
 
