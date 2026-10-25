@@ -12,9 +12,16 @@ $key = ($keyLine -split '=', 2)[1].Trim().Trim('"').Trim("'")
 
 $expected = @{}
 $story = Get-Content (Join-Path $root "config\story.json") -Raw -Encoding UTF8 | ConvertFrom-Json
-foreach ($chapter in $story.PSObject.Properties) {
-	foreach ($line in $chapter.Value) {
-		if ($line.voice) { $expected[$line.voice] = if ($line.sa) { $line.sa } else { $line.hi } }
+function Add-Expected($beats) {
+	foreach ($b in $beats) {
+		if ($b.options) { foreach ($o in $b.options) { Add-Expected $o.reply }; continue }
+		if ($b.voice) { $expected[$b.voice] = if ($b.sa) { $b.sa } else { $b.hi } }
+	}
+}
+foreach ($story_id in $story.PSObject.Properties) {
+	if ($story_id.Name.StartsWith("_")) { continue }
+	foreach ($item in $story_id.Value) {
+		if ($item.beats) { Add-Expected $item.beats } else { Add-Expected @($item) }
 	}
 }
 $cfg = Get-Content (Join-Path $root "config\voice_lines.json") -Raw -Encoding UTF8 | ConvertFrom-Json

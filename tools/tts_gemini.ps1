@@ -19,12 +19,24 @@ $cfg = Get-Content (Join-Path $root "config\voice_lines.json") -Raw -Encoding UT
 $story = Get-Content (Join-Path $root "config\story.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 if ($Model -eq "") { $Model = $cfg.model }
 
-$jobs = @()
-foreach ($chapter in $story.PSObject.Properties) {
-	foreach ($line in $chapter.Value) {
-		if (-not $line.voice) { continue }
-		if ($line.sa) { $jobs += @{ id = $line.voice; text = $line.sa; role = "chant" } }
-		elseif ($line.hi) { $jobs += @{ id = $line.voice; text = $line.hi; role = "narrator" } }
+$jobs = New-Object System.Collections.ArrayList
+# Walks story beats, including the replies inside choices. The speaker picks the voice;
+# "echo" beats (visions) use the speaker's whisper voice when one exists.
+function Add-Beats($beats) {
+	foreach ($b in $beats) {
+		if ($b.options) { foreach ($o in $b.options) { Add-Beats $o.reply }; continue }
+		if (-not $b.voice) { continue }
+		$role = if ($b.sa) { "chant" } elseif ($b.speaker) { $b.speaker } else { "narrator" }
+		if ($b.echo -and $cfg.voices.("$($role)_echo")) { $role = "$($role)_echo" }
+		if (-not $cfg.voices.$role) { $role = "narrator" }
+		$text = if ($b.sa) { $b.sa } else { $b.hi }
+		[void]$jobs.Add(@{ id = $b.voice; text = $text; role = $role })
+	}
+}
+foreach ($story_id in $story.PSObject.Properties) {
+	if ($story_id.Name.StartsWith("_")) { continue }
+	foreach ($item in $story_id.Value) {
+		if ($item.beats) { Add-Beats $item.beats } else { Add-Beats @($item) }
 	}
 }
 foreach ($call in $cfg.calls.PSObject.Properties) {

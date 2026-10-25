@@ -1,0 +1,14 @@
+{
+  "_about": "Jyoti items are earned in play. 'premium' items are placeholders for future in-app purchases: shown, but not buyable until a store SDK is added behind StoreService. Cosmetics only - never power for money.",
+  "upgrade_costs": [0, 40, 100],
+  "upgrade_cost_mult": [1.0, 0.8, 0.65],
+  "upgrade_cooldown_mult": [1.0, 0.8, 0.65],
+  "skins": {
+    "classic": {"cost": 0, "palette": {}},
+    "ash_walker": {"cost": 150, "palette": {"skin": "#5e4f60", "cloth": "#2a2b40", "sash": "#a7a7c4", "accent": "#c8c8e8"}},
+    "jade_guardian": {"cost": 250, "palette": {"cloth": "#0f6b5c", "sash": "#e8d27a", "accent": "#3fe0b8"}},
+    "crimson_ascetic": {"cost": 400, "palette": {"skin": "#7a2a2a", "cloth": "#5c0f24", "sash": "#f0e6d0", "accent": "#ff5a7a"}},
+    "moon_prince": {"premium": true, "palette": {"skin": "#3b4a7a", "cloth": "#e8ecff", "sash": "#7a8cff", "accent": "#bfd0ff"}},
+    "storm_rider": {"premium": true, "palette": {"skin": "#2f3b46", "cloth": "#13212e", "sash": "#4fd8ff", "accent": "#9ff0ff"}}
+  }
+}

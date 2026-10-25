@@ -19,7 +19,11 @@ var _mutex := Mutex.new()
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
-	previous_session_crashed = FileAccess.file_exists(LOCK_FILE)
+	# The lock says what the last session was doing. "background" means Android closed
+	# the app while it was paused: normal, not a crash.
+	var last_state := FileAccess.get_file_as_string(LOCK_FILE) if FileAccess.file_exists(LOCK_FILE) else ""
+	var killed_in_background := last_state.begins_with("background")
+	previous_session_crashed = FileAccess.file_exists(LOCK_FILE) and not killed_in_background
 	if FileAccess.file_exists(LOG_FILE):
 		if FileAccess.file_exists(PREV_FILE):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(PREV_FILE))
@@ -27,11 +31,13 @@ func _init() -> void:
 	_file = FileAccess.open(LOG_FILE, FileAccess.WRITE)
 	var lock := FileAccess.open(LOCK_FILE, FileAccess.WRITE)
 	if lock != null:
-		lock.store_string(Time.get_datetime_string_from_system())
+		lock.store_string("running " + Time.get_datetime_string_from_system())
 	OS.add_logger(EngineLogger.new(self))
 	_log_device_info()
 	if previous_session_crashed:
 		warn("log", "Previous session did not close cleanly (crash or force-close). See game.prev.log.")
+	elif killed_in_background:
+		info("log", "Previous session was closed by the system while in the background.")
 
 
 func _notification(what: int) -> void:
@@ -40,8 +46,10 @@ func _notification(what: int) -> void:
 			_close()
 		NOTIFICATION_APPLICATION_PAUSED:
 			info("app", "paused")
+			_write_lock("background")
 		NOTIFICATION_APPLICATION_RESUMED:
 			info("app", "resumed")
+			_write_lock("running")
 
 
 func info(tag: String, message: String, data: Dictionary = {}) -> void:
@@ -85,6 +93,12 @@ func _write(level: String, tag: String, message: String, data: Dictionary) -> vo
 	_mutex.unlock()
 	if OS.is_debug_build() and level != "ERROR" and level != "WARN":
 		print(line)  # stdout only; errors already reach the console through the engine
+
+
+func _write_lock(state: String) -> void:
+	var lock := FileAccess.open(LOCK_FILE, FileAccess.WRITE)
+	if lock != null:
+		lock.store_string(state + " " + Time.get_datetime_string_from_system())
 
 
 func _close() -> void:

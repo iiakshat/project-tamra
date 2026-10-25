@@ -41,11 +41,11 @@ func test_unlock_states() -> void:
 func test_buy_spends_embers() -> void:
 	var g := _grimoire()
 	g.save.results["c1_l1"] = {"time": 60.0, "embers": 5}
-	g.save.embers_bank = 4
+	g.save.jyoti = 40
 	check(not g.buy("kavach"), "cannot buy without enough embers")
-	g.save.embers_bank = 12
+	g.save.jyoti = 70
 	check(g.buy("kavach"), "buy succeeds")
-	check_eq(g.save.embers_bank, 2, "cost deducted")
+	check_eq(g.save.jyoti, 10, "cost deducted")
 	check(g.is_learned("kavach"), "learned after buying")
 	check(not g.buy("kavach"), "cannot buy twice")
 
@@ -101,4 +101,4 @@ func test_replays_do_not_farm_embers() -> void:
 	check_eq(s.record_result("c1_l1", 80.0, 6), 6, "first clear banks all embers")
 	check_eq(s.record_result("c1_l1", 70.0, 6), 0, "same count banks nothing")
 	check_eq(s.record_result("c1_l1", 75.0, 9), 3, "only the new ones bank")
-	check_eq(s.embers_bank, 9, "bank total")
+	check_eq(s.jyoti, 9, "bank total")

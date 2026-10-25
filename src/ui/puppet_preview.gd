@@ -14,8 +14,9 @@ func _ready() -> void:
 	_add("hero", Vector2(170, 600), 0.0, true, "")
 	_add("hero", Vector2(420, 600), 1.0, true, "")
 	_add("hero", Vector2(660, 560), 0.0, false, "strike")
-	_add("soldier", Vector2(920, 600), 0.0, true, "")
-	_add("soldier", Vector2(1150, 600), 0.0, true, "windup")
+	_add("soldier", Vector2(900, 600), 0.0, true, "windup")
+	_add("mother", Vector2(1060, 600), 0.0, true, "")
+	_add("king", Vector2(1200, 600), 0.0, true, "")
 
 
 func _add(style: String, pos: Vector2, move: float, floor: bool, action: String) -> void:

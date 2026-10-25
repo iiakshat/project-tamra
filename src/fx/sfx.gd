@@ -10,6 +10,17 @@ static func play(id: String, pos: Variant = null, volume_db: float = 0.0, pitch:
 		audio.play(id, pos, volume_db, pitch)
 
 
+## Starts or stops a looping sound (e.g. soft breathing).
+static func loop(id: String, on: bool) -> void:
+	var audio := _audio()
+	if audio == null:
+		return
+	if on:
+		audio.play_loop(id, 0.6)
+	else:
+		audio.stop_loop(id, 0.4)
+
+
 static func scene(name: String) -> void:
 	var audio := _audio()
 	if audio != null and audio.has_method("set_scene_audio"):

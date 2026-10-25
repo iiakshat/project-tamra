@@ -10,5 +10,9 @@
   "jump_cut": 0.45,
   "coyote_time": 0.1,
   "jump_buffer": 0.12,
-  "invulnerable_after_hit": 1.2
+  "invulnerable_after_hit": 1.2,
+  "prana_max": 100,
+  "prana_regen": 3.0,
+  "prana_regen_delay": 1.5,
+  "run_tired_after": 4.0
 }

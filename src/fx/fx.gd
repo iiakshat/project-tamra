@@ -6,15 +6,29 @@ extends RefCounted
 const INK := Color(0.035, 0.016, 0.024)
 
 const PALETTES := {
+	# Ash Pits: indigo night, crimson fire-glow on the horizon, a pale moon.
 	"ember": {
-		"top": Color(0.07, 0.02, 0.07),
-		"mid": Color(0.40, 0.07, 0.10),
-		"horizon": Color(0.98, 0.50, 0.18),
-		"sun": Color(1.0, 0.84, 0.52),
-		"rim": Color(1.0, 0.58, 0.26),
-		"far": Color(0.36, 0.10, 0.12),
-		"middle": Color(0.18, 0.05, 0.07),
-		"near": Color(0.085, 0.03, 0.04),
+		"top": Color(0.03, 0.02, 0.09),
+		"mid": Color(0.2, 0.05, 0.2),
+		"horizon": Color(0.74, 0.13, 0.3),
+		"sun": Color(0.98, 0.88, 0.95),
+		"rim": Color(0.95, 0.38, 0.55),
+		"far": Color(0.19, 0.06, 0.18),
+		"middle": Color(0.1, 0.035, 0.1),
+		"near": Color(0.05, 0.02, 0.06),
+		"spark": Color(1.0, 0.42, 0.6),
+	},
+	# The Smoke King's palace: violet dusk, a gold moon over the walls.
+	"palace": {
+		"top": Color(0.02, 0.02, 0.06),
+		"mid": Color(0.1, 0.08, 0.25),
+		"horizon": Color(0.52, 0.38, 0.85),
+		"sun": Color(1.0, 0.93, 0.72),
+		"rim": Color(0.78, 0.68, 1.0),
+		"far": Color(0.14, 0.11, 0.27),
+		"middle": Color(0.08, 0.06, 0.16),
+		"near": Color(0.03, 0.02, 0.07),
+		"spark": Color(0.85, 0.78, 1.0),
 	},
 	"marsh": {
 		"top": Color(0.02, 0.03, 0.08),
@@ -25,6 +39,7 @@ const PALETTES := {
 		"far": Color(0.11, 0.2, 0.3),
 		"middle": Color(0.06, 0.11, 0.17),
 		"near": Color(0.03, 0.05, 0.08),
+		"spark": Color(0.6, 0.95, 1.0),
 	},
 }
 
@@ -145,7 +160,7 @@ static func burst(parent: Node, pos: Vector2, color: Color, amount: int = 24, sp
 
 
 ## Drifting embers that fill the air around their emitter.
-static func embers(extents: Vector2, amount: int = 40) -> CPUParticles2D:
+static func embers(extents: Vector2, amount: int = 40, tint: Color = Color(1.0, 0.42, 0.6)) -> CPUParticles2D:
 	var p := CPUParticles2D.new()
 	p.amount = amount
 	p.lifetime = 7.0
@@ -162,7 +177,7 @@ static func embers(extents: Vector2, amount: int = 40) -> CPUParticles2D:
 	p.initial_velocity_max = 42.0
 	p.scale_amount_min = 0.04
 	p.scale_amount_max = 0.13
-	p.color = Color(1.0, 0.55, 0.22)
+	p.color = tint
 	p.color_ramp = gradient([Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 0.8, 0.6, 0.6), Color(1, 1, 1, 0)], [0.0, 0.15, 0.6, 1.0])
 	return p
 

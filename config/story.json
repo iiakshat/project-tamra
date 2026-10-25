@@ -1,21 +1,209 @@
 {
+  "_about": "Puppet-theatre story. Each story id is a list of scenes; a scene has a stage, actors and beats. A beat is spoken ({speaker, hi|sa, en, voice}) or a choice ({choice, options:[{en, reply:[beats]}]}). Every choice converges. Gods and epic characters are never named.",
+
   "c1_intro": [
-    {"sa": "तमसो मा ज्योतिर्गमय।", "en": "From darkness, lead me to light.", "voice": "c1_intro_00"},
-    {"hi": "स्वर्ण द्वीप कभी गाता था। अब वह केवल जलता है।", "en": "The Golden Isle once sang. Now it only burns.", "voice": "c1_intro_01"},
-    {"hi": "उसका शासक, धूम्रराज, मानव तट के वनों को अपनी आग में झोंकता है।", "en": "Its ruler, the Smoke King, feeds his fires with the forests of the mortal shore.", "voice": "c1_intro_02"},
-    {"hi": "तुम उसके सबसे श्रेष्ठ शिकारी थे। असुर-जन्मा। न कभी प्रश्न किया, न कभी हारे।", "en": "You were his finest hunter. Asura-born. Never questioned. Never failed.", "voice": "c1_intro_03"},
-    {"hi": "फिर एक रात, उसने आदेश दिया: सोते हुए बच्चों का गाँव जला दो।", "en": "Until the night he ordered you to burn a village while its children slept.", "voice": "c1_intro_04"},
-    {"hi": "तुमने मना कर दिया।", "en": "You refused.", "voice": "c1_intro_05"},
-    {"hi": "उन्होंने तुम्हारा कवच छीना, तुम्हारा नाम छीना, और तुम्हें राख के गर्त में मरने के लिए फेंक दिया।", "en": "They took your armour and your name, and threw you into the Ash Pits to die.", "voice": "c1_intro_06"},
-    {"hi": "पर तुम्हारी माँ ने तुम्हें पुराने चिह्न सिखाए थे, मंत्र। और माया, असुरों के रक्त में बहती है।", "en": "But your mother taught you the old signs, the mantras. And maya runs in asura blood.", "voice": "c1_intro_07"},
-    {"hi": "उठो। चढ़ो।", "en": "Rise. Climb.", "voice": "c1_intro_08"}
+    {
+      "stage": "fire",
+      "actors": [
+        {"id": "maa", "style": "mother", "x": 0.4, "face": 1},
+        {"id": "tamra", "style": "hero", "x": 0.6, "face": -1, "scale": 0.72}
+      ],
+      "beats": [
+        {"speaker": "narrator", "hi": "बहुत साल पहले, स्वर्ण द्वीप के किनारे, एक आग के पास...", "en": "Long ago, at the edge of the Golden Isle, beside a fire...", "voice": "s_fire_01"},
+        {"speaker": "maa", "hi": "ताम्र, इधर आओ। आज तुम्हें एक रहस्य सिखाती हूँ।", "en": "Tamra, come here. Tonight I'll teach you a secret.", "voice": "s_fire_02"},
+        {"speaker": "maa", "hi": "हमारे पुरखे हवा में चिह्न बनाते थे। सच्चे मन से बना चिह्न, सच हो जाता है।", "en": "Our ancestors drew signs in the air. A sign drawn with a true heart becomes real.", "voice": "s_fire_03", "pose": "cast"},
+        {"choice": "first_sign", "options": [
+          {"en": "Draw a line", "icon": "line", "reply": [
+            {"speaker": "tamra", "pose": "cast", "hi": "देखो माँ!", "en": "Look, Mother!", "voice": "s_fire_04a"},
+            {"speaker": "maa", "hi": "तुम्हारी रेखा एक पुल बन गई।", "en": "Your line became a bridge.", "voice": "s_fire_05a"}
+          ]},
+          {"en": "Draw a circle", "icon": "circle", "reply": [
+            {"speaker": "tamra", "pose": "cast", "hi": "देखो माँ!", "en": "Look, Mother!", "voice": "s_fire_04b"},
+            {"speaker": "maa", "hi": "एक कवच! तुम्हारे भीतर शक्ति है।", "en": "A shield! There is power in you.", "voice": "s_fire_05b"}
+          ]}
+        ]},
+        {"speaker": "maa", "hi": "पर याद रखना, ताम्र। यह शक्ति रक्षा के लिए है, विनाश के लिए नहीं।", "en": "But remember, Tamra. This power is for protecting, never for destroying.", "voice": "s_fire_06"}
+      ]
+    },
+    {
+      "stage": "court",
+      "actors": [
+        {"id": "tamra", "style": "hero", "x": 0.28, "face": 1},
+        {"id": "guard", "style": "soldier", "x": 0.5, "face": -1},
+        {"id": "king", "style": "king", "x": 0.74, "face": -1}
+      ],
+      "beats": [
+        {"speaker": "narrator", "hi": "आज। धूम्रराज का दरबार।", "en": "Today. The Smoke King's court.", "voice": "s_court_01"},
+        {"speaker": "king", "hi": "ताम्र, मेरे सबसे वफ़ादार शिकारी। तट का गाँव जला दो। आज रात।", "en": "Tamra, my most loyal hunter. Burn the shore village. Tonight.", "voice": "s_court_02"},
+        {"choice": "court", "options": [
+          {"en": "Refuse", "icon": "close", "reply": [
+            {"speaker": "tamra", "hi": "नहीं। वहाँ बच्चे सोते हैं।", "en": "No. Children sleep there.", "voice": "s_court_03a"}
+          ]},
+          {"en": "Ask why", "icon": "question", "reply": [
+            {"speaker": "tamra", "hi": "क्यों, महाराज? उन्होंने क्या बिगाड़ा है?", "en": "Why, my king? What have they done?", "voice": "s_court_03b"},
+            {"speaker": "king", "hi": "मेरी आग को उनके वन चाहिए।", "en": "My fire needs their forests.", "voice": "s_court_04b"}
+          ]},
+          {"en": "Put down the torch", "icon": "restart", "reply": [
+            {"speaker": "narrator", "hi": "तुमने मशाल ज़मीन पर रख दी।", "en": "You set the torch down on the stone.", "voice": "s_court_03c"}
+          ]}
+        ]},
+        {"speaker": "king", "hi": "तो तुम भी उन्हीं के साथ जलोगे... नहीं। उससे भी बुरा।", "en": "Then you'll burn with them... no. Something worse.", "voice": "s_court_05"},
+        {"speaker": "king", "hi": "इसकी माँ को पकड़ लाओ। उसके चिह्न मेरी आग को अमर कर देंगे।", "en": "Bring me his mother. Her signs will make my fire eternal.", "voice": "s_court_06"},
+        {"speaker": "king", "hi": "और इसे राख के गर्त में फेंक दो।", "en": "And throw him into the Ash Pits.", "voice": "s_court_07"}
+      ]
+    },
+    {
+      "stage": "pit",
+      "actors": [
+        {"id": "tamra", "style": "hero", "x": 0.5, "face": 1}
+      ],
+      "beats": [
+        {"speaker": "chant", "sa": "तमसो मा ज्योतिर्गमय।", "en": "From darkness, lead me to light.", "voice": "c1_intro_00"},
+        {"speaker": "narrator", "hi": "अँधेरा। राख। और दूर ऊपर, महल की चोटी पर, धुएँ का एक पिंजरा।", "en": "Darkness. Ash. And far above, on the palace peak, a cage of smoke.", "voice": "s_pit_01"},
+        {"speaker": "maa", "hi": "ताम्र... चिह्न बनाओ।", "en": "Tamra... draw the sign.", "voice": "s_pit_02", "echo": true},
+        {"speaker": "tamra", "hi": "माँ, मैं आ रहा हूँ।", "en": "Mother, I'm coming.", "voice": "s_pit_03"}
+      ]
+    }
   ],
+
+  "after_c1_l1": [
+    {
+      "stage": "pit",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.45, "face": 1}],
+      "beats": [
+        {"speaker": "narrator", "hi": "पहला गर्त पीछे छूटा। ऊपर, महल की आग और तेज़ जल रही है।", "en": "The first pit falls behind. Above, the palace fire burns brighter.", "voice": "s_a11_01"},
+        {"speaker": "tamra", "hi": "हर देर की रात, माँ के लिए कैद की एक और रात।", "en": "Every night I'm late is another night in her cage.", "voice": "s_a11_02"}
+      ]
+    }
+  ],
+
+  "after_c1_l2": [
+    {
+      "stage": "pit",
+      "actors": [
+        {"id": "tamra", "style": "hero", "x": 0.3, "face": 1},
+        {"id": "guard", "style": "soldier", "x": 0.68, "face": -1}
+      ],
+      "beats": [
+        {"speaker": "guard", "hi": "ताम्र? तुम ज़िंदा हो?", "en": "Tamra? You're alive?", "voice": "s_a12_01"},
+        {"choice": "spare_guard", "options": [
+          {"en": "Strike him", "icon": "trial", "reply": [
+            {"speaker": "narrator", "pose": "strike", "hi": "तुम्हारा डंडा उठता है... और रुक जाता है।", "en": "Your staff rises... and stops.", "voice": "s_a12_02a"}
+          ]},
+          {"en": "Spare him", "icon": "heart", "reply": [
+            {"speaker": "tamra", "hi": "भागो। और फिर कभी मशाल मत उठाना।", "en": "Run. And never carry a torch again.", "voice": "s_a12_02b"}
+          ]}
+        ]},
+        {"speaker": "guard", "hi": "महाराज तुम्हारी माँ को दर्पण दलदल के पार ले गए हैं।", "en": "The king took your mother beyond the Mirror Marsh.", "voice": "s_a12_03"}
+      ]
+    }
+  ],
+
+  "after_c1_l3": [
+    {
+      "stage": "pit",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.4, "face": 1}, {"id": "maa", "style": "mother", "x": 0.72, "face": -1, "ghost": true}],
+      "beats": [
+        {"speaker": "maa", "hi": "ताम्र, जल्दी करो। धुआँ मेरी साँसें छीन रहा है।", "en": "Tamra, hurry. The smoke is stealing my breath.", "voice": "s_a13_01", "echo": true},
+        {"speaker": "tamra", "hi": "बस थोड़ा और, माँ।", "en": "Just a little longer, Mother.", "voice": "s_a13_02"}
+      ]
+    }
+  ],
+
   "c2_intro": [
-    {"sa": "असतो मा सद्गमय।", "en": "From the unreal, lead me to the real.", "voice": "c2_intro_00"},
-    {"hi": "गर्त के ऊपर, धुआँ धुंध में बदल जाता है।", "en": "Above the pits, the smoke thins into mist.", "voice": "c2_intro_01"},
-    {"hi": "यह दर्पण दलदल है, जहाँ धूम्रराज के मायावी प्रकाश को मोड़ देते हैं।", "en": "This is the Mirror Marsh, where the Smoke King's sorcerers bend the light.", "voice": "c2_intro_02"},
-    {"hi": "यहाँ धरती झूठ बोलती है। जो पत्थर दिखते हैं, वे हैं ही नहीं। और जो राहें हैं, वे छिपी हैं।", "en": "Here the ground lies. Stones float that are not there. Paths hide that are.", "voice": "c2_intro_03"},
-    {"hi": "तुम्हारे रक्त में एक पुराना चिह्न जागता है: वह दृष्टि, जो माया के पार देखती है।", "en": "An old sign wakes in your blood: the eye that sees through maya.", "voice": "c2_intro_04"},
-    {"hi": "जो सचमुच न देखा हो, उस पर भरोसा मत करना।", "en": "Trust nothing you have not truly seen.", "voice": "c2_intro_05"}
+    {
+      "stage": "marsh",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.35, "face": 1}],
+      "beats": [
+        {"speaker": "chant", "sa": "असतो मा सद्गमय।", "en": "From the unreal, lead me to the real.", "voice": "c2_intro_00"},
+        {"speaker": "narrator", "hi": "गर्त के ऊपर, धुआँ धुंध में बदल जाता है।", "en": "Above the pits, the smoke thins into mist.", "voice": "c2_intro_01"},
+        {"speaker": "narrator", "hi": "यह दर्पण दलदल है, जहाँ धूम्रराज के मायावी प्रकाश को मोड़ देते हैं।", "en": "This is the Mirror Marsh, where the Smoke King's sorcerers bend the light.", "voice": "c2_intro_02"},
+        {"speaker": "narrator", "hi": "तुम्हारे रक्त में एक पुराना चिह्न जागता है: वह दृष्टि, जो माया के पार देखती है।", "en": "An old sign wakes in your blood: the eye that sees through maya.", "voice": "c2_intro_04"}
+      ]
+    }
+  ],
+
+  "after_c2_l1": [
+    {
+      "stage": "marsh",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.4, "face": 1}],
+      "beats": [
+        {"speaker": "narrator", "hi": "दलदल में, तुम्हारी अपनी परछाई तुम्हें देखती है।", "en": "In the marsh, your own reflection watches you.", "voice": "s_a21_01"},
+        {"speaker": "tamra", "hi": "माया मुझे नहीं रोक सकती।", "en": "Maya cannot stop me.", "voice": "s_a21_02"}
+      ]
+    }
+  ],
+
+  "after_c2_l2": [
+    {
+      "stage": "marsh",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.3, "face": 1}, {"id": "king", "style": "king", "x": 0.72, "face": -1, "ghost": true}],
+      "beats": [
+        {"speaker": "king", "hi": "तुम्हारी माँ के चिह्न अब मेरे हैं, ताम्र।", "en": "Your mother's signs are mine now, Tamra.", "voice": "s_a22_01", "echo": true},
+        {"choice": "answer_king", "options": [
+          {"en": "Stay silent", "icon": "close", "reply": [
+            {"speaker": "narrator", "hi": "तुम्हारी मुट्ठी कस जाती है।", "en": "Your fist tightens.", "voice": "s_a22_02a"}
+          ]},
+          {"en": "Answer him", "icon": "question", "reply": [
+            {"speaker": "tamra", "hi": "चिह्न दिल से बनते हैं। तुम्हारे पास दिल नहीं।", "en": "Signs come from the heart. You have none.", "voice": "s_a22_02b"}
+          ]}
+        ]}
+      ]
+    }
+  ],
+
+  "after_c2_l3": [
+    {
+      "stage": "walls",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.4, "face": 1}],
+      "beats": [
+        {"speaker": "narrator", "hi": "दलदल के पार, महल की दीवारें। सोने की, पर काली राख से ढकी।", "en": "Beyond the marsh, the palace walls. Gold, but buried in black ash.", "voice": "s_a23_01"}
+      ]
+    }
+  ],
+
+  "c3_intro": [
+    {
+      "stage": "walls",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.35, "face": 1}, {"id": "maa", "style": "mother", "x": 0.72, "face": -1, "ghost": true}],
+      "beats": [
+        {"speaker": "chant", "sa": "मृत्योर्मा अमृतं गमय।", "en": "From death, lead me to the deathless.", "voice": "s_c3_00"},
+        {"speaker": "narrator", "hi": "महल की दीवारें। हर पत्थर पर धूम्रराज का पहरा।", "en": "The palace walls. Every stone is guarded.", "voice": "s_c3_01"},
+        {"speaker": "maa", "hi": "ताम्र, मैं ऊपर हूँ। सबसे ऊँची मीनार में।", "en": "Tamra, I'm above. In the highest tower.", "voice": "s_c3_02", "echo": true}
+      ]
+    }
+  ],
+
+  "after_c3_l1": [
+    {
+      "stage": "walls",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.3, "face": 1}, {"id": "guard", "style": "soldier", "x": 0.7, "face": -1}],
+      "beats": [
+        {"speaker": "guard", "hi": "द्वार टूट गया! उसे रोको!", "en": "The gate is broken! Stop him!", "voice": "s_a31_01"},
+        {"speaker": "tamra", "pose": "strike", "hi": "कोई नहीं रोकेगा।", "en": "No one will.", "voice": "s_a31_02"}
+      ]
+    }
+  ],
+
+  "after_c3_l2": [
+    {
+      "stage": "tower",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.35, "face": 1}, {"id": "maa", "style": "mother", "x": 0.7, "face": -1, "ghost": true}],
+      "beats": [
+        {"speaker": "maa", "hi": "मेरी आवाज़ सुनो, ताम्र। ऊपर देखो।", "en": "Hear my voice, Tamra. Look up.", "voice": "s_a32_01", "echo": true},
+        {"speaker": "tamra", "hi": "मैं देख रहा हूँ, माँ। धुएँ की सीढ़ी।", "en": "I see it, Mother. The smoke stair.", "voice": "s_a32_02"}
+      ]
+    }
+  ],
+
+  "after_c3_l3": [
+    {
+      "stage": "tower",
+      "actors": [{"id": "tamra", "style": "hero", "x": 0.28, "face": 1}, {"id": "king", "style": "king", "x": 0.72, "face": -1}],
+      "beats": [
+        {"speaker": "king", "hi": "तुम आ गए, ताम्र। पर अब बहुत देर हो चुकी है।", "en": "You came, Tamra. But it is far too late.", "voice": "s_a33_01"},
+        {"speaker": "narrator", "hi": "धुएँ की मीनार पर, अंतिम युद्ध जल्द।", "en": "On the tower of smoke, the last battle comes soon.", "voice": "s_a33_02"}
+      ]
+    }
   ]
 }

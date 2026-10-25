@@ -324,6 +324,9 @@ func _apply_saved_volumes() -> void:
 	var game := get_node_or_null("/root/Game")
 	if game == null:
 		return
+	if game.has_method("apply_audio_settings"):
+		game.apply_audio_settings()  # knows about the music/sound mute toggles
+		return
 	var save = game.get("save")
 	if save == null:
 		return

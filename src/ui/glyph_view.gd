@@ -12,7 +12,7 @@ var custom: PackedVector2Array = PackedVector2Array():
 	set(value):
 		custom = value
 		queue_redraw()
-var color := UiKit.GOLD
+var color := UiKit.ACCENT
 var animate := false
 var line_width := 4.0
 
@@ -24,7 +24,7 @@ func show_mantra(mantra_id: String) -> void:
 	var strokes := Game.save.sign_strokes(mantra_id)
 	custom = strokes[0] if not strokes.is_empty() else PackedVector2Array()
 	glyph = str(Game.mantra_cfg.get(mantra_id, {}).get("gesture", ""))
-	color = GameConfig.color(Game.mantra_cfg.get(mantra_id, {}).get("color", ""), UiKit.GOLD)
+	color = GameConfig.color(Game.mantra_cfg.get(mantra_id, {}).get("color", ""), UiKit.ACCENT)
 
 
 func _ready() -> void:

@@ -3,15 +3,20 @@ extends RefCounted
 ## Everything the game persists. Plain data, so it is easy to test and migrate.
 ## from_dict() never trusts its input: anything missing or mistyped falls back to defaults.
 
-const VERSION := 2
+const VERSION := 3
 
 var unlocked: Array[String] = ["c1_l1"]
-var results := {}  # level_id -> {"time": float, "embers": int}
+var results := {}  # level_id -> {"time": float, "embers": int, "stars": int}
 var story_seen: Array[String] = []
 var learned: Array[String] = []  # mantra ids
-var embers_bank := 0             # spendable embers
+var jyoti := 0                   # spendable light (the in-game currency)
 var custom_signs := {}           # mantra id -> Array of strokes, each an Array of [x, y]
-var settings := {"vibration": true, "quality": "high", "music": 0.8, "sfx": 1.0}
+var upgrades := {}               # mantra id -> rank (1 = base)
+var skins_owned: Array[String] = ["classic"]
+var skin := "classic"
+var story_choices := {}          # choice id -> option index, for flavour callbacks
+var daily := {}                  # see DailyRules; plain data
+var settings := {"vibration": true, "quality": "high", "music": 0.8, "sfx": 1.0, "music_on": true, "sfx_on": true}
 
 
 func to_dict() -> Dictionary:
@@ -21,10 +26,30 @@ func to_dict() -> Dictionary:
 		"results": results,
 		"story_seen": story_seen,
 		"learned": learned,
-		"embers_bank": embers_bank,
+		"jyoti": jyoti,
 		"custom_signs": custom_signs,
+		"upgrades": upgrades,
+		"skins_owned": skins_owned,
+		"skin": skin,
+		"story_choices": story_choices,
+		"daily": daily,
 		"settings": settings,
 	}
+
+
+func stars(level_id: String) -> int:
+	return int(results.get(level_id, {}).get("stars", 0))
+
+
+func total_stars() -> int:
+	var total := 0
+	for id in results:
+		total += stars(id)
+	return total
+
+
+func rank(mantra_id: String) -> int:
+	return int(upgrades.get(mantra_id, 1))
 
 
 static func from_dict(d: Dictionary) -> SaveData:
@@ -37,10 +62,24 @@ static func from_dict(d: Dictionary) -> SaveData:
 		for id in results_in:
 			var r = results_in[id]
 			if r is Dictionary:
-				s.results[str(id)] = {"time": float(r.get("time", 0.0)), "embers": int(r.get("embers", 0))}
-	var bank = d.get("embers_bank", 0)
+				s.results[str(id)] = {"time": float(r.get("time", 0.0)), "embers": int(r.get("embers", 0)),
+					"stars": clampi(int(r.get("stars", 1)), 0, 3)}
+	# v2 called the currency "embers_bank".
+	var bank = d.get("jyoti", d.get("embers_bank", 0))
 	if bank is float or bank is int:
-		s.embers_bank = maxi(0, int(bank))
+		s.jyoti = maxi(0, int(bank))
+	var ups = d.get("upgrades", {})
+	if ups is Dictionary:
+		for id in ups:
+			if ups[id] is float or ups[id] is int:
+				s.upgrades[str(id)] = clampi(int(ups[id]), 1, 3)
+	_read_strings(d.get("skins_owned"), s.skins_owned)
+	if d.get("skin") is String and s.skins_owned.has(d["skin"]):
+		s.skin = d["skin"]
+	if d.get("story_choices") is Dictionary:
+		s.story_choices = d["story_choices"]
+	if d.get("daily") is Dictionary:
+		s.daily = d["daily"]
 	var signs_in = d.get("custom_signs", {})
 	if signs_in is Dictionary:
 		for id in signs_in:
@@ -68,19 +107,21 @@ static func _read_strings(value, into: Array[String]) -> void:
 			into.append(id)
 
 
-## Keeps the best time (lowest) and the most embers ever collected for a level.
-## Returns how many embers are new beyond the previous best; only those are banked,
-## so replaying a level cannot farm currency.
-func record_result(level_id: String, time: float, embers: int) -> int:
+## Keeps the best time (lowest), the most light ever collected and the most stars for a
+## level. Returns how many pickups are new beyond the previous best; only those are banked,
+## so replaying a level cannot farm currency (daily vows and the trial are the repeatable
+## sources).
+func record_result(level_id: String, time: float, embers: int, star_count: int = 1) -> int:
 	if not results.has(level_id):
-		results[level_id] = {"time": time, "embers": embers}
-		embers_bank += embers
+		results[level_id] = {"time": time, "embers": embers, "stars": star_count}
+		jyoti += embers
 		return embers
 	var r: Dictionary = results[level_id]
 	var gained := maxi(0, embers - int(r["embers"]))
+	r["stars"] = maxi(int(r.get("stars", 1)), star_count)
 	r["time"] = minf(float(r["time"]), time)
 	r["embers"] = maxi(int(r["embers"]), embers)
-	embers_bank += gained
+	jyoti += gained
 	return gained
 
 

@@ -26,6 +26,8 @@ func _ready() -> void:
 		show_menu()
 		if args.has("book"):
 			(_screen as MenuScreen).open_book()
+		if args.has("panel"):
+			(_screen as MenuScreen).open_panel(args["panel"])
 	if args.has("hold"):
 		Input.action_press(args["hold"])
 	if args.has("cast"):
@@ -39,49 +41,72 @@ func _ready() -> void:
 func show_menu() -> void:
 	var menu := MenuScreen.new()
 	menu.begin_pressed.connect(_on_begin)
-	menu.continue_pressed.connect(_start_level)
+	menu.continue_pressed.connect(_continue)
+	menu.level_chosen.connect(func(id: String, mod: String) -> void: _start_level(id, -1.0, mod))
 	_switch(menu)
 
 
 func _on_begin() -> void:
-	var chapters: Array = Game.game_cfg.get("chapters", [])
-	if chapters.is_empty():
-		return
-	var first: Dictionary = chapters[0]
-	_show_story(str(first.get("story", "")), str(first["levels"][0]))
+	var levels := Game.all_levels()
+	if not levels.is_empty():
+		_continue(levels[0])
+
+
+## Plays a level, preceded by its chapter's opening scene the first time.
+func _continue(id: String) -> void:
+	var story := str(Game.chapter_of(id).get("story", ""))
+	var first_of_chapter: bool = Game.chapter_of(id).get("levels", [""])[0] == id
+	if first_of_chapter and _unseen(story):
+		_play_stories([story], _start_level.bind(id, -1.0, ""))
+	else:
+		_start_level(id)
 
 
 func _show_story(story_id: String, then_level: String) -> void:
-	var story := StoryScreen.new()
-	story.setup(story_id)
 	if then_level == "":
-		story.finished.connect(show_menu)
+		_play_stories([story_id], show_menu)
 	else:
-		story.finished.connect(_start_level.bind(then_level, -1.0))
+		_play_stories([story_id], _start_level.bind(then_level, -1.0, ""))
+
+
+## Plays story scenes back to back, then calls `then`.
+func _play_stories(ids: Array, then: Callable) -> void:
+	if ids.is_empty():
+		then.call()
+		return
+	var story := StoryScreen.new()
+	story.setup(str(ids[0]))
+	story.finished.connect(_play_stories.bind(ids.slice(1), then))
 	_switch(story)
 
 
-func _start_level(id: String, start_x: float = -1.0) -> void:
+func _unseen(story_id: String) -> bool:
+	return story_id != "" and GameConfig.read("story").has(story_id) and not Game.save.story_seen.has(story_id)
+
+
+func _start_level(id: String, start_x: float = -1.0, mod: String = "") -> void:
 	var level := Level.new()
-	level.setup(id, start_x)
+	level.setup(id, start_x, mod)
 	level.completed.connect(_on_level_completed)
 	level.quit_to_menu.connect(show_menu)
-	level.restart_requested.connect(_start_level)
+	level.restart_requested.connect(func(lid: String) -> void: _start_level(lid, -1.0, mod))
 	_switch(level)
 
 
+## After a level: its short story beat (first time), the next chapter's opening if one
+## begins, then the next level.
 func _on_level_completed(id: String) -> void:
 	var nxt := Game.next_level(id)
+	var stories: Array = []
+	if _unseen("after_" + id):
+		stories.append("after_" + id)
 	if nxt == "":
-		show_menu()
+		_play_stories(stories, show_menu)
 		return
-	# Entering a new chapter: tell its story first, once.
 	var chapter := Game.chapter_of(nxt)
-	var story := str(chapter.get("story", ""))
-	if chapter != Game.chapter_of(id) and story != "" and not Game.save.story_seen.has(story):
-		_show_story(story, nxt)
-	else:
-		_start_level(nxt)
+	if chapter != Game.chapter_of(id) and _unseen(str(chapter.get("story", ""))):
+		stories.append(str(chapter["story"]))
+	_play_stories(stories, _start_level.bind(nxt, -1.0, ""))
 
 
 func _switch(node: Node) -> void:

@@ -30,7 +30,7 @@ func _ready() -> void:
 	add_child(_pad)
 	_trail = Line2D.new()
 	_trail.width = 12.0
-	_trail.default_color = Color(1.0, 0.78, 0.4)
+	_trail.default_color = Color(0.75, 1.0, 0.92)
 	_trail.material = Fx.additive()
 	_trail.joint_mode = Line2D.LINE_JOINT_ROUND
 	_trail.begin_cap_mode = Line2D.LINE_CAP_ROUND
@@ -152,7 +152,7 @@ class PadView extends Control:
 			var r: float = TouchControls.RADIUS[role]
 			var center: Vector2 = c[role]
 			draw_circle(center, r, Color(0.05, 0.02, 0.03, 0.42 if pressed else 0.26))
-			draw_arc(center, r, 0.0, TAU, 48, Color(UiKit.GOLD, 0.75 if pressed else 0.35), 2.5, true)
+			draw_arc(center, r, 0.0, TAU, 48, Color(UiKit.ACCENT, 0.75 if pressed else 0.35), 2.5, true)
 			var ink := Color(UiKit.TEXT, 0.9 if pressed else 0.55)
 			var s := r * 0.32
 			match role:

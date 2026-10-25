@@ -1,22 +1,24 @@
 {
   "setu": {
     "gesture": "line",
+    "prana": 25,
     "label": "SETU",
     "meaning": "bridge",
-    "description": "Draw a line where you want a bridge of light. Its length and slope follow your finger, so it can also be a ramp. It catches you if you fall onto it.",
+    "description": "Draw a bridge where you need one.",
     "unlock": {"level": "c1_l1"},
     "cooldown": 2.5,
     "duration": 5.0,
     "max_length": 540,
     "min_length": 80,
     "reach": 700,
-    "color": "#ffc35a"
+    "color": "#c8fff0"
   },
   "chhaya": {
     "gesture": "v",
+    "prana": 30,
     "label": "CHHAYA",
     "meaning": "shadow",
-    "description": "Draw a V. Your shadow-double runs ahead. Guards chase it, and striking it leaves them dazed.",
+    "description": "A shadow-double that fools guards.",
     "unlock": {"level": "c1_l1"},
     "cooldown": 6.0,
     "duration": 4.0,
@@ -25,9 +27,10 @@
   },
   "jwala": {
     "gesture": "bolt",
+    "prana": 20,
     "label": "JWALA",
     "meaning": "flame",
-    "description": "Draw a lightning bolt to hurl fire. Burns smoke-thorns and fells a guard in one hit.",
+    "description": "Fire. Burns thorns and guards.",
     "unlock": {"level": "c1_l1"},
     "cooldown": 1.4,
     "speed": 950,
@@ -37,41 +40,45 @@
   },
   "udaan": {
     "gesture": "line_up",
+    "prana": 20,
     "label": "UDAAN",
     "meaning": "flight",
-    "description": "Draw a line straight up to leap high, even in mid-air. Jump first, then cast at the top to reach the highest ledges.",
+    "description": "Leap high, even in mid-air.",
     "unlock": {"level": "c1_l2"},
     "cooldown": 2.0,
     "lift": 1050,
-    "color": "#ffe08a"
+    "color": "#d6c8ff"
   },
   "kavach": {
     "gesture": "circle",
+    "prana": 35,
     "label": "KAVACH",
     "meaning": "armour",
-    "description": "Draw a circle to raise a shield. Spears glance off it and the attacker is dazed.",
-    "unlock": {"cost": 10, "after": "c1_l1"},
+    "description": "A shield against spears and bolts.",
+    "unlock": {"cost": 60, "after": "c1_l1"},
     "cooldown": 8.0,
     "duration": 3.0,
-    "color": "#ffe9a8"
+    "color": "#fff4c8"
   },
   "tarang": {
     "gesture": "caret",
+    "prana": 30,
     "label": "TARANG",
     "meaning": "wave",
-    "description": "Draw a peak (^) to send out a shockwave. It hurls guards back and shatters cracked stone, which often hides secrets.",
-    "unlock": {"cost": 15, "after": "c1_l2"},
+    "description": "A shockwave. Breaks cracked stone.",
+    "unlock": {"cost": 90, "after": "c1_l2"},
     "cooldown": 5.0,
     "radius": 260,
     "force": 620,
-    "color": "#ffb08a"
+    "color": "#ff8ab4"
   },
   "bandhan": {
     "gesture": "square",
+    "prana": 40,
     "label": "BANDHAN",
     "meaning": "binding",
-    "description": "Draw a square to bind every guard near you in roots of light. They cannot move or strike for a while.",
-    "unlock": {"cost": 20, "after": "c1_l2"},
+    "description": "Roots nearby guards in place.",
+    "unlock": {"cost": 120, "after": "c1_l2"},
     "cooldown": 9.0,
     "duration": 3.5,
     "radius": 300,
@@ -79,9 +86,10 @@
   },
   "drishti": {
     "gesture": "triangle",
+    "prana": 25,
     "label": "DRISHTI",
     "meaning": "sight",
-    "description": "Draw a triangle to see through maya: false stones fade and hidden paths appear for a few seconds.",
+    "description": "See through maya.",
     "unlock": {"level": "c2_l1"},
     "cooldown": 6.0,
     "duration": 5.0,

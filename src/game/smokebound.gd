@@ -27,6 +27,12 @@ var max_hp := 3
 var hp := 3
 var dir := -1
 var puppet: Puppet
+## "soldier" patrols and thrusts; "archer" holds position and looses smoke bolts.
+var kind := "soldier"
+var fire_interval := 2.6
+var drop_prana := 20.0
+
+var _fire_t := 1.2
 
 var _state := State.PATROL
 var _t := 0.0
@@ -52,8 +58,12 @@ func _ready() -> void:
 	var aura := Fx.glow(Color(0.9, 0.15, 0.1, 0.2), 95.0)
 	aura.position = Vector2(0, -60)
 	add_child(aura)
+	hp = max_hp
 	puppet = Puppet.new()
-	puppet.build("soldier")
+	if kind == "archer":
+		puppet.build("soldier", {"cloth": Color(0.3, 0.14, 0.36), "sash": Color(0.5, 0.2, 0.8), "metal": Color(0.42, 0.38, 0.46)})
+	else:
+		puppet.build("soldier")
 	add_child(puppet)
 	_glint = Fx.glow(Color(1.0, 0.95, 0.75), 26.0)
 	_glint.visible = false
@@ -94,9 +104,11 @@ func _physics_process(delta: float) -> void:
 	var vx := 0.0
 	match _state:
 		State.PATROL, State.CHASE:
-			vx = _move_or_engage()
+			vx = _archer_aim(delta) if kind == "archer" else _move_or_engage()
 		State.WINDUP:
-			if _t <= 0.0:
+			if _t <= 0.0 and kind == "archer":
+				_loose_bolt()
+			elif _t <= 0.0:
 				_enter(State.THRUST, THRUST_TIME)
 				puppet.thrust()
 				_glint.visible = false
@@ -129,6 +141,40 @@ func _process(delta: float) -> void:
 	if _glint.visible:
 		_glint.position = to_local(puppet.weapon_tip.global_position)
 		_glint.scale = Vector2.ONE * (0.6 + 0.3 * sin(Time.get_ticks_msec() * 0.03))
+
+
+## Archers never walk: they turn to the hero in range and, every few seconds, draw
+## (glint, half a second of warning) and loose a bolt.
+func _archer_aim(delta: float) -> float:
+	var p := level.player
+	if p == null or not p.alive or p.global_position.distance_to(global_position) > 650.0:
+		_fire_t = maxf(_fire_t, 0.8)
+		return 0.0
+	dir = 1 if p.global_position.x > global_position.x else -1
+	if not _alerted:
+		_alerted = true
+		Sfx.play("enemy_alert", global_position)
+	_fire_t -= delta
+	if _fire_t <= 0.0:
+		_fire_t = fire_interval
+		_enter(State.WINDUP, 0.5)
+		puppet.windup()
+		_glint.visible = true
+		Sfx.play("enemy_windup", global_position)
+	return 0.0
+
+
+func _loose_bolt() -> void:
+	_glint.visible = false
+	puppet.thrust()
+	var bolt := SmokeBolt.new()
+	var from := puppet.weapon_tip.global_position
+	bolt.position = from
+	var target := level.player.global_position + Vector2(0, -50)
+	bolt.dir = (target - from).normalized()
+	get_parent().add_child(bolt)
+	Sfx.play("enemy_attack", global_position, -3.0, 1.3)
+	_enter(State.RECOVER, 0.4)
 
 
 func _move_or_engage() -> float:
@@ -264,6 +310,12 @@ func _die(cause: String) -> void:
 	_pips.visible = false
 	_roots.visible = false
 	died.emit(global_position, cause)
+	Game.track("fire_kills" if cause == "fire" else "strike_kills")
+	if drop_prana > 0.0:
+		var orb := PranaOrb.new()
+		orb.amount = drop_prana
+		orb.position = global_position + Vector2(0, -60)
+		get_parent().call_deferred("add_child", orb)
 	if cause == "fire":
 		Sfx.play("enemy_burn", global_position)
 		Fx.burst(get_parent(), global_position + Vector2(0, -55), Color(1.0, 0.5, 0.15), 48, 320.0)

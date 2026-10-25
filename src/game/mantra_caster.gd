@@ -20,7 +20,7 @@ func _process(delta: float) -> void:
 
 ## 0 = ready, 1 = just cast.
 func cooldown_ratio(id: String) -> float:
-	var total := float(cfg.get(id, {}).get("cooldown", 1.0))
+	var total := grimoire.cooldown(id) if grimoire != null else float(cfg.get(id, {}).get("cooldown", 1.0))
 	return clampf(float(_cooldowns.get(id, 0.0)) / maxf(total, 0.01), 0.0, 1.0)
 
 
@@ -43,12 +43,20 @@ func try_gesture(result: Dictionary) -> void:
 	if float(_cooldowns.get(id, 0.0)) > 0.0:
 		failed.emit("cooldown", id)
 		return
+	var cost := float(grimoire.prana_cost(id))
+	if not level.player.spend_prana(cost):
+		failed.emit("prana", id)
+		return
 	var problem := _execute(id, cfg[id], result)
 	if problem != "":
+		level.player.add_prana(cost)  # nothing happened, so nothing is spent
 		failed.emit(problem, id)
 		return
-	_cooldowns[id] = float(cfg[id].get("cooldown", 1.0))
+	_cooldowns[id] = grimoire.cooldown(id)
 	cast.emit(id)
+	Game.track("casts")
+	if id == "setu" or id == "udaan":
+		Game.track(id)
 	Sfx.play("cast_" + id, level.player.global_position)
 	Sfx.play("call_" + id)  # the hero speaks the mantra's name
 	Services.analytics.log_event("mantra_cast", {"id": id, "level": level.level_id})

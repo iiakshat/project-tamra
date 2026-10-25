@@ -29,14 +29,17 @@ var _done := false
 var _reveal_time := 0.0
 var _start_x := -1.0
 var _rng := RandomNumberGenerator.new()
+## Daily trial twist: "frail" (one lamp), "thin_prana" (half prana), "fierce" guards.
+var trial_mod := ""
 var _perf_timer := 0.0
 var _min_fps := 1000.0
 
 
 ## start_x >= 0 drops the hero at that x instead of the spawn (debug and testing).
-func setup(id: String, start_x: float = -1.0) -> void:
+func setup(id: String, start_x: float = -1.0, mod: String = "") -> void:
 	level_id = id
 	_start_x = start_x
+	trial_mod = mod
 
 
 func _ready() -> void:
@@ -63,7 +66,9 @@ func _ready() -> void:
 
 	player = Player.new()
 	player.level = self
-	player.setup(Game.player_cfg, int(Game.game_cfg.get("max_hearts", 3)))
+	var hearts := 1 if trial_mod == "frail" else int(Game.game_cfg.get("max_hearts", 3))
+	var prana_max := float(Game.player_cfg.get("prana_max", 100.0)) * (0.5 if trial_mod == "thin_prana" else 1.0)
+	player.setup(Game.player_cfg, hearts, prana_max)
 	_checkpoint = GameConfig.vec(data.get("spawn"), Vector2(100, 600))
 	player.position = _checkpoint if _start_x < 0.0 else Vector2(_start_x, 200)
 	world.add_child(player)
@@ -79,7 +84,7 @@ func _ready() -> void:
 	camera.limit_bottom = int(data.get("camera_bottom", 780))
 	player.add_child(camera)
 	camera.make_current()
-	camera.add_child(Fx.embers(Vector2(760, 420), 46))
+	camera.add_child(Fx.embers(Vector2(760, 420), 46, Fx.palette(palette).get("spark", Color.WHITE)))
 
 	var front := Backdrop.new()
 	add_child(front)
@@ -97,7 +102,11 @@ func _ready() -> void:
 	hud.setup(caster, Game.mantra_cfg)
 	hud.set_hearts(player.hearts, player.max_hearts)
 	hud.set_embers(0, _embers_total)
+	hud.set_prana(player.prana, player.max_prana)
+	if trial_mod != "":
+		hud.show_trial(trial_mod)
 	player.hearts_changed.connect(hud.set_hearts)
+	player.prana_changed.connect(hud.set_prana)
 	caster.cast.connect(hud.on_cast)
 	caster.failed.connect(hud.on_cast_failed)
 	hud.pause_pressed.connect(toggle_pause)
@@ -282,6 +291,7 @@ func _on_enemy_died(at: Vector2, cause: String) -> void:
 func _on_ember() -> void:
 	_embers += 1
 	hud.set_embers(_embers, _embers_total)
+	Game.track("jyoti")
 
 
 func _on_goal() -> void:
@@ -291,14 +301,12 @@ func _on_goal() -> void:
 	player.controls_enabled = false
 	touch.release_all()
 	Engine.time_scale = 1.0
-	var outcome := Game.complete_level(level_id, _time, _embers)
+	var outcome := Game.complete_level(level_id, _time, _embers, _embers_total, _deaths, trial_mod)
 	Services.analytics.log_event("level_complete", {"level": level_id, "time": int(_time), "deaths": _deaths,
-		"embers": _embers, "banked": outcome["banked"]})
+		"embers": _embers, "banked": outcome["banked"], "stars": outcome["stars"], "trial": trial_mod})
 	await get_tree().create_timer(0.9, false).timeout
 	if is_inside_tree():
-		var buyable: Array[String] = outcome["buyable"]
-		hud.show_results(str(data.get("name", level_id)), _time, _embers, _embers_total, Game.next_level(level_id) != "",
-			int(outcome["banked"]), buyable)
+		hud.show_results(outcome, _time, _embers, _embers_total, _deaths, Game.next_level(level_id) != "" and trial_mod == "")
 
 
 func _build_geometry(size: Vector2, rim: Color) -> void:
@@ -373,12 +381,43 @@ func _build_entities() -> void:
 		zone.shown.connect(func(text: String, glyph: String) -> void: hud.show_prompt(text, glyph))
 		zone.hidden_again.connect(func() -> void: hud.hide_prompt())
 		world.add_child(zone)
+	for o in data.get("orbs", []):
+		var orb := PranaOrb.new()
+		orb.position = GameConfig.vec(o)
+		world.add_child(orb)
+	for sp in data.get("spikes", []):
+		world.add_child(Hazards.spikes(float(sp[0]), float(sp[1]), float(sp[2])))
+	for j in data.get("jets", []):
+		world.add_child(Hazards.jet(float(j.get("x", 0)), float(j.get("y", 600)), float(j.get("interval", 3.0)),
+			float(j.get("on", 1.2)), float(j.get("offset", 0.0))))
+	for m in data.get("moving", []):
+		var mp := MovingPlatform.new()
+		mp.position = Vector2(float(m.get("x", 0)), float(m.get("y", 0)))
+		mp.size = Vector2(float(m.get("w", 150)), 26)
+		mp.travel = Vector2(float(m.get("dx", 0)), float(m.get("dy", 0)))
+		mp.period = float(m.get("period", 3.0))
+		world.add_child(mp)
+	for c in data.get("crumble", []):
+		var cp := MovingPlatform.new()
+		cp.crumble = true
+		cp.position = Vector2(float(c[0]), float(c[1]))
+		cp.size = Vector2(float(c[2]), 26)
+		world.add_child(cp)
 	for e in data.get("enemies", []):
 		var s := Smokebound.new()
 		s.level = self
+		s.kind = str(e.get("type", "soldier"))
+		s.max_hp = int(e.get("hp", 2 if s.kind == "archer" else 3))
 		s.position = Vector2(float(e.get("x", 0)), float(e.get("y", 600)))
 		s.patrol_min = float(e.get("min", s.position.x - 200))
 		s.patrol_max = float(e.get("max", s.position.x + 200))
+		if s.kind == "archer":
+			s.patrol_min = s.position.x
+			s.patrol_max = s.position.x
+		if trial_mod == "fierce":
+			s.max_hp += 1
+			s.chase_speed *= 1.25
+			s.fire_interval *= 0.8
 		s.died.connect(_on_enemy_died)
 		world.add_child(s)
 	if data.has("goal"):

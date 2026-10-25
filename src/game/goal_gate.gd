@@ -17,15 +17,15 @@ func _ready() -> void:
 	shape.position = Vector2(0, -85)
 	add_child(shape)
 
-	var inner := Fx.glow(Color(1.0, 0.55, 0.2, 0.9), 120.0)
+	var inner := Fx.glow(Color(0.7, 0.62, 1.0, 0.9), 120.0)
 	inner.position = Vector2(0, -90)
 	inner.z_index = -1
 	add_child(inner)
-	add_child(Fx.glow(Color(1.0, 0.85, 0.55, 0.6), 40.0))
+	add_child(Fx.glow(Color(0.95, 0.9, 1.0, 0.6), 40.0))
 	for side in [-1.0, 1.0]:
 		var pillar := PackedVector2Array([Vector2(side * 52, 0), Vector2(side * 70, 0), Vector2(side * 66, -150), Vector2(side * 50, -150)])
 		add_child(Fx.polygon(pillar, Fx.INK))
-		add_child(Fx.outline(pillar, Color(1.0, 0.6, 0.3, 0.55), 1.5))
+		add_child(Fx.outline(pillar, Color(0.75, 0.68, 1.0, 0.55), 1.5))
 	var arch := Line2D.new()
 	var pts := PackedVector2Array()
 	for i in 17:
@@ -53,7 +53,7 @@ func _ready() -> void:
 	sparks.initial_velocity_max = 50.0
 	sparks.scale_amount_min = 0.06
 	sparks.scale_amount_max = 0.16
-	sparks.color = Color(1.0, 0.7, 0.3)
+	sparks.color = Color(0.85, 0.8, 1.0)
 	sparks.color_ramp = Fx.fade_ramp()
 	add_child(sparks)
 	body_entered.connect(_on_body_entered)
@@ -63,6 +63,6 @@ func _on_body_entered(body: Node) -> void:
 	if _done or not body is Player:
 		return
 	_done = true
-	Fx.burst(get_parent(), global_position + Vector2(0, -90), Color(1.0, 0.75, 0.35), 60, 360.0, true, 1.0)
+	Fx.burst(get_parent(), global_position + Vector2(0, -90), Color(0.9, 0.85, 1.0), 60, 360.0, true, 1.0)
 	Sfx.play("goal", global_position)
 	reached.emit()

@@ -3,9 +3,42 @@
   "model": "gemini-2.5-flash-preview-tts",
   "_style_note": "gemini-3.8-flash-tts reads any style prefix aloud and rejects system instructions; 2.5-flash-preview-tts treats a short 'Say ...:' prefix as direction. Verify every take with tools/tts_check.ps1.",
   "voices": {
-    "narrator": {"voice": "Charon", "style": "Narrate slowly in a deep, warm storyteller's voice:"},
-    "chant": {"voice": "Charon", "style": "Chant slowly and reverently:"},
-    "hero": {"voice": "Orus", "style": "Say firmly and powerfully, like a warrior casting a spell:"}
+    "narrator": {
+      "voice": "Charon",
+      "style": "Narrate slowly in a deep, warm storyteller's voice:"
+    },
+    "chant": {
+      "voice": "Charon",
+      "style": "Chant slowly and reverently:"
+    },
+    "hero": {
+      "voice": "Orus",
+      "style": "Say firmly and powerfully, like a warrior casting a spell:"
+    },
+    "tamra": {
+      "voice": "Orus",
+      "style": "Say with quiet determination, like a young warrior:"
+    },
+    "maa": {
+      "voice": "Kore",
+      "style": "Say gently and warmly, like a loving mother:"
+    },
+    "maa_echo": {
+      "voice": "Kore",
+      "style": "Whisper softly, as if from far away:"
+    },
+    "king": {
+      "voice": "Algenib",
+      "style": "Say coldly and menacingly, like a cruel king:"
+    },
+    "guard": {
+      "voice": "Fenrir",
+      "style": "Say gruffly and nervously:"
+    },
+    "king_echo": {
+      "voice": "Algenib",
+      "style": "Whisper coldly, as if from far away:"
+    }
   },
   "calls": {
     "call_setu": "सेतु!",

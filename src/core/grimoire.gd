@@ -10,6 +10,34 @@ const SIGN_CONSISTENCY := 0.68
 
 var cfg: Dictionary
 var save: SaveData
+var shop: Dictionary = {}  # config/shop.json: upgrade prices and multipliers
+
+
+## Prana a cast costs at the player's current rank.
+func prana_cost(id: String) -> int:
+	var mult: Array = shop.get("upgrade_cost_mult", [1.0, 1.0, 1.0])
+	return int(round(float(cfg.get(id, {}).get("prana", 0)) * float(mult[save.rank(id) - 1])))
+
+
+func cooldown(id: String) -> float:
+	var mult: Array = shop.get("upgrade_cooldown_mult", [1.0, 1.0, 1.0])
+	return float(cfg.get(id, {}).get("cooldown", 1.0)) * float(mult[save.rank(id) - 1])
+
+
+## Jyoti for the next rank, or -1 at max rank.
+func upgrade_cost(id: String) -> int:
+	var costs: Array = shop.get("upgrade_costs", [0, 40, 100])
+	var r := save.rank(id)
+	return int(costs[r]) if r < costs.size() else -1
+
+
+func upgrade(id: String) -> bool:
+	var cost := upgrade_cost(id)
+	if not is_learned(id) or cost < 0 or save.jyoti < cost:
+		return false
+	save.jyoti -= cost
+	save.upgrades[id] = save.rank(id) + 1
+	return true
 
 
 func _init(mantras: Dictionary, data: SaveData) -> void:
@@ -50,14 +78,14 @@ func state(id: String) -> Dictionary:
 
 
 func can_afford(id: String) -> bool:
-	return save.embers_bank >= int(state(id)["cost"])
+	return save.jyoti >= int(state(id)["cost"])
 
 
 func buy(id: String) -> bool:
 	var s := state(id)
-	if s["state"] != "buyable" or save.embers_bank < int(s["cost"]):
+	if s["state"] != "buyable" or save.jyoti < int(s["cost"]):
 		return false
-	save.embers_bank -= int(s["cost"])
+	save.jyoti -= int(s["cost"])
 	learn(id)
 	return true
 

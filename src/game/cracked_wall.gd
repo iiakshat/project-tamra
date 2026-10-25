@@ -41,10 +41,10 @@ func _ready() -> void:
 			y -= rng.randf_range(-14, 14)
 		crack.points = pts
 		crack.width = 2.0
-		crack.default_color = Color(1.0, 0.55, 0.2, 0.9)
+		crack.default_color = Color(0.95, 0.35, 0.6, 0.9)
 		crack.material = Fx.additive()
 		add_child(crack)
-	var hint := Fx.glow(Color(1.0, 0.5, 0.2, 0.25), 60.0)
+	var hint := Fx.glow(Color(0.95, 0.35, 0.6, 0.25), 60.0)
 	hint.position = Vector2(0, -height / 2.0)
 	add_child(hint)
 
@@ -57,7 +57,7 @@ func shatter() -> void:
 	collision_layer = 0
 	for i in 5:
 		Fx.burst(get_parent(), global_position + Vector2(0, -height * (0.1 + 0.2 * i)), Color(0.3, 0.2, 0.18, 0.9), 14, 260.0, false, 0.9)
-	Fx.burst(get_parent(), global_position + Vector2(0, -height / 2.0), Color(1.0, 0.6, 0.25), 30, 300.0)
+	Fx.burst(get_parent(), global_position + Vector2(0, -height / 2.0), Color(0.95, 0.5, 0.75), 30, 300.0)
 	Sfx.play("land_heavy", global_position, 4.0, 0.7)
 	var t := create_tween()
 	t.tween_property(self, "modulate:a", 0.0, 0.35)

@@ -5,6 +5,7 @@ extends CharacterBody2D
 
 signal died(cause: String)
 signal hearts_changed(hearts: int, max_hearts: int)
+signal prana_changed(prana: float, max_prana: float)
 
 const SIZE := Vector2(30, 88)
 const STRIKE_COOLDOWN := 0.42
@@ -33,11 +34,38 @@ var _strike_t := -1.0
 var _strike_cool := 0.0
 var _struck: Array[Node] = []
 
+## Prana: the energy every mantra spends. Regenerates after a short rest from casting.
+var max_prana := 100.0
+var prana := 100.0
+var _since_cast := 99.0
+var _run_time := 0.0
+var _idle_time := 0.0
+var _pant_left := 0
+var _pant_timer := 0.0
+var _screamed := false
+var _breathing := false
 
-func setup(config: Dictionary, hearts_max: int) -> void:
+
+func setup(config: Dictionary, hearts_max: int, prana_max: float = -1.0) -> void:
 	cfg = config
 	max_hearts = hearts_max
 	hearts = hearts_max
+	max_prana = prana_max if prana_max > 0.0 else float(config.get("prana_max", 100.0))
+	prana = max_prana
+
+
+func spend_prana(cost: float) -> bool:
+	if prana < cost:
+		return false
+	prana -= cost
+	_since_cast = 0.0
+	prana_changed.emit(prana, max_prana)
+	return true
+
+
+func add_prana(amount: float) -> void:
+	prana = minf(max_prana, prana + amount)
+	prana_changed.emit(prana, max_prana)
 
 
 func _ready() -> void:
@@ -51,11 +79,11 @@ func _ready() -> void:
 	shape.position = Vector2(0, -SIZE.y / 2.0)
 	add_child(shape)
 	# Warm backlight: the leather puppet glows like a lamp is behind the screen.
-	var aura := Fx.glow(Color(1.0, 0.55, 0.25, 0.3), 100.0)
+	var aura := Fx.glow(Color(0.72, 0.68, 1.0, 0.28), 100.0)
 	aura.position = Vector2(0, -55)
 	add_child(aura)
 	puppet = Puppet.new()
-	puppet.build("hero")
+	puppet.build("hero", Game.skin_palette())
 	add_child(puppet)
 	_shield = _make_shield()
 	add_child(_shield)
@@ -98,6 +126,7 @@ func _physics_process(delta: float) -> void:
 		_coyote = 0.0
 		puppet.jumped()
 		Sfx.play("jump", global_position)
+		Sfx.play("vo_jump", global_position)
 		Fx.burst(get_parent(), global_position, Color(0.5, 0.4, 0.35, 0.6), 10, 90.0, false, 0.4)
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= _num("jump_cut", 0.45)
@@ -128,6 +157,55 @@ func _after_move(delta: float) -> void:
 	shield_time = maxf(0.0, shield_time - delta)
 	_strike_cool = maxf(0.0, _strike_cool - delta)
 	_update_strike(delta)
+	_update_prana(delta)
+	_update_breath(delta, on_floor)
+	if on_floor:
+		_screamed = false
+	elif not _screamed and velocity.y > 650.0 and not _ground_below(900.0):
+		_screamed = true
+		Sfx.play("vo_fall", global_position)
+
+
+func _update_prana(delta: float) -> void:
+	_since_cast += delta
+	if prana < max_prana and _since_cast >= _num("prana_regen_delay", 1.5):
+		add_prana(_num("prana_regen", 3.0) * delta)
+
+
+## After a long run he stops, bends over and catches his breath; standing still he
+## breathes softly. Small, but it makes the puppet feel alive.
+func _update_breath(delta: float, on_floor: bool) -> void:
+	var speed := absf(velocity.x)
+	if on_floor and speed > 200.0:
+		_run_time += delta
+		_idle_time = 0.0
+	elif on_floor and speed < 20.0:
+		if _run_time >= _num("run_tired_after", 4.0) and _pant_left == 0:
+			_pant_left = 3
+			_pant_timer = 0.0
+			puppet.pant(2.8)
+		_run_time = 0.0
+		_idle_time += delta
+	else:
+		_idle_time = 0.0
+	if _pant_left > 0:
+		_pant_timer -= delta
+		if _pant_timer <= 0.0:
+			_pant_left -= 1
+			_pant_timer = 0.9
+			Sfx.play("vo_pant", global_position)
+		if speed > 60.0:
+			_pant_left = 0
+			puppet.relax()
+	var breathe := _idle_time > 1.5 and _pant_left == 0 and alive
+	if breathe != _breathing:
+		_breathing = breathe
+		Sfx.loop("breath_idle", breathe)
+
+
+func _ground_below(depth: float) -> bool:
+	var query := PhysicsRayQueryParameters2D.create(global_position, global_position + Vector2(0, depth), 1)
+	return not get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
 
 func _process(delta: float) -> void:
@@ -165,6 +243,10 @@ func _update_strike(delta: float) -> void:
 	if _strike_t < STRIKE_WINDOW.x or level == null:
 		return
 	var reach := Rect2(global_position + Vector2(-10.0 if facing > 0 else -STRIKE_REACH, -100.0), Vector2(STRIKE_REACH + 10.0, 95.0))
+	for b in get_tree().get_nodes_in_group("bolts"):
+		if reach.has_point(b.global_position):
+			b.pop()
+			Sfx.play("strike_hit", b.global_position, -4.0, 1.3)
 	for e in level.enemies():
 		if _struck.has(e) or not e.is_alive():
 			continue
@@ -196,6 +278,7 @@ func take_hit(from_x: float) -> void:
 	velocity = Vector2(away * 380.0, -420.0)
 	puppet.hit(away)
 	Sfx.play("hurt", global_position)
+	Sfx.play("vo_hurt", global_position)
 	Services.analytics.log_event("player_hit", {"x": int(global_position.x), "hearts": hearts,
 		"level": level.level_id if level != null else ""})
 	Game.vibrate(70)
@@ -208,12 +291,16 @@ func die(cause: String) -> void:
 		return
 	alive = false
 	velocity = Vector2.ZERO
-	Fx.burst(get_parent(), global_position + Vector2(0, -45), Color(1.0, 0.45, 0.2), 30, 240.0)
+	Fx.burst(get_parent(), global_position + Vector2(0, -45), Color(0.95, 0.4, 0.6), 30, 240.0)
 	if cause != "fall":
 		puppet.shatter(get_parent(), global_position.y)
 	else:
 		puppet.visible = false
 	Sfx.play("death", global_position)
+	if cause != "fall":
+		Sfx.play("vo_death", global_position)
+	Sfx.loop("breath_idle", false)
+	_breathing = false
 	Game.vibrate(120)
 	died.emit(cause)
 
@@ -227,6 +314,8 @@ func respawn(at: Vector2) -> void:
 	_invulnerable = 1.0
 	_strike_t = -1.0
 	puppet.restore()
+	prana = max_prana
+	prana_changed.emit(prana, max_prana)
 	hearts_changed.emit(hearts, max_hearts)
 	Sfx.play("respawn", global_position)
 

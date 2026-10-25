@@ -1,13 +1,19 @@
 extends Node
-## Game-wide state: configs, save data, progression and the mantra rules.
+## Game-wide state: configs, save data, progression, mantra rules, daily rewards,
+## the shop and settings.
 
 signal mantras_changed
+signal jyoti_changed(total: int)
+signal vow_completed(vow: Dictionary)
+signal settings_changed
 
 var game_cfg: Dictionary
 var player_cfg: Dictionary
 var mantra_cfg: Dictionary
+var shop_cfg: Dictionary
 var save: SaveData
 var grimoire: Grimoire
+var daily: DailyRules
 
 var _store: SaveStore
 
@@ -17,11 +23,21 @@ func _ready() -> void:
 	game_cfg = GameConfig.read("game")
 	player_cfg = GameConfig.read("player")
 	mantra_cfg = GameConfig.read("mantras")
+	shop_cfg = GameConfig.read("shop")
 	_store = SaveStore.new(Services.storage)
 	save = _store.load_data()
 	grimoire = Grimoire.new(mantra_cfg, save)
+	grimoire.shop = shop_cfg
+	daily = DailyRules.new(save)
+	daily.refresh(today())
 	Services.analytics.log_event("session_start", {"version": str(ProjectSettings.get_setting("application/config/version", "")),
-		"learned": save.learned.size(), "bank": save.embers_bank})
+		"learned": save.learned.size(), "jyoti": save.jyoti, "stars": save.total_stars()})
+	apply_audio_settings.call_deferred()
+
+
+## Local calendar date, "YYYY-MM-DD". Daily rewards roll over at local midnight.
+func today() -> String:
+	return Time.get_date_string_from_system()
 
 
 func persist() -> void:
@@ -71,6 +87,18 @@ func has_progress() -> bool:
 	return not save.results.is_empty()
 
 
+func cleared_levels() -> Array:
+	return all_levels().filter(func(id: String) -> bool: return save.results.has(id))
+
+
+func add_jyoti(amount: int) -> void:
+	if amount == 0:
+		return
+	save.jyoti += amount
+	persist()
+	jyoti_changed.emit(save.jyoti)
+
+
 ## Learns the mantras a level teaches. Returns the ones that are new.
 func learn_from_level(level_id: String) -> Array[String]:
 	var fresh: Array[String] = []
@@ -89,7 +117,18 @@ func buy_mantra(id: String) -> bool:
 		return false
 	persist()
 	mantras_changed.emit()
-	Services.analytics.log_event("mantra_learned", {"ids": [id], "how": "embers", "bank": save.embers_bank})
+	jyoti_changed.emit(save.jyoti)
+	Services.analytics.log_event("mantra_learned", {"ids": [id], "how": "jyoti", "jyoti": save.jyoti})
+	return true
+
+
+func upgrade_mantra(id: String) -> bool:
+	if not grimoire.upgrade(id):
+		return false
+	persist()
+	mantras_changed.emit()
+	jyoti_changed.emit(save.jyoti)
+	Services.analytics.log_event("mantra_upgraded", {"id": id, "rank": save.rank(id)})
 	return true
 
 
@@ -106,14 +145,105 @@ func clear_custom_sign(id: String) -> void:
 	mantras_changed.emit()
 
 
-## Records the run. Returns {"banked": int, "buyable": Array[String]} for the results screen.
-func complete_level(id: String, time: float, embers: int) -> Dictionary:
-	var banked := save.record_result(id, time, embers)
+# --- shop -------------------------------------------------------------------------
+
+func skin_palette(id: String = "") -> Dictionary:
+	var key := id if id != "" else save.skin
+	var raw: Dictionary = shop_cfg.get("skins", {}).get(key, {}).get("palette", {})
+	var out := {}
+	for k in raw:
+		out[k] = GameConfig.color(raw[k])
+	return out
+
+
+func buy_skin(id: String) -> bool:
+	var item: Dictionary = shop_cfg.get("skins", {}).get(id, {})
+	if item.is_empty() or bool(item.get("premium", false)) or save.skins_owned.has(id) or save.jyoti < int(item.get("cost", 0)):
+		return false
+	save.jyoti -= int(item.get("cost", 0))
+	save.skins_owned.append(id)
+	save.skin = id
+	persist()
+	jyoti_changed.emit(save.jyoti)
+	Services.analytics.log_event("skin_bought", {"id": id})
+	return true
+
+
+func equip_skin(id: String) -> void:
+	if save.skins_owned.has(id):
+		save.skin = id
+		persist()
+
+
+# --- daily ------------------------------------------------------------------------
+
+## Counts toward today's vows; announces any vow it completes.
+func track(event: String, amount: int = 1) -> void:
+	daily.refresh(today())
+	for v in daily.track(event, amount):
+		vow_completed.emit(v)
+		Services.analytics.log_event("vow_done", {"id": v["id"]})
+
+
+func claim_blessing() -> int:
+	var reward := daily.claim_blessing(today())
+	if reward > 0:
+		persist()
+		jyoti_changed.emit(save.jyoti)
+		Services.analytics.log_event("blessing_claimed", {"reward": reward, "step": daily.blessing_step()})
+	return reward
+
+
+func claim_vows() -> int:
+	var reward := daily.claim_vows()
+	if reward > 0:
+		persist()
+		jyoti_changed.emit(save.jyoti)
+	return reward
+
+
+## Something waiting to be collected on the title screen: drives the badge dot.
+func daily_waiting() -> bool:
+	daily.refresh(today())
+	return daily.blessing_available(today()) or daily.unclaimed_vows() > 0 \
+		or (not daily.trial(today(), cleared_levels()).is_empty() and not daily.trial_done(today()))
+
+
+## Records the run. Returns {"banked", "buyable", "stars", "trial_reward"} for the results.
+func complete_level(id: String, time: float, embers: int, embers_total: int, deaths: int, trial_mod: String) -> Dictionary:
+	var star_count := 1 + (1 if embers >= embers_total else 0) + (1 if deaths == 0 else 0)
+	var banked := save.record_result(id, time, embers, star_count)
 	var nxt := next_level(id)
 	if nxt != "" and not save.unlocked.has(nxt):
 		save.unlocked.append(nxt)
+	var trial_reward := daily.complete_trial(today()) if trial_mod != "" else 0
 	persist()
-	return {"banked": banked, "buyable": grimoire.newly_buyable_after(id)}
+	jyoti_changed.emit(save.jyoti)
+	track("levels")
+	if deaths == 0:
+		track("clean_clear")
+	return {"banked": banked, "buyable": grimoire.newly_buyable_after(id), "stars": star_count, "trial_reward": trial_reward}
+
+
+# --- settings ---------------------------------------------------------------------
+
+func set_setting(key: String, value: Variant) -> void:
+	save.settings[key] = value
+	persist()
+	apply_audio_settings()
+	settings_changed.emit()
+
+
+func apply_audio_settings() -> void:
+	var audio := get_node_or_null("/root/Audio")
+	if audio == null:
+		return
+	var music: float = float(save.settings.get("music", 0.8)) if bool(save.settings.get("music_on", true)) else 0.0
+	var sfx: float = float(save.settings.get("sfx", 1.0)) if bool(save.settings.get("sfx_on", true)) else 0.0
+	audio.set_bus_volume("Music", music)
+	audio.set_bus_volume("Ambience", music)
+	audio.set_bus_volume("SFX", sfx)
+	audio.set_bus_volume("UI", sfx)
 
 
 func vibrate(ms: int) -> void:

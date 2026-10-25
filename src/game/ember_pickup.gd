@@ -18,7 +18,7 @@ func _ready() -> void:
 	shape.shape = circle
 	add_child(shape)
 	_glow = Node2D.new()
-	_glow.add_child(Fx.glow(Color(1.0, 0.5, 0.18, 0.8), 30.0))
+	_glow.add_child(Fx.glow(Color(0.55, 0.88, 1.0, 0.85), 30.0))
 	_glow.add_child(Fx.glow(Color(1.0, 0.9, 0.7), 8.0))
 	add_child(_glow)
 	body_entered.connect(_on_body_entered)
@@ -33,7 +33,7 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node) -> void:
 	if not body is Player:
 		return
-	Fx.burst(get_parent(), global_position, Color(1.0, 0.7, 0.3), 18, 180.0)
+	Fx.burst(get_parent(), global_position, Color(0.8, 0.95, 1.0), 18, 180.0)
 	Sfx.play("ember_pickup", global_position)
 	collected.emit()
 	queue_free()

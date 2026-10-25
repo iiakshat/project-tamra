@@ -10,9 +10,19 @@ const GOLD := Color(1.0, 0.8, 0.3)
 
 const PALETTES := {
 	"hero": {
-		"skin": Color(0.76, 0.31, 0.14), "cloth": Color(0.97, 0.64, 0.15), "sash": Color(0.07, 0.6, 0.55),
-		"hair": Color(0.13, 0.06, 0.05), "metal": GOLD, "accent": Color(0.86, 0.13, 0.1),
-		"light": Color(1.0, 0.94, 0.72), "eye": Color(1.0, 0.97, 0.9),
+		"skin": Color(0.64, 0.25, 0.17), "cloth": Color(0.14, 0.33, 0.66), "sash": Color(0.86, 0.14, 0.32),
+		"hair": Color(0.1, 0.05, 0.06), "metal": GOLD, "accent": Color(0.95, 0.25, 0.45),
+		"light": Color(1.0, 0.96, 0.88), "eye": Color(1.0, 0.97, 0.94),
+	},
+	"mother": {
+		"skin": Color(0.68, 0.31, 0.2), "cloth": Color(0.09, 0.52, 0.46), "sash": Color(0.92, 0.78, 0.3),
+		"hair": Color(0.08, 0.04, 0.05), "metal": GOLD, "accent": Color(0.9, 0.2, 0.35),
+		"light": Color(1.0, 0.96, 0.88), "eye": Color(1.0, 0.97, 0.94),
+	},
+	"king": {
+		"skin": Color(0.33, 0.3, 0.34), "cloth": Color(0.13, 0.08, 0.18), "sash": Color(0.7, 0.1, 0.2),
+		"hair": Color(0.06, 0.04, 0.06), "metal": GOLD, "accent": Color(0.85, 0.1, 0.25),
+		"light": Color(1.0, 0.35, 0.45), "eye": Color(1.0, 0.2, 0.25),
 	},
 	"soldier": {
 		"skin": Color(0.42, 0.39, 0.37), "cloth": Color(0.24, 0.15, 0.28), "sash": Color(0.6, 0.11, 0.08),
@@ -61,15 +71,17 @@ var _drop := Spring.new(220.0, 16.0)
 var _recoil := Spring.new(170.0, 10.0)
 
 
-## style: "hero" or "soldier".
-func build(style_name: String) -> void:
+## style: "hero", "soldier", "mother" or "king". `overrides` recolours pieces
+## (shop skins), e.g. {"cloth": Color(...)}.
+func build(style_name: String, overrides: Dictionary = {}) -> void:
 	style = style_name if PALETTES.has(style_name) else "hero"
-	palette = PALETTES[style]
+	palette = PALETTES[style].duplicate()
+	palette.merge(overrides, true)
 	_leather = Fx.leather_texture()
 	var soldier := style == "soldier"
 	z_index = 30
-	_s = 1.16 if soldier else 1.0
-	_bulk = 1.3 if soldier else 1.0
+	_s = {"soldier": 1.16, "king": 1.22, "mother": 0.94}.get(style, 1.0)
+	_bulk = {"soldier": 1.3, "king": 1.35}.get(style, 1.0)
 	_hip_y = -52.0 * _s
 	body = _joint(self, Vector2.ZERO)
 	hips = _joint(body, Vector2(0, _hip_y))
@@ -96,10 +108,65 @@ func build(style_name: String) -> void:
 	fore_f = _build_arm(arm_f, 5)
 
 	head = _joint(torso, Vector2(2, -31) * _s)
-	if soldier:
-		_build_soldier()
-	else:
-		_build_hero()
+	match style:
+		"soldier":
+			_build_soldier()
+		"mother":
+			_build_mother()
+		"king":
+			_build_king()
+		_:
+			_build_hero()
+
+
+## Tamra's mother: green sari to the ankles, hair in a bun with a long braid, small horns.
+func _build_mother() -> void:
+	var sari := _piece(hips, _sc([Vector2(-10, -6), Vector2(10, -6), Vector2(13, 10), Vector2(16, 30), Vector2(18, 49),
+		Vector2(-16, 49), Vector2(-13, 28), Vector2(-12, 8)]), palette["cloth"], 2, true, 9)
+	_trim(sari, _sc([Vector2(-16, 47), Vector2(18, 47)]), 2.6)
+	_piece(torso, _sc([Vector2(-9, -27), Vector2(-4, -30), Vector2(10, -8), Vector2(6, -4)]), palette["sash"], 1, false)
+	_piece(head, _sc(_HEAD), palette["skin"], 3, false)
+	_piece(head, _sc(Fx.ellipse(Vector2(-9, -15), Vector2(6, 6), 12)), palette["hair"], 2, false)
+	_piece(head, _sc([Vector2(-3, -19), Vector2(-8, -24), Vector2(-10, -29), Vector2(-7, -24), Vector2(-3, -21)]), Color(0.96, 0.88, 0.7), 2, false)
+	_trim(head, _sc([Vector2(-6, -19.5), Vector2(6, -18.5)]), 1.8)
+	_dots(head, _sc([Vector2(6, -18.5)]), 1.8, palette["accent"], 4)
+	_trim(head, _sc([Vector2(1.5, -15.6), Vector2(4.5, -16.4), Vector2(7.5, -15.2)]), 1.2, OUTLINE)
+	_build_eye(palette["eye"], OUTLINE)
+	_chain(head, Vector2(-11, -12), 9, 5.5, 4.5, palette["hair"], -6, 120.0, 20.0)
+	_chain(torso, Vector2(-9, -26), 6, 6.0, 6.0, palette["sash"], -5, 200.0, 80.0)
+	var gem := Fx.polygon(Fx.ellipse(Vector2.ZERO, Vector2(1.6, 2.2) * _s, 8), palette["accent"])
+	_chain(head, Vector2(-1, -6), 2, 3.0, 1.2, palette["metal"], 4, 0.0, 0.0, gem)
+	weapon_tip = fore_f
+
+
+## The Smoke King: ash-grey skin, black-violet robe, a towering horned crown, smoke.
+func _build_king() -> void:
+	var robe := _piece(hips, _sc([Vector2(-10, -6), Vector2(10, -6), Vector2(14, 12), Vector2(17, 32), Vector2(19, 50),
+		Vector2(-18, 50), Vector2(-15, 30), Vector2(-13, 10)]), palette["cloth"], 2, true, 10)
+	_trim(robe, _sc([Vector2(-18, 48), Vector2(19, 48)]), 2.6)
+	_piece(torso, _sc([Vector2(-9, -6), Vector2(9, -6), Vector2(13, -18), Vector2(11, -27), Vector2(-9, -28), Vector2(-11, -17)]),
+		palette["cloth"], 1, true, 8)
+	_trim(torso, _sc([Vector2(-9, -27), Vector2(0, -20), Vector2(11, -27)]), 2.0)
+	_piece(head, _sc(_HEAD), palette["skin"], 3, false)
+	_piece(head, _sc([Vector2(4, 0.5), Vector2(9.5, -2), Vector2(10.5, 6), Vector2(6, 13), Vector2(1, 8)]), palette["hair"], 4, false)
+	var crown := PackedVector2Array()
+	for p in _CROWN:
+		crown.append(Vector2(p.x * 1.25, -18.0 + (p.y + 18.0) * 1.35))
+	_piece(head, _sc(crown), palette["metal"], 4, false)
+	for side in [0.0, 1.0]:
+		_piece(head, _sc([Vector2(-2 + side * 6, -21), Vector2(-10 + side * 14, -32), Vector2(-8 + side * 22, -50),
+			Vector2(-3 + side * 12, -33), Vector2(2 + side * 6, -22)]), Color(0.9, 0.86, 0.78), 2, false)
+	_build_eye(palette["eye"], palette["eye"])
+	var glare := Fx.glow(palette["eye"], 11.0 * _s)
+	glare.position = Vector2(4.5, -12) * _s
+	glare.z_index = 5
+	head.add_child(glare)
+	_chain(torso, Vector2(-9, -26), 8, 7.0, 9.0, palette["sash"], -6, 220.0, 60.0)
+	_chain(torso, Vector2(-6, -26), 7, 7.0, 7.0, palette["sash"], -6, 200.0, 50.0)
+	var smoke := Fx.smoke(Vector2(16, 10), Color(0.1, 0.07, 0.1, 0.55), 16)
+	smoke.position = Vector2(0, -20) * _s
+	torso.add_child(smoke)
+	weapon_tip = fore_f
 
 
 func _build_hero() -> void:
@@ -276,6 +343,11 @@ func strike() -> void:
 	_swoosh()
 
 
+## Bent over, hands on knees, chest heaving: catching breath after a long run.
+func pant(duration: float) -> void:
+	_start("pant", duration)
+
+
 func windup() -> void:
 	_start("windup", 10.0)  # held until thrust()
 
@@ -423,6 +495,19 @@ func _apply_action(p: Dictionary, delta: float) -> void:
 			p["arm_f"] = -1.05
 			p["elbow_f"] = 0.95
 			_lean.target = 0.3
+		"pant":
+			var heave := sin(_time * 7.5)
+			_lean.target = 0.55 + heave * 0.05
+			p["thigh_f"] = -0.35
+			p["thigh_b"] = 0.15
+			p["knee_f"] = 0.65
+			p["knee_b"] = 0.5
+			p["arm_f"] = -0.45
+			p["arm_b"] = -0.3
+			p["elbow_f"] = -0.25
+			p["elbow_b"] = -0.2
+			p["head"] = 0.25 + heave * 0.06
+			p["bob"] = 7.0 + heave * 1.5
 
 
 func _start(action: String, length: float) -> void:
