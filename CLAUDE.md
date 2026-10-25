@@ -23,14 +23,14 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
 
 - **Phase 1, round 2 (2026-10-25):** 3 levels (c1_l1 Ash Pits, c1_l2 Chain Ladder, c2_l1 Mirror Marsh), 2 chapter stories, 8 mantras, the Mantra Book, combat (strike, guards with telegraphed spear attacks, health), the puppet characters, and SETU drawn as you draw it.
 - Owner's first real-device test (Samsung S-series, 2026-10-25): 120 fps, 0 errors, finished level 1 twice. Their feedback drove this round: short SETU, stickman look, gesture scores of 0.73 to 0.77 just missing the old 0.78 cutoff.
-- **Verified locally:** 17 automated tests pass. Headless smoke runs are clean. Screenshots confirm rendering and all three mantras working end to end.
+- **Sound (merged 2026-10-25):** the `Audio` autoload plus 41 SFX ids (`config/sounds.json`). Gameplay calls `Sfx.play(id, pos)`, never `Audio` directly. Kenney CC0 foley and synthesized magic, fire and ambience (`tools/synth_audio.gd`), with a tanpura drone. Nobody has listened to it on a phone yet.
+- **Voice:** story narration in Hindi (Sanskrit Upanishad openers), shown in Devanagari (Yatra One font) with English subtitles, auto-advancing. The hero speaks each mantra's name on cast (`call_<id>`). Generated with `tools/tts_gemini.ps1` (gemini-2.5-flash-preview-tts; 3.8-tts reads style prompts aloud) and verified by `tools/tts_check.ps1` transcription. Sarvam not used.
+- **Verified locally:** 38 automated tests pass. Headless smoke runs are clean. Screenshots confirm the characters, mantras, book, marsh reveal and story.
 - **CI verified (2026-10-25):** the "Android build" workflow passes (tests plus signed debug APK, about 1.5 min). The APK is 55 MB because it is a debug build covering both arm64 and armv7. Release AAB per-device downloads will be much smaller. Local copy: `../builds/project-tamra-debug.apk`.
 - **Not yet verified:**
   - Feel on a real phone (the owner is testing the first APK).
   - Performance on low-end devices.
-- All art is procedural (code-drawn). No image or audio files yet.
 - **Diagnostics:** the `GameLog` autoload writes `user://logs/game.log` and flushes every line, so the log survives a crash. It captures every engine error and warning, plus analytics events, a perf sample every 10 s, and device and GPU info. A crashed previous session is flagged and kept as `game.prev.log`. Testers send logs without USB: **Pause → "Copy debug log"** (or the button on the title screen), then paste into any chat. Debug builds show a red error counter on the HUD.
-- **PENDING (owner asked, deferred on 2026-10-25): sound effects.** Jumping, running/footsteps, fighting (guard hits, JWALA impacts), mantra casts, pickups, UI, ambience. Do this next after the first APK. Plan: CC0 foley (e.g. Kenney packs) for physical sounds, synthesized tones for magic. Log every file in ASSETS.md.
 - `ra_html.html`: discarded prototype. Git-ignored, reference only.
 
 ## Open decisions (do not assume)

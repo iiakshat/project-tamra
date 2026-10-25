@@ -39,5 +39,13 @@
   "page_turn": {"files": ["res://audio/foley/page_turn_0.ogg", "res://audio/foley/page_turn_1.ogg", "res://audio/foley/page_turn_2.ogg"], "bus": "UI", "volume_db": -6, "pitch_var": 0.08, "max_voices": 2, "min_interval": 0.1, "loop": false},
   "amb_wind": {"files": ["res://audio/synth/amb_wind.wav"], "bus": "Ambience", "volume_db": -14, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0, "loop": true},
   "amb_fire": {"files": ["res://audio/synth/amb_fire.wav"], "bus": "Ambience", "volume_db": -18, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0, "loop": true},
-  "music_drone": {"files": ["res://audio/synth/music_drone.wav"], "bus": "Music", "volume_db": -10, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0, "loop": true}
+  "music_drone": {"files": ["res://audio/synth/music_drone.wav"], "bus": "Music", "volume_db": -10, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0, "loop": true},
+  "call_setu": {"files": ["res://audio/voice/call_setu.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false},
+  "call_chhaya": {"files": ["res://audio/voice/call_chhaya.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false},
+  "call_jwala": {"files": ["res://audio/voice/call_jwala.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false},
+  "call_udaan": {"files": ["res://audio/voice/call_udaan.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false},
+  "call_kavach": {"files": ["res://audio/voice/call_kavach.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false},
+  "call_tarang": {"files": ["res://audio/voice/call_tarang.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false},
+  "call_bandhan": {"files": ["res://audio/voice/call_bandhan.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false},
+  "call_drishti": {"files": ["res://audio/voice/call_drishti.wav"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.3, "loop": false}
 }

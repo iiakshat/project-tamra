@@ -50,6 +50,7 @@ func try_gesture(result: Dictionary) -> void:
 	_cooldowns[id] = float(cfg[id].get("cooldown", 1.0))
 	cast.emit(id)
 	Sfx.play("cast_" + id, level.player.global_position)
+	Sfx.play("call_" + id)  # the hero speaks the mantra's name
 	Services.analytics.log_event("mantra_cast", {"id": id, "level": level.level_id})
 
 

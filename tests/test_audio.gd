@@ -74,6 +74,22 @@ func test_audio_budget() -> void:
 	check(total < BUDGET_BYTES, "audio is %d bytes, budget %d" % [total, BUDGET_BYTES])
 
 
+## Narration has its own allowance: speech is long, and Godot packs WAV as QOA in the APK.
+func test_voice_budget_and_lines() -> void:
+	var total := 0
+	for f in DirAccess.get_files_at("res://audio/voice/"):
+		if f.ends_with(".wav"):
+			total += FileAccess.get_file_as_bytes("res://audio/voice/" + f).size()
+	check(total < 9 * 1024 * 1024, "voice is %d bytes, budget 9 MiB" % total)
+	var story := GameConfig.read("story")
+	for id in story:
+		for line in story[id]:
+			if line is Dictionary and line.has("voice"):
+				check(FileAccess.file_exists("res://audio/voice/%s.wav" % line["voice"]), "voice for %s exists" % line["voice"])
+	for m in GameConfig.read("mantras"):
+		check(GameConfig.read("sounds").has("call_" + m), "battle cry for %s" % m)
+
+
 func test_variant_never_repeats() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7

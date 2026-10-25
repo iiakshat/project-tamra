@@ -1,19 +1,21 @@
 {
   "c1_intro": [
-    "The Golden Isle once sang. Now it only burns.",
-    "Its ruler, the Smoke King, feeds his fires with the forests of the mortal shore.",
-    "You were his finest hunter. Asura-born. Never questioned. Never failed.",
-    "Until the night he ordered you to burn a village while its children slept.",
-    "You refused.",
-    "They took your armour and your name, and threw you into the Ash Pits to die.",
-    "But your mother taught you the old signs, the mantras. And maya runs in asura blood.",
-    "Climb."
+    {"sa": "तमसो मा ज्योतिर्गमय।", "en": "From darkness, lead me to light.", "voice": "c1_intro_00"},
+    {"hi": "स्वर्ण द्वीप कभी गाता था। अब वह केवल जलता है।", "en": "The Golden Isle once sang. Now it only burns.", "voice": "c1_intro_01"},
+    {"hi": "उसका शासक, धूम्रराज, मानव तट के वनों को अपनी आग में झोंकता है।", "en": "Its ruler, the Smoke King, feeds his fires with the forests of the mortal shore.", "voice": "c1_intro_02"},
+    {"hi": "तुम उसके सबसे श्रेष्ठ शिकारी थे। असुर-जन्मा। न कभी प्रश्न किया, न कभी हारे।", "en": "You were his finest hunter. Asura-born. Never questioned. Never failed.", "voice": "c1_intro_03"},
+    {"hi": "फिर एक रात, उसने आदेश दिया: सोते हुए बच्चों का गाँव जला दो।", "en": "Until the night he ordered you to burn a village while its children slept.", "voice": "c1_intro_04"},
+    {"hi": "तुमने मना कर दिया।", "en": "You refused.", "voice": "c1_intro_05"},
+    {"hi": "उन्होंने तुम्हारा कवच छीना, तुम्हारा नाम छीना, और तुम्हें राख के गर्त में मरने के लिए फेंक दिया।", "en": "They took your armour and your name, and threw you into the Ash Pits to die.", "voice": "c1_intro_06"},
+    {"hi": "पर तुम्हारी माँ ने तुम्हें पुराने चिह्न सिखाए थे, मंत्र। और माया, असुरों के रक्त में बहती है।", "en": "But your mother taught you the old signs, the mantras. And maya runs in asura blood.", "voice": "c1_intro_07"},
+    {"hi": "उठो। चढ़ो।", "en": "Rise. Climb.", "voice": "c1_intro_08"}
   ],
   "c2_intro": [
-    "Above the pits, the smoke thins into mist.",
-    "This is the Mirror Marsh, where the Smoke King's sorcerers bend the light.",
-    "Here the ground lies. Stones float that are not there. Paths hide that are.",
-    "An old sign wakes in your blood: the eye that sees through maya.",
-    "Trust nothing you have not truly seen."
+    {"sa": "असतो मा सद्गमय।", "en": "From the unreal, lead me to the real.", "voice": "c2_intro_00"},
+    {"hi": "गर्त के ऊपर, धुआँ धुंध में बदल जाता है।", "en": "Above the pits, the smoke thins into mist.", "voice": "c2_intro_01"},
+    {"hi": "यह दर्पण दलदल है, जहाँ धूम्रराज के मायावी प्रकाश को मोड़ देते हैं।", "en": "This is the Mirror Marsh, where the Smoke King's sorcerers bend the light.", "voice": "c2_intro_02"},
+    {"hi": "यहाँ धरती झूठ बोलती है। जो पत्थर दिखते हैं, वे हैं ही नहीं। और जो राहें हैं, वे छिपी हैं।", "en": "Here the ground lies. Stones float that are not there. Paths hide that are.", "voice": "c2_intro_03"},
+    {"hi": "तुम्हारे रक्त में एक पुराना चिह्न जागता है: वह दृष्टि, जो माया के पार देखती है।", "en": "An old sign wakes in your blood: the eye that sees through maya.", "voice": "c2_intro_04"},
+    {"hi": "जो सचमुच न देखा हो, उस पर भरोसा मत करना।", "en": "Trust nothing you have not truly seen.", "voice": "c2_intro_05"}
   ]
 }
