@@ -8,32 +8,31 @@
       "id": "c1",
       "name": "The Ash Pits",
       "story": "c1_intro",
-<<<<<<< HEAD
       "levels": [
         "c1_l1",
-        "c1_l2"
+        "c1_l2",
+        "c1_l3"
       ]
-=======
-      "levels": ["c1_l1", "c1_l2", "c1_l3"]
->>>>>>> worktree-agent-ae245600be8dd85c2
     },
     {
       "id": "c2",
       "name": "Mirror Marsh",
       "story": "c2_intro",
-<<<<<<< HEAD
       "levels": [
-        "c2_l1"
+        "c2_l1",
+        "c2_l2",
+        "c2_l3"
       ]
-=======
-      "levels": ["c2_l1", "c2_l2", "c2_l3"]
     },
     {
       "id": "c3",
       "name": "The Palace Walls",
       "story": "c3_intro",
-      "levels": ["c3_l1", "c3_l2", "c3_l3"]
->>>>>>> worktree-agent-ae245600be8dd85c2
+      "levels": [
+        "c3_l1",
+        "c3_l2",
+        "c3_l3"
+      ]
     }
   ]
 }
