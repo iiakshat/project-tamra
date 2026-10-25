@@ -123,13 +123,12 @@ func _ready() -> void:
 	_rig.scale = Vector2.ONE * k
 	add_child(_rig)
 	puppet = Puppet.new()
-	match kind:
-		"archer":
-			puppet.build("soldier", {"cloth": Color(0.3, 0.14, 0.36), "sash": Color(0.5, 0.2, 0.8), "metal": Color(0.42, 0.38, 0.46)})
-		"brute":
-			puppet.build("soldier", {"cloth": Color(0.36, 0.08, 0.08), "sash": Color(0.15, 0.1, 0.12), "metal": Color(0.3, 0.27, 0.3)})
-		_:
-			puppet.build("soldier")
+	puppet.build(kind if kind in ["archer", "brute"] else "soldier")
+	if kind == "brute":
+		# Smoke pours off the brute's back (painted art has none, so it can animate).
+		var smoke := Fx.smoke(Vector2(30, 40), Color(0.1, 0.08, 0.1, 0.5), 16)
+		smoke.position = Vector2(-30, -150)
+		_rig.add_child(smoke)
 	_rig.add_child(puppet)
 	_glint = Fx.glow(Color(1.0, 0.95, 0.75), 26.0 * k)
 	_glint.visible = false

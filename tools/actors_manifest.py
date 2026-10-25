@@ -16,7 +16,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 CHARS = ROOT / "assets" / "chars"
 
 # Game-world scale for each actor's strips (standing height in px ~ strip height x scale).
-SCALE = {"hero": 0.52, "soldier": 0.5, "archer": 0.5, "brute": 0.5}
+SCALE = {"hero": 0.52, "soldier": 0.46, "archer": 0.46, "brute": 0.36}  # brute is drawn 1.3x by its rig
 FPS = {"run": 14.0, "jump": 0.0, "strike": 0.0, "cast": 0.0, "death": 3.0}
 
 
