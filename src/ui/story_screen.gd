@@ -169,7 +169,7 @@ func _play(beat: Dictionary) -> void:
 	_line.visible_ratio = 0.0
 	_sub.modulate.a = 0.0
 	var stream: AudioStream = null
-	var path := "res://audio/voice/%s.wav" % str(beat.get("voice", ""))
+	var path := "res://audio/voice/%s.ogg" % str(beat.get("voice", ""))
 	if beat.has("voice") and ResourceLoader.exists(path):
 		stream = load(path)
 	var spoken := stream.get_length() if stream != null else 0.0

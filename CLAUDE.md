@@ -1,4 +1,4 @@
-# CLAUDE.md — Game #1 (working title "Project Tamra")
+# CLAUDE.md — Game #1: TAMRA
 
 > Live file. Claude keeps this current: update it whenever a decision, status or rule changes, in the same session. The parent file `../CLAUDE.md` holds the business strategy and general rules. This file holds project specifics. If they conflict, the owner's live instructions win, then this file, then the parent.
 
@@ -20,6 +20,18 @@ Design detail: `docs/GDD.md`. Build, test and release steps: `docs/RELEASE.md`.
 The folder is still called `RaOne`. That name came from the discarded prototype and is a trademark risk (Ra.One / G.One are film IP). Do not use it in anything player-facing, in the package ID, or in the store listing. Rename the folder once the real name is chosen.
 
 ## Status
+
+- **Round 3 (2026-10-25)**, from the owner's second device test and feedback:
+  - Game name **TAMRA** (ताम्र), and the hero is called Tamra in the story.
+  - The currency is **Jyoti** (light). Mantras cost **Prana** (energy, regenerates), so they are no longer unlimited.
+  - Palette moved to indigo, crimson and jade (the owner found the orange "Claude-like"). The UI is **icons over words**; the owner hates verbosity, so keep text minimal.
+  - The story is an **interactive puppet theatre** (`src/ui/story_screen.gd`, `config/story.json`). Choices are flavour only and every path converges. There is a short beat after every level. The cast: Tamra, Maa, the Smoke King, a guard.
+  - 9 levels in 3 chapters (Ash Pits, Mirror Marsh, Palace Walls), and they are much harder. New hazards: spikes, flame jets, moving and crumbling ledges, archers. Design notes are in `docs/LEVELS.md`.
+  - **Hooks:** a daily blessing (7-step cycle that never resets), 3 daily vows, a daily trial (a cleared level with a twist), stars per level, mantra upgrade ranks, and a skin shop.
+  - Premium skins are placeholders behind `StoreService`, ready for in-app purchases. **Cosmetics only, never power for money.**
+  - Mute toggles for music and sound. Vocals: jump grunt, fall scream, hurt, panting after long runs, idle breathing.
+  - Voice: Gemini 2.5 TTS for story lines (one voice per character), Sarvam bulbul:v3 for the 8 battle cries. All voice is trimmed, OGG, and checked by transcription.
+  - Voice pipeline: `tools/tts_gemini.ps1` / `tts_sarvam.ps1` / `tts_vocals.ps1` → `tools/trim_voice.gd` → `tools/tts_check.ps1` (needs WAV) → convert to OGG with `../_tools/ffmpeg/ffmpeg.exe`.
 
 - **Phase 1, round 2 (2026-10-25):** 3 levels (c1_l1 Ash Pits, c1_l2 Chain Ladder, c2_l1 Mirror Marsh), 2 chapter stories, 8 mantras, the Mantra Book, combat (strike, guards with telegraphed spear attacks, health), the puppet characters, and SETU drawn as you draw it.
 - Owner's first real-device test (Samsung S-series, 2026-10-25): 120 fps, 0 errors, finished level 1 twice. Their feedback drove this round: short SETU, stickman look, gesture scores of 0.73 to 0.77 just missing the old 0.78 cutoff.

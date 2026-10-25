@@ -39,8 +39,11 @@ foreach ($story_id in $story.PSObject.Properties) {
 		if ($item.beats) { Add-Beats $item.beats } else { Add-Beats @($item) }
 	}
 }
-foreach ($call in $cfg.calls.PSObject.Properties) {
-	$jobs += @{ id = $call.Name; text = $call.Value; role = "hero" }
+# Battle cries belong to tools/tts_sarvam.ps1 unless calls_engine says "gemini".
+if ($cfg.calls_engine -eq "gemini") {
+	foreach ($call in $cfg.calls.PSObject.Properties) {
+		[void]$jobs.Add(@{ id = $call.Name; text = $call.Value; role = "hero" })
+	}
 }
 
 function Write-Wav([string]$path, [byte[]]$pcm, [int]$rate) {
@@ -57,7 +60,7 @@ $made = 0
 foreach ($job in $jobs) {
 	if ($Only -ne "" -and $job.id -ne $Only) { continue }
 	$path = Join-Path $outDir "$($job.id).wav"
-	if (Test-Path $path) { continue }
+	if ((Test-Path $path) -or (Test-Path ($path -replace "\.wav$", ".ogg"))) { continue }
 	$voice = $cfg.voices.($job.role)
 	# A short "Say ...:" prefix is the style cue TTS models are trained on. Longer
 	# instructions get read aloud, and system instructions are rejected.

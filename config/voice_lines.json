@@ -1,5 +1,5 @@
 {
-  "_about": "Source of truth for generated voice. tools/tts_gemini.ps1 reads this and story.json and writes audio/voice/<id>.wav, skipping files that already exist. Delete a wav to regenerate it.",
+  "_about": "Source of truth for generated voice. Story narration: tools/tts_gemini.ps1 (Gemini) reads this and story.json. Battle cries ('calls'): tools/tts_sarvam.ps1 (Sarvam, native Hindi) when calls_engine is 'sarvam'. Both write audio/voice/<id>.wav and skip files that already exist; delete a wav to regenerate it. Then run tools/trim_voice.gd and verify with tools/tts_check.ps1.",
   "model": "gemini-2.5-flash-preview-tts",
   "_style_note": "gemini-3.8-flash-tts reads any style prefix aloud and rejects system instructions; 2.5-flash-preview-tts treats a short 'Say ...:' prefix as direction. Verify every take with tools/tts_check.ps1.",
   "voices": {
@@ -45,9 +45,20 @@
     "call_chhaya": "छाया!",
     "call_jwala": "ज्वाला!",
     "call_udaan": "उड़ान!",
-    "call_kavach": "कवच।",
+    "call_kavach": "कवच!",
     "call_tarang": "तरंग!",
     "call_bandhan": "बंधन!",
     "call_drishti": "दृष्टि!"
+  },
+  "calls_engine": "sarvam",
+  "_calls_note": "Gemini's hero voice gave KAVACH an English accent and UDAAN a doubled take (owner, 2026-10-25), so the cries moved to Sarvam's native Hindi voices. One speaker for all eight keeps the hero consistent.",
+  "sarvam": {
+    "model": "bulbul:v3",
+    "speaker": "shubh",
+    "language_code": "hi-IN",
+    "pace": 1.0,
+    "temperature": 0.6,
+    "sample_rate": 24000,
+    "min_gap_seconds": 12
   }
 }

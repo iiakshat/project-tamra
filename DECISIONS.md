@@ -2,6 +2,21 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-25 — Prana: mantras cost energy
+The owner asked whether unlimited casting was intended (it wasn't). His log showed Mirror Marsh cleared in 23 s with JWALA spam. Each mantra now costs Prana (max 100, regenerates 3/s after 1.5 s idle). Orbs and defeated guards refill it. Staff strikes matter again.
+
+## 2026-10-25 — Daily hooks without dark patterns
+The owner wants daily reasons to return and a willingness to pay later. The parent strategy forbids dark patterns. So: a blessing cycle that never resets, small vows, a daily trial, stars, upgrades and cosmetic skins. Missing a day costs nothing. Premium items are cosmetic and wait for Play Billing behind StoreService. Changes if: retention data says a stronger hook is needed. Even then, no energy timers and no pay-to-win.
+
+## 2026-10-25 — Story as interactive puppet theatre
+The owner wanted a real story told interactively, with choices that converge and the hero's name spoken. Shadow-puppet theatre is the native form for this art style. Sanskrit lines (Upanishad openers) stay as atmosphere.
+
+## 2026-10-25 — Voices: Gemini for story, Sarvam for battle cries
+The owner reported KAVACH sounded English-accented and UDAAN doubled. The cries moved to Sarvam's native Hindi voice (8 requests, spaced). Every take is trimmed and transcription-checked. The story keeps Gemini 2.5 TTS, because 3.8 reads style prompts aloud.
+
+## 2026-10-25 — Palette: indigo night, crimson, jade
+The owner said the orange read as "Claude-like". Fire stays orange in the world; the UI and skies moved off it.
+
 ## 2026-10-25 — SETU builds where you draw
 Owner reported "drew a longer line, got a shorter bridge". It was a fixed 420 px bridge. Now the bridge follows the stroke's position, length (80 to 540 px) and slope (up to 40°, so it can be a ramp), anchored at the end nearer the hero, within 700 px. That's more expressive, and it is what the player expects.
 
