@@ -3,7 +3,7 @@
 Newest first. One entry per notable decision: what, why, and what would change it.
 
 ## 2026-10-25 — Prana: mantras cost energy
-The owner asked whether unlimited casting was intended (it wasn't). His log showed Mirror Marsh cleared in 23 s with JWALA spam. Each mantra now costs Prana (max 100, regenerates 3/s after 1.5 s idle). Orbs and defeated guards refill it. Staff strikes matter again.
+The owner asked whether unlimited casting was intended (it wasn't). Their log showed Mirror Marsh cleared in 23 s with JWALA spam. Each mantra now costs Prana (max 100, regenerates 3/s after 1.5 s idle). Orbs and defeated guards refill it. Staff strikes matter again.
 
 ## 2026-10-25 — Daily hooks without dark patterns
 The owner wants daily reasons to return and a willingness to pay later. The parent strategy forbids dark patterns. So: a blessing cycle that never resets, small vows, a daily trial, stars, upgrades and cosmetic skins. Missing a day costs nothing. Premium items are cosmetic and wait for Play Billing behind StoreService. Changes if: retention data says a stronger hook is needed. Even then, no energy timers and no pay-to-win.
