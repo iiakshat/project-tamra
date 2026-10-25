@@ -17,6 +17,7 @@ config/quit_on_go_back=false
 GameLog="*res://src/autoload/game_log.gd"
 Services="*res://src/autoload/services.gd"
 Game="*res://src/autoload/game.gd"
+Audio="*res://src/autoload/audio.gd"
 
 [debug]
 
