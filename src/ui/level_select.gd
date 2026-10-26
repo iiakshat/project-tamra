@@ -33,6 +33,11 @@ var _last_x := 0.0
 var _card: Control
 var _intro: Tween
 var _focus := ""
+## Set before the map opens after a cleared level: the hero walks from this level's
+## spot along the route to the next one, then that level's card opens.
+var walk_from := ""
+var _hero_img: TextureRect
+var _hero_idle_tex: Texture2D
 
 
 func _ready() -> void:
@@ -142,6 +147,10 @@ func _layout() -> void:
 	if cur != null:
 		_hero.position = cur.position
 		_route.lit_until = _route.distance_at(cur.position)
+	var start := _nodes.get(walk_from) as Control
+	if start != null and cur != null and start != cur:
+		_walk(start, cur)
+		return
 	# Open centred on the current level (or a focused one), easing in from the side.
 	var aim := _nodes.get(_focus, cur) as Control
 	var target := _offset_for(aim.position.x if aim != null else 0.0)
@@ -151,6 +160,61 @@ func _layout() -> void:
 	_intro.tween_method(func(v: float) -> void:
 		_offset = v
 		_apply_offset(), _offset, target, 0.7).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## The hero runs along the dotted route from the level just cleared to the next one;
+## the lit path grows behind him and the map scrolls with him, then the card opens.
+func _walk(from: Control, to: Control) -> void:
+	var d0 := _route.distance_at(from.position)
+	var d1 := _route.distance_at(to.position)
+	_hero.position = from.position
+	_route.lit_until = d0
+	_offset = _offset_for(from.position.x)
+	_apply_offset()
+	var run := _run_frames()
+	var time := clampf(absf(d1 - d0) / 260.0, 1.2, 3.2)
+	var tw := create_tween()
+	tw.tween_interval(0.5)
+	tw.tween_method(func(d: float) -> void:
+		var p := _route.position_at(d)
+		if _hero_img != null and not run.is_empty():
+			var dir := signf(p.x - _hero.position.x)
+			if dir != 0.0:
+				_hero_img.flip_h = dir < 0.0
+			_hero_img.texture = run[int(Time.get_ticks_msec() / 75.0) % run.size()]
+		_hero.position = p
+		_route.lit_until = d
+		_offset = lerpf(_offset, _offset_for(p.x), 0.12)
+		_apply_offset(), d0, d1, time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_callback(func() -> void:
+		if _hero_img != null:
+			_hero_img.texture = _hero_idle_tex
+			_hero_img.flip_h = false
+		Sfx.play("checkpoint")
+		var n := 0
+		for id in _nodes:
+			n += 1
+			if id == _current:
+				break
+		_open_card(_current, n))
+
+
+## The hero's run cycle as separate frame textures (assets/chars/hero/run.png).
+func _run_frames() -> Array[Texture2D]:
+	var out: Array[Texture2D] = []
+	var path := "res://assets/chars/hero/run.png"
+	if not ResourceLoader.exists(path):
+		return out
+	var strip: Texture2D = load(path)
+	var meta: Dictionary = GameConfig.read("actors").get("hero", {}).get("anims", {}).get("run", {})
+	var n := int(meta.get("frames", 8))
+	var fw := float(meta.get("frame_w", strip.get_width() / float(n)))
+	for i in n:
+		var at := AtlasTexture.new()
+		at.atlas = strip
+		at.region = Rect2(i * fw, 0, fw, strip.get_height())
+		out.append(at)
+	return out
 
 
 func _offset_for(world_x: float) -> float:
@@ -232,6 +296,8 @@ func _hero_marker() -> Control:
 	if tex != null:
 		var tr := TextureRect.new()
 		tr.texture = tex
+		_hero_img = tr
+		_hero_idle_tex = tex
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		var w := h * tex.get_width() / float(tex.get_height())
@@ -435,6 +501,14 @@ class Route extends Control:
 				next += SPACING
 			travelled += seg
 		queue_redraw()
+
+	## Point on the route `d` px from its start.
+	func position_at(d: float) -> Vector2:
+		if dots.is_empty():
+			return Vector2.ZERO
+		var i := clampi(int(d / SPACING), 0, dots.size() - 1)
+		var j := mini(i + 1, dots.size() - 1)
+		return dots[i].lerp(dots[j], clampf((d - dist[i]) / SPACING, 0.0, 1.0))
 
 	## Distance along the route of the dot closest to `p`.
 	func distance_at(p: Vector2) -> float:

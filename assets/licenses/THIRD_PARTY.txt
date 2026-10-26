@@ -1,0 +1,13 @@
+TAMRA - third-party notices (bundled with the app; the in-game credits screen was removed at the owner's request).
+
+Icons
+- Game icons from game-icons.net by Lorc, Delapouite and Sbed, licensed under CC BY 3.0
+  (https://creativecommons.org/licenses/by/3.0/). Recoloured. Lorc: candlebright, lotus,
+  crossed-swords, tied-scroll, scroll-unfurled, open-book, fireball, magic-swirl, robe.
+  Delapouite: present, level-end-flag, stone-bridge, jump-across. Sbed: death-skull.
+- Material Symbols by Google, Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
+
+Sound: foley by Kenney (kenney.nl), CC0. Other effects synthesized for this game.
+Art and voices: generated with Google Gemini; mantra calls voiced with Sarvam AI.
+Font: Yatra One, The Yatra Project Authors, SIL Open Font License 1.1 (OFL.txt).
+Engine: Godot Engine, MIT License (GODOT_LICENSE.txt).

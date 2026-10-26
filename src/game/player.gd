@@ -11,6 +11,7 @@ const SIZE := Vector2(30, 88)
 const STRIKE_COOLDOWN := 0.42
 const STRIKE_WINDOW := Vector2(0.08, 0.2)  # seconds after the swing starts when it can hit
 const STRIKE_REACH := 84.0
+const PANT_TIME := 2.6  # seconds of catching breath after a long run
 const STEP_DISTANCE := 46.0
 
 var cfg: Dictionary
@@ -42,8 +43,8 @@ var prana := 100.0
 var _since_cast := 99.0
 var _run_time := 0.0
 var _idle_time := 0.0
-var _pant_left := 0
-var _pant_timer := 0.0
+var _pant_left := 0  # 1 while catching breath after a long run
+var _pant_timer := 0.0  # seconds of panting left
 var _screamed := false
 var _scream_check := 0.0
 var _breathing := false
@@ -228,29 +229,31 @@ func _update_breath(delta: float, on_floor: bool) -> void:
 		_idle_time = 0.0
 	elif on_floor and speed < 20.0:
 		if _run_time >= _num("run_tired_after", 4.0) and _pant_left == 0:
-			_pant_left = 3
-			_pant_timer = 0.0
-			puppet.pant(2.8)
+			_pant_left = 1
+			_pant_timer = PANT_TIME
+			puppet.pant(PANT_TIME)
 		_run_time = 0.0
 		_idle_time += delta
 	else:
 		_idle_time = 0.0
 	if _pant_left > 0:
 		_pant_timer -= delta
-		if _pant_timer <= 0.0:
-			_pant_left -= 1
-			_pant_timer = 0.9
-			Sfx.play("vo_pant", global_position)
-		if speed > 60.0:
+		if _pant_timer <= 0.0 or speed > 60.0:
 			_pant_left = 0
 			puppet.relax()
-	var breathe := _idle_time > 1.5 and _pant_left == 0 and alive
+	var breathe := _idle_time > 0.6 and _pant_left == 0 and alive
 	_breathing = breathe
 
 
-## Standing still, he breathes in and out in time with his chest (Puppet.breathed).
+## Every breath of the chest animation (Puppet.breathed) has a sound: quick, soft
+## "hah" pants after a long run, fading as he recovers; barely audible breaths at rest.
 func _on_breathed(inhale: bool) -> void:
-	if _breathing and alive:
+	if not alive:
+		return
+	if _pant_left > 0:
+		var fade := -10.0 * (1.0 - _pant_timer / PANT_TIME)
+		Sfx.play("pant_in" if inhale else "pant_out", global_position, fade)
+	elif _breathing:
 		Sfx.play("breath_in" if inhale else "breath_out", global_position)
 
 

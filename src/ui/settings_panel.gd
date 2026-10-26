@@ -1,8 +1,8 @@
 class_name SettingsPanel
 extends PanelContainer
 ## Settings: each row is an icon, a one-word label and a switch (Music, Sound effects,
-## Vibration), then Credits and Copy debug log. Used on the title screen and in pause.
-## Credits open inside the same panel.
+## Vibration), then Copy debug log. Used on the title screen and in pause. (Owner removed the
+## Credits screen; licence notices ship inside the app in assets/licenses/.)
 
 signal closed
 
@@ -43,7 +43,6 @@ func _show_settings() -> void:
 	line.color = Color(UiKit.COPPER, 0.35)
 	line.custom_minimum_size = Vector2(0, 2)
 	_body.add_child(line)
-	_body.add_child(_action_row("info", "Credits", _show_credits))
 	var copy := _action_row("log", "Copy debug log", func() -> void: pass)
 	copy.pressed.connect(func() -> void:
 		GameLog.copy_report_to_clipboard()
@@ -121,53 +120,6 @@ func _row_button(icon: String, text: String) -> Button:
 func _refresh() -> void:
 	for key in _switches:
 		(_switches[key] as Switch).on = bool(Game.save.settings.get(key, true))
-
-
-# --- credits ------------------------------------------------------------------------
-
-func _show_credits() -> void:
-	_clear()
-	var head := UiKit.header("info", "Credits", _show_settings)
-	(head.get_child(head.get_child_count() - 1).get_child(0) as UiKit.IconView).icon = "back"
-	_body.add_child(head)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(620, 400)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_body.add_child(scroll)
-	var text := RichTextLabel.new()
-	text.bbcode_enabled = true
-	text.fit_content = true
-	text.scroll_active = false
-	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text.add_theme_font_size_override("normal_font_size", 17)
-	text.add_theme_font_size_override("bold_font_size", 19)
-	text.add_theme_color_override("default_color", UiKit.TEXT)
-	text.text = credits_text()
-	scroll.add_child(text)
-
-
-## Every third-party work in the game and its licence. Keep in step with ASSETS.md.
-static func credits_text() -> String:
-	var h := "[color=#dc997a][b]%s[/b][/color]\n"
-	var c := h % "Icons"
-	c += "Game icons from game-icons.net by Lorc, Delapouite and Sbed, licensed under CC BY 3.0 (creativecommons.org/licenses/by/3.0). Recoloured.\n"
-	c += "[font_size=14]Lorc: candlebright, lotus, crossed-swords, tied-scroll, scroll-unfurled, open-book, fireball, magic-swirl, robe. "
-	c += "Delapouite: present, level-end-flag, stone-bridge, jump-across. Sbed: death-skull.[/font_size]\n"
-	c += "System icons: Material Symbols by Google, Apache License 2.0 (apache.org/licenses/LICENSE-2.0).\n\n"
-	c += h % "Sound"
-	c += "Foley and interface sounds by Kenney (kenney.nl), CC0. Other effects and music synthesized for this game.\n\n"
-	c += h % "Art and voices"
-	c += "Painted art and story voices generated with Google Gemini. Mantra calls voiced with Sarvam AI.\n\n"
-	c += h % "Font"
-	c += "Yatra One by The Yatra Project Authors, SIL Open Font License 1.1.\n\n"
-	c += h % "Engine"
-	c += "Made with Godot Engine (godotengine.org), MIT License:\n"
-	c += "[font_size=13]%s[/font_size]\n\n" % Engine.get_license_text().strip_edges()
-	var parts: Array[String] = []
-	for info in Engine.get_copyright_info():
-		parts.append(str(info.get("name", "")))
-	c += "[font_size=13]Godot includes third-party components: %s. Their licences: godotengine.org/license.[/font_size]\n" % ", ".join(parts)
-	return c
 
 
 ## A flat on/off switch: a jade track with the knob right when on, grey when off.

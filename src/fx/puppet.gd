@@ -11,8 +11,8 @@ extends Node2D
 signal breathed(inhale: bool)
 
 const SHADER := preload("res://src/fx/actor.gdshader")
-const IDLE_BREATH_PERIOD := 3.4  # seconds per full breath at rest
-const PANT_BREATH_PERIOD := 0.9
+const IDLE_BREATH_PERIOD := 3.0  # seconds per full breath at rest
+const PANT_BREATH_PERIOD := 0.52
 
 static var _cfg: Dictionary = {}
 static var _textures: Dictionary = {}
@@ -265,7 +265,7 @@ func _update_breath(delta: float, period: float) -> void:
 		return
 	_breath_phase += delta * TAU / period
 	var b := sin(_breath_phase)
-	var strength := 1.0 if period >= IDLE_BREATH_PERIOD else 2.2
+	var strength := 1.8 if period >= IDLE_BREATH_PERIOD else 3.2
 	_mat.set_shader_parameter("breath", b * strength)
 	var inhaling := cos(_breath_phase) > 0.0
 	if inhaling != _inhaling:

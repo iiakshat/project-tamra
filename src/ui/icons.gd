@@ -1,7 +1,7 @@
 class_name Icons
 extends RefCounted
 ## UI icons from free icon sets, stored as white SVGs in res://assets/icons/<name>.svg and
-## tinted when drawn. Sources and licences: ASSETS.md and the in-game Credits;
+## tinted when drawn. Sources and licences: ASSETS.md and assets/licenses/THIRD_PARTY.txt;
 ## tools/fetch_icons.ps1 downloads and normalises them.
 ## System icons: Google Material Symbols Rounded (Apache 2.0).
 ## Game icons: game-icons.net by Lorc, Delapouite and Sbed (CC BY 3.0).

@@ -54,8 +54,9 @@ func open_book() -> void:
 	_open_full(mb)
 
 
-func open_map() -> LevelSelect:
+func open_map(walk_from: String = "") -> LevelSelect:
 	var map := LevelSelect.new()
+	map.walk_from = walk_from
 	UiKit.full_rect(map)
 	map.chosen.connect(func(id: String) -> void: level_chosen.emit(id, ""))
 	map.story_chosen.connect(func(id: String) -> void: story_chosen.emit(id))

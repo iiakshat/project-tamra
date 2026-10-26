@@ -33,6 +33,8 @@ func _ready() -> void:
 			(_screen as MenuScreen).open_panel(args["panel"])
 		if args.has("focus"):
 			(_screen as MenuScreen).open_map().focus(args["focus"])
+		elif args.has("walk"):
+			(_screen as MenuScreen).open_map(args["walk"])
 		if args.has("card"):
 			(_screen as MenuScreen).open_map().open_card(args["card"])
 	if args.has("hold"):
@@ -112,7 +114,7 @@ func _start_level(id: String, start_x: float = -1.0, mod: String = "") -> void:
 
 
 ## After a level: its short story beat (first time), the next chapter's opening if one
-## begins, then the next level.
+## begins, then the journey map, where Tamra walks to the next level and its card opens.
 func _on_level_completed(id: String) -> void:
 	var nxt := Game.next_level(id)
 	var stories: Array = []
@@ -124,7 +126,12 @@ func _on_level_completed(id: String) -> void:
 	var chapter := Game.chapter_of(nxt)
 	if chapter != Game.chapter_of(id) and _unseen(str(chapter.get("story", ""))):
 		stories.append(str(chapter["story"]))
-	_play_stories(stories, _start_level.bind(nxt, -1.0, ""))
+	_play_stories(stories, _walk_on_map.bind(id))
+
+
+func _walk_on_map(from_id: String) -> void:
+	show_menu()
+	(_screen as MenuScreen).open_map(from_id)
 
 
 func _switch(node: Node) -> void:

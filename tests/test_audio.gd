@@ -14,7 +14,7 @@ const REQUIRED := [
 	"barrier_burn", "ember_pickup", "checkpoint", "goal", "mantra_learned",
 	"ui_click", "ui_back", "page_turn",
 	"amb_wind", "amb_fire", "music_drone",
-	"vo_jump", "vo_fall", "vo_hurt", "vo_death", "vo_pant", "breath_in", "breath_out",
+	"vo_jump", "vo_fall", "vo_hurt", "vo_death", "pant_in", "pant_out", "breath_in", "breath_out",
 ]
 const LOOPS := ["amb_wind", "amb_fire", "music_drone"]
 

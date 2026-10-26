@@ -46,6 +46,14 @@ vec3 recolor(vec3 col, float src_hue, vec4 to) {
 	return mix(col, moved, w * to.a);
 }
 
+varying vec4 tint;
+
+void vertex() {
+	// In fragment(), COLOR already holds the texture sample; keep the plain modulate
+	// here so the (UV-distorted) texture is applied exactly once.
+	tint = COLOR;
+}
+
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -60,11 +68,11 @@ float noise(vec2 p) {
 void fragment() {
 	vec2 uv = UV;
 	if (breath != 0.0) {
-		float s = breath * 0.03;
+		float s = breath * 0.03;  // breath arrives pre-scaled: ~5% at rest, ~10% panting
 		if (uv.y < waist) {
 			uv.y = waist - (waist - uv.y) / (1.0 + s);
 			float band = smoothstep(waist, waist - 0.12, uv.y) * smoothstep(waist - 0.45, waist - 0.25, uv.y);
-			uv.x = chest_x + (uv.x - chest_x) / (1.0 + s * 0.7 * band);
+			uv.x = chest_x + (uv.x - chest_x) / (1.0 + s * 1.8 * band);
 		}
 	}
 	vec4 c = texture(TEXTURE, uv);
@@ -95,5 +103,5 @@ void fragment() {
 			c.rgb = dissolve_edge.rgb;
 		}
 	}
-	COLOR = c * COLOR;
+	COLOR = c * tint;
 }

@@ -52,7 +52,8 @@
   "vo_fall": {"files": ["res://audio/vocal/vo_fall_0.ogg", "res://audio/vocal/vo_fall_1.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 1.0, "loop": false},
   "vo_hurt": {"files": ["res://audio/vocal/vo_hurt_0.ogg", "res://audio/vocal/vo_hurt_2.ogg"], "bus": "SFX", "volume_db": -3, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.3, "loop": false},
   "vo_death": {"files": ["res://audio/vocal/vo_death_0.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.5, "loop": false},
-  "vo_pant": {"files": ["res://audio/vocal/vo_pant_0.ogg", "res://audio/vocal/vo_pant_1.ogg", "res://audio/vocal/vo_pant_2.ogg"], "bus": "SFX", "volume_db": -6, "pitch_var": 0.04, "max_voices": 1, "min_interval": 0.6, "loop": false},
-  "breath_in": {"files": ["res://audio/vocal/breath_in.ogg"], "bus": "SFX", "volume_db": -6, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.5, "loop": false},
-  "breath_out": {"files": ["res://audio/vocal/breath_out.ogg"], "bus": "SFX", "volume_db": -7, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.5, "loop": false}
+  "breath_in": {"files": ["res://audio/vocal/breath_in.ogg"], "bus": "SFX", "volume_db": -21, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.4, "loop": false},
+  "breath_out": {"files": ["res://audio/vocal/breath_out.ogg"], "bus": "SFX", "volume_db": -22, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.4, "loop": false},
+  "pant_in": {"files": ["res://audio/vocal/pant_in_0.ogg", "res://audio/vocal/pant_in_1.ogg"], "bus": "SFX", "volume_db": -14, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.1, "loop": false},
+  "pant_out": {"files": ["res://audio/vocal/pant_out_0.ogg", "res://audio/vocal/pant_out_1.ogg", "res://audio/vocal/pant_out_2.ogg"], "bus": "SFX", "volume_db": -10, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.1, "loop": false}
 }

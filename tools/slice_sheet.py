@@ -66,13 +66,21 @@ def components(mask: np.ndarray):
 
 
 def strip_lines(cell: np.ndarray) -> None:
-    """Remove drawn grid/floor lines: rows or columns mostly made of dark opaque pixels."""
+    """Remove drawn grid/floor lines: THIN rows or columns (a few px) that are mostly dark
+    opaque pixels while the rows/columns 5 px away are not. Thick dark areas (hair,
+    armour) are never touched."""
     dark = (cell[..., 3] > 100) & (cell[..., :3].max(axis=2) < 70)
     h, w = dark.shape
-    for y in np.nonzero(dark.sum(axis=1) > w * 0.35)[0]:
-        cell[max(0, y - 2):y + 3, :, 3] = np.where(dark[max(0, y - 2):y + 3], 0, cell[max(0, y - 2):y + 3, :, 3])
-    for x in np.nonzero(dark.sum(axis=0) > h * 0.35)[0]:
-        cell[:, max(0, x - 2):x + 3, 3] = np.where(dark[:, max(0, x - 2):x + 3], 0, cell[:, max(0, x - 2):x + 3, 3])
+    rows = dark.sum(axis=1) / w
+    cols = dark.sum(axis=0) / h
+    for y in np.nonzero(rows > 0.35)[0]:
+        if rows[max(y - 5, 0)] < 0.12 and rows[min(y + 5, h - 1)] < 0.12:
+            sl = slice(max(0, y - 2), y + 3)
+            cell[sl, :, 3] = np.where(dark[sl], 0, cell[sl, :, 3])
+    for x in np.nonzero(cols > 0.35)[0]:
+        if cols[max(x - 5, 0)] < 0.12 and cols[min(x + 5, w - 1)] < 0.12:
+            sl = slice(max(0, x - 2), x + 3)
+            cell[:, sl, 3] = np.where(dark[:, sl], 0, cell[:, sl, 3])
 
 
 def clean(cell: np.ndarray) -> np.ndarray:
