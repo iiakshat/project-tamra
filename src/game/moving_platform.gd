@@ -32,9 +32,16 @@ func _ready() -> void:
 	add_child(_shape)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(position.x * 3.0 + position.y)
-	_visual = LevelArt.rock(Rect2(Vector2.ZERO, size), false, Color(0.75, 0.68, 1.0) if not crumble else Color(0.95, 0.4, 0.55), rng)
+	var slab := Props.texture("crumble" if crumble else "slab")
+	if slab != null:
+		# The painted slab's walkable top is ~12% down the image; its body hangs below.
+		var h := size.x * slab.get_height() / slab.get_width()
+		_visual = Props.spanning("crumble" if crumble else "slab", Vector2(size.x * 1.08, h))
+		_visual.position = Vector2(-size.x * 0.04, -h * 0.12)
+	else:
+		_visual = LevelArt.rock(Rect2(Vector2.ZERO, size), false, Color(0.75, 0.68, 1.0) if not crumble else Color(0.95, 0.4, 0.55), rng)
 	add_child(_visual)
-	if crumble:
+	if crumble and slab == null:
 		for i in 3:
 			var crack := Line2D.new()
 			var x := size.x * (0.25 + 0.25 * i)

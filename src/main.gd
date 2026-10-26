@@ -53,13 +53,17 @@ func _on_begin() -> void:
 
 
 ## Plays a level, preceded by its chapter's opening scene the first time.
+## The opening story always plays once (also for players who continue mid-game after
+## the story was rewritten), so everyone meets Tamra, Maa and the Smoke King.
 func _continue(id: String) -> void:
+	var stories: Array = []
+	if _unseen("c1_intro"):
+		stories.append("c1_intro")
 	var story := str(Game.chapter_of(id).get("story", ""))
 	var first_of_chapter: bool = Game.chapter_of(id).get("levels", [""])[0] == id
-	if first_of_chapter and _unseen(story):
-		_play_stories([story], _start_level.bind(id, -1.0, ""))
-	else:
-		_start_level(id)
+	if first_of_chapter and _unseen(story) and not stories.has(story):
+		stories.append(story)
+	_play_stories(stories, _start_level.bind(id, -1.0, ""))
 
 
 func _show_story(story_id: String, then_level: String) -> void:
@@ -81,7 +85,7 @@ func _play_stories(ids: Array, then: Callable) -> void:
 
 
 func _unseen(story_id: String) -> bool:
-	return story_id != "" and GameConfig.read("story").has(story_id) and not Game.save.story_seen.has(story_id)
+	return story_id != "" and GameConfig.read("story").has(story_id) and not StoryScreen.is_seen(story_id)
 
 
 func _start_level(id: String, start_x: float = -1.0, mod: String = "") -> void:

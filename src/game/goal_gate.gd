@@ -24,22 +24,10 @@ func _ready() -> void:
 	add_child(inner)
 	_inner = inner
 	add_child(Fx.glow(Color(0.95, 0.9, 1.0, 0.6), 40.0))
-	for side in [-1.0, 1.0]:
-		var pillar := PackedVector2Array([Vector2(side * 52, 0), Vector2(side * 70, 0), Vector2(side * 66, -150), Vector2(side * 50, -150)])
-		add_child(Fx.polygon(pillar, Fx.INK))
-		add_child(Fx.outline(pillar, Color(0.75, 0.68, 1.0, 0.55), 1.5))
-	var arch := Line2D.new()
-	var pts := PackedVector2Array()
-	for i in 17:
-		var t := float(i) / 16.0
-		var x := lerpf(-60, 60, t)
-		pts.append(Vector2(x, -150 - (1.0 - pow(absf(x) / 60.0, 1.6)) * 70.0))
-	arch.points = pts
-	arch.width = 18.0
-	arch.default_color = Fx.INK
-	add_child(arch)
-	var finial := PackedVector2Array([Vector2(-6, -218), Vector2(0, -245), Vector2(6, -218)])
-	add_child(Fx.polygon(finial, Fx.INK))
+	# A carved temple doorway with light pouring from the arch: the way out.
+	var door := Props.standing("door", 240.0)
+	door.position.y = 6.0
+	add_child(door)
 
 	var sparks := CPUParticles2D.new()
 	sparks.amount = 30

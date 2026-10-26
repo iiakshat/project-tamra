@@ -53,5 +53,6 @@
   "vo_hurt": {"files": ["res://audio/vocal/vo_hurt_0.ogg", "res://audio/vocal/vo_hurt_2.ogg"], "bus": "SFX", "volume_db": -3, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.3, "loop": false},
   "vo_death": {"files": ["res://audio/vocal/vo_death_0.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.5, "loop": false},
   "vo_pant": {"files": ["res://audio/vocal/vo_pant_0.ogg", "res://audio/vocal/vo_pant_1.ogg", "res://audio/vocal/vo_pant_2.ogg"], "bus": "SFX", "volume_db": -6, "pitch_var": 0.04, "max_voices": 1, "min_interval": 0.6, "loop": false},
-  "breath_idle": {"files": ["res://audio/vocal/breath_idle.ogg"], "bus": "SFX", "volume_db": -18, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.0, "loop": true}
+  "breath_in": {"files": ["res://audio/vocal/breath_in.ogg"], "bus": "SFX", "volume_db": -6, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.5, "loop": false},
+  "breath_out": {"files": ["res://audio/vocal/breath_out.ogg"], "bus": "SFX", "volume_db": -7, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.5, "loop": false}
 }

@@ -41,6 +41,7 @@ func _build_painted(palette_name: String) -> bool:
 	far.lift = 0.02
 	far.height_frac = 1.12
 	far.bottom_frac = 1.06
+	far.tint = {"palace": Color(0.72, 0.68, 0.78)}.get(palette_name, Color.WHITE)
 	add_child(far)
 	if ResourceLoader.exists(mid_path):
 		var mid := PaintedLayer.new()
@@ -58,6 +59,8 @@ func _build_painted(palette_name: String) -> bool:
 
 ## Big dark shapes that pass in front of the world. Cheap depth.
 func build_foreground(width: float, seed_value: int) -> void:
+	if ResourceLoader.exists("res://assets/env/%s_far.png" % LevelArt.theme):
+		return  # painted chapters carry their own depth
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value + 99
 	var p := Parallax2D.new()

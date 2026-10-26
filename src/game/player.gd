@@ -99,6 +99,7 @@ func _ready() -> void:
 	puppet = Puppet.new()
 	puppet.build("hero", Game.skin_palette())
 	add_child(puppet)
+	puppet.breathed.connect(_on_breathed)
 	_shield = _make_shield()
 	add_child(_shield)
 
@@ -244,9 +245,13 @@ func _update_breath(delta: float, on_floor: bool) -> void:
 			_pant_left = 0
 			puppet.relax()
 	var breathe := _idle_time > 1.5 and _pant_left == 0 and alive
-	if breathe != _breathing:
-		_breathing = breathe
-		Sfx.loop("breath_idle", breathe)
+	_breathing = breathe
+
+
+## Standing still, he breathes in and out in time with his chest (Puppet.breathed).
+func _on_breathed(inhale: bool) -> void:
+	if _breathing and alive:
+		Sfx.play("breath_in" if inhale else "breath_out", global_position)
 
 
 ## The fall scream is for a fall into a pit, never for a jump that lands: it plays at
@@ -419,7 +424,6 @@ func die(cause: String) -> void:
 	Sfx.play("death", global_position)
 	if cause != "fall":
 		Sfx.play("vo_death", global_position)
-	Sfx.loop("breath_idle", false)
 	_breathing = false
 	Game.vibrate(120)
 	died.emit(cause)

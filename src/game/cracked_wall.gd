@@ -29,8 +29,19 @@ func _ready() -> void:
 	body.append(Vector2(width / 2.0, -height))
 	for i in range(steps, -1, -1):
 		body.append(Vector2(width / 2.0 + rng.randf_range(-3, 3), -height * i / steps))
-	add_child(Fx.polygon(body, Fx.INK))
-	for i in 4:
+	var art := Props.texture("wall")
+	if art != null:
+		# The painted wall is drawn lying down; stand it up to fill the wall's box.
+		var w := Sprite2D.new()
+		w.texture = art
+		w.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		w.rotation = -PI / 2.0
+		w.scale = Vector2(height / art.get_width(), (width + 14.0) / art.get_height())
+		w.position = Vector2(0, -height / 2.0)
+		add_child(w)
+	else:
+		add_child(Fx.polygon(body, Fx.INK))
+	for i in (0 if art != null else 4):
 		var crack := Line2D.new()
 		var pts := PackedVector2Array()
 		var y := -rng.randf_range(10, 40) - i * height / 4.5

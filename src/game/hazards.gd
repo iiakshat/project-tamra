@@ -15,12 +15,12 @@ static func spikes(x: float, top_y: float, width: float) -> Area2D:
 		pts.append(Vector2(i * 14.0 + 7.0, -18 - (i % 2) * 4))
 		pts.append(Vector2(i * 14.0 + 11.0, -2))
 	pts.append(Vector2(width, 2))
-	a.add_child(Fx.polygon(pts, Fx.INK))
-	var rim := Line2D.new()
-	rim.points = pts
-	rim.width = 1.5
-	rim.default_color = Color(0.95, 0.35, 0.55, 0.7)
-	a.add_child(rim)
+	var row := Props.strip("spikes", width, 28.0)
+	if row.texture != null:
+		row.position.y += 4.0
+		a.add_child(row)
+	else:
+		a.add_child(Fx.polygon(pts, Fx.INK))
 	return a
 
 
@@ -73,7 +73,9 @@ class FlameJet extends Node2D:
 
 	func _ready() -> void:
 		_t = offset
-		add_child(Fx.polygon(PackedVector2Array([Vector2(-16, 0), Vector2(16, 0), Vector2(11, -10), Vector2(-11, -10)]), Fx.INK))
+		var vent := Props.standing("vent", 30.0)
+		vent.position.y = 6.0
+		add_child(vent)
 		_warn = Fx.glow(Color(1.0, 0.45, 0.2, 0.0), 30.0)
 		_warn.position = Vector2(0, -8)
 		add_child(_warn)
