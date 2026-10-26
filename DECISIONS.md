@@ -2,6 +2,14 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-26 — Art: painted characters, flat 2D worlds, story as a motion comic
+Owner feedback on 0.3.0: puppets looked "very puppet, body parts scrambled"; the game "looks like a basic game"; the story had "no emotions, no animations, just standing and reading"; the voices whispered and Tamra (a kid) sounded deep. Then, seeing the first painted backdrops: "very bright, the AI orange glow, do not make it look 3D, keep it 2D".
+- **Characters** are Gemini-generated painted frame strips (one reference per character, then pose sheets using it), cut and aligned by script. Springs still add squash/lean/recoil; a shader breathes the idle frame (inhale/exhale) and draws a thin rim so the hero reads on busy art. Frame animation was chosen over a cutout rig: AI parts don't joint cleanly, whole-pose sheets stay consistent.
+- **Worlds and UI art are flat 2D** (paper-cut look, limited indigo/violet/teal/muted crimson palette, no glow, no orange or yellow light, no 3D). Prompts say so explicitly; reference images are only used for style when they don't get copied.
+- **Story** is a motion comic: 16 flat painted panels, camera drift and push-ins, punch-ins with shake, flat particles, portraits and subtitles. Script rewritten for a 12-year-old Tamra with real stakes and a cliffhanger. Seen-flags carry the script version so returning players see the new story once.
+- **Voices**: Gemini 3.1 flash TTS with inline emotion tags; every take is judged by Gemini listening (tags read aloud, whispering, age, accent) and retried. Tags like "hushed/distant/mysterious" cause whispering — avoid them.
+Changes if: players find the flat worlds and painted characters clash (then flatten the characters too), or a better voice for a child appears.
+
 ## 2026-10-25 — Round 4 feel: higher, forgiving jump; difficulty from enemies, not pixels
 Owner device test of 0.3.0: "couldn't jump to the upper platform", "villains just stand idle", repeated pit deaths. Cause: apex was ~160 px while levels asked for 150 px step-ups, and `jump_cut` 0.45 halved a short touch tap.
 - **Jump:** apex ~230 px (gravity 2400, jump 1050). Releasing early still trims the jump, but never before 0.13 s, so a quick tap rises ~172 px (75%). Cut 0.7. Coyote 0.12 s, buffer 0.15 s. Releasing the jump pad no longer trims UDAAN.

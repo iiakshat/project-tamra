@@ -21,6 +21,13 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
 
 ## Status
 
+- **Round 4 (2026-10-26, v0.4.0)**, from the owner's third device test (marks in the approval page + log):
+  - **Art:** Gemini-painted characters (hero, soldier, archer, brute, Maa, Smoke King) as frame strips (`src/fx/puppet.gd` keeps the old API); flat 2D chapter backdrops, textured ground with painted edges, painted props. **Owner art rule: flat 2D, no glow, no orange/yellow light, no 3D/AI-render look.** Pipeline: `tools/gen_image.py` → `tools/slice_sheet.py` / `build_chars.sh` / `actors_manifest.py` / `build_env.py`.
+  - **Story:** rewritten for a 12-year-old Tamra; motion comic (`src/ui/story_screen.gd`, `config/story.json` v2, panels in `assets/story`). Voices: `tools/tts_story.py` (Gemini 3.1 TTS emotion tags) + `tools/voice_check.py`. Two finale lines are `voice_pending` (Gemini billing cap hit 2026-10-26).
+  - **Feel:** jump apex ~230 px with a forgiving tap; aggressive enemies + brute; JWALA 2 dmg; slower prana; goal door walk-in with no danger after; goal arrow and death hints; fall scream only over real pits; softer UI/foley sounds; audible inhale/exhale synced to the chest animation.
+  - **UI:** Material Symbols + game-icons.net icons (credited in Settings > Credits), copper/lacquer theme, journey map level select (`config/map.json`), self-explaining daily panel, badge bug fixed.
+  - **Blocked:** the Google AI key's monthly spending cap is reached; image/TTS/listening checks fail until the owner raises it at ai.studio/billing.
+
 - **Round 3 (2026-10-25)**, from the owner's second device test and feedback:
   - Game name **TAMRA** (ताम्र), and the hero is called Tamra in the story.
   - The currency is **Jyoti** (light). Mantras cost **Prana** (energy, regenerates), so they are no longer unlimited.
