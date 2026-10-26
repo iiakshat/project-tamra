@@ -84,6 +84,9 @@ static func _for_fight(level: Dictionary, x: float, known: Array) -> String:
 	for e in level.get("enemies", []):
 		if absf(float(e.get("x", 0)) - x) > SPOT + 200.0:
 			continue
+		# An unseen guard, or a smoke one drawing the eye: see through it.
+		if str(e.get("maya", "")) != "" and known.has("drishti"):
+			return "drishti"
 		var kind := str(e.get("type", "soldier"))
 		if kind == "archer" and known.has("kavach"):
 			return "kavach"

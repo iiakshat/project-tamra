@@ -67,7 +67,7 @@ func _ready() -> void:
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_child(stack)
 	_hearts = HeartsView.new()
-	_hearts.custom_minimum_size = Vector2(196, 34)
+	_hearts.custom_minimum_size = Vector2(196, 44)
 	stack.add_child(_hearts)
 	_prana = PranaBar.new()
 	_prana.custom_minimum_size = Vector2(196, 26)
@@ -166,6 +166,48 @@ func set_hearts(hearts: int, max_hearts: int) -> void:
 	_hearts.hearts = hearts
 	_hearts.max_hearts = max_hearts
 	_hearts.queue_redraw()
+
+
+## A heart lost (-1) or healed (+1): the heart itself bursts or swells, the row shakes,
+## and the screen edge flashes, so a hit can never go unnoticed.
+func on_heart_delta(delta: int) -> void:
+	_hearts.animate(delta)
+	if delta < 0:
+		_flash.color = Color(0.7, 0.05, 0.2, 0.3)
+		create_tween().tween_property(_flash, "color:a", 0.0, 0.45)
+	else:
+		_flash.color = Color(1.0, 0.55, 0.65, 0.18)
+		create_tween().tween_property(_flash, "color:a", 0.0, 0.6)
+
+
+## Every heart is gone: a dark band with three empty hearts and two words, held for a
+## moment before the level starts over.
+func show_lives_lost() -> void:
+	var band := ColorRect.new()
+	band.color = Color(0.02, 0.01, 0.05, 0.0)
+	UiKit.full_rect(band)
+	band.mouse_filter = Control.MOUSE_FILTER_STOP
+	_root.add_child(band)
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	UiKit.full_rect(box)
+	box.add_theme_constant_override("separation", 12)
+	band.add_child(box)
+	var row := HeartsView.new()
+	row.hearts = 0
+	row.max_hearts = _hearts.max_hearts
+	row.big = true
+	row.custom_minimum_size = Vector2(row.max_hearts * 80.0, 80)
+	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(row)
+	var text := UiKit.title("Lives lost", 52, UiKit.DANGER, 8)
+	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(text)
+	box.modulate.a = 0.0
+	var t := create_tween()
+	t.tween_property(band, "color:a", 0.72, 0.35)
+	t.parallel().tween_property(box, "modulate:a", 1.0, 0.35)
+	row.animate(-1)
 
 
 func set_prana(value: float, max_value: float) -> void:
@@ -558,30 +600,55 @@ func _clear_overlay() -> void:
 		_overlay = null
 
 
-## Life as hearts: lit ones are crimson and flicker faintly like lamp flames; spent ones
-## are dark shells.
+## Life as hearts: lit ones are solid crimson and beat faintly; spent ones are empty
+## crimson-rimmed shells, clearly still there (round 5: the owner could not see the old
+## dark shells, so a lost heart looked like nothing had happened). A lost heart bursts
+## and the row shakes; a healed one swells in.
 class HeartsView extends Control:
 	var hearts := 3
 	var max_hearts := 3
+	var big := false
 	var _t := 0.0
+	var _anim := 0.0  # 1 -> 0 after a change
+	var _anim_dir := 0
+	var _anim_slot := -1
 
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
+	func animate(delta: int) -> void:
+		_anim = 1.0
+		_anim_dir = delta
+		_anim_slot = hearts if delta < 0 else hearts - 1
+
 	func _process(delta: float) -> void:
 		_t += delta
+		_anim = maxf(0.0, _anim - delta * 1.6)
 		queue_redraw()
 
 	func _draw() -> void:
+		var r := 30.0 if big else 18.0
+		var step := r * 2.3
+		var shake := Vector2.ZERO
+		if _anim_dir < 0 and _anim > 0.4:
+			shake.x = sin(_t * 70.0) * 5.0 * _anim
 		for i in max_hearts:
-			var c := Vector2(17.0 + i * 36.0, size.y / 2.0)
+			var c := Vector2(r + 2.0 + i * step, size.y / 2.0) + shake
+			var k := 1.0
+			if i == _anim_slot and _anim > 0.0 and _anim_dir > 0:
+				k = 1.0 + 0.5 * _anim
 			if i < hearts:
-				var f := 0.5 + 0.5 * sin(_t * 5.3 + i * 1.9) * sin(_t * 3.1 + i)
-				Icons.draw(self, "heart", c, 16.0, Color(0.02, 0.01, 0.05, 0.9))
-				Icons.draw(self, "heart", c, 14.0 + f * 0.8, UiKit.DANGER.lerp(Color(1.0, 0.62, 0.68), f * 0.35))
+				var f := maxf(0.0, sin(_t * 4.2 + i * 1.3))
+				Icons.draw(self, "heart", c, (r + 2.0) * k, Color(0.02, 0.01, 0.05, 0.95))
+				Icons.draw(self, "heart", c, (r - 1.0 + f * 1.0) * k, UiKit.DANGER)
 			else:
-				Icons.draw(self, "heart", c, 14.0, Color(0.2, 0.18, 0.28, 0.85))
+				Icons.draw(self, "heart", c, r + 2.0, Color(0.02, 0.01, 0.05, 0.95))
+				Icons.draw(self, "heart", c, r - 1.0, Color(UiKit.DANGER, 0.85))
+				Icons.draw(self, "heart", c, r - 5.0, Color(0.1, 0.06, 0.14))
+				if i == _anim_slot and _anim > 0.0 and _anim_dir < 0:
+					# The lost heart flies apart: a swelling crimson ghost fading out.
+					Icons.draw(self, "heart", c - shake, r * (1.0 + 1.2 * (1.0 - _anim)), Color(UiKit.DANGER, _anim * 0.8))
 
 
 ## The prana meter: a lotus and a copper-rimmed bar with a shimmer running through it;

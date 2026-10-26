@@ -1,7 +1,10 @@
 class_name Level
 extends Node2D
 ## Builds a level from config/levels/<id>.json and runs it: teaching mantras,
-## checkpoints, death and respawn, mantra input, pause and completion.
+## checkpoints, hearts and respawn, mantra input, pause and completion.
+## Hearts last the whole level: a hit or a pit fall costs one, a fall sends him back to
+## the last lamp, and nothing refills them except the rare heart pickup. When the last
+## heart goes, the level starts over from the beginning ("Lives lost").
 
 signal completed(level_id: String)
 signal quit_to_menu
@@ -10,6 +13,8 @@ signal restart_requested(level_id: String)
 const PERF_INTERVAL := 10.0
 ## Seconds a mantra hint stays over the hero after repeated deaths in one spot.
 const HINT_SECONDS := 6.0
+## How long the "Lives lost" moment holds before the level starts over.
+const GAME_OVER_SECONDS := 1.8
 
 var level_id := ""
 var data: Dictionary
@@ -39,6 +44,7 @@ var _death_xs: Array = []
 var _hint: MantraHint
 var _arrow: GoalArrow
 var _gate: GoalGate
+var _game_over := false
 
 
 ## start_x >= 0 drops the hero at that x instead of the spawn (debug and testing).
@@ -115,6 +121,7 @@ func _ready() -> void:
 	if trial_mod != "":
 		hud.show_trial(trial_mod)
 	player.hearts_changed.connect(hud.set_hearts)
+	player.heart_delta.connect(hud.on_heart_delta)
 	player.prana_changed.connect(hud.set_prana)
 	caster.cast.connect(hud.on_cast)
 	caster.failed.connect(hud.on_cast_failed)
@@ -143,6 +150,43 @@ func _ready() -> void:
 	Game.mantras_changed.connect(_rebuild_recognizer)
 	Sfx.scene("level")
 	Services.analytics.log_event("level_start", {"level": level_id, "learned": Game.save.learned.size()})
+	_debug_events()
+
+
+## Debug builds only: `--hurt=60,200` hits the hero at those physics frames, `--kill=N`
+## drops him into the pit at frame N (hearts, falls and game over); `--burn=N` and
+## `--smite=N` kill the nearest guard by fire or by staff (death effects).
+func _debug_events() -> void:
+	if not OS.is_debug_build():
+		return
+	var plan := {}
+	for a in OS.get_cmdline_user_args():
+		for key in ["hurt", "kill", "burn", "smite"]:
+			if a.begins_with("--%s=" % key):
+				for f in a.split("=", true, 1)[1].split(",", false):
+					plan[int(f)] = key
+	if plan.is_empty():
+		return
+	var frame := 0
+	var last: int = plan.keys().max()
+	while frame <= last and is_inside_tree():
+		await get_tree().physics_frame
+		frame += 1
+		if not plan.has(frame) or not is_instance_valid(player):
+			continue
+		match plan[frame]:
+			"hurt":
+				player._invulnerable = 0.0
+				player.take_hit(player.global_position.x + 10.0)
+			"kill":
+				player.global_position.y = _kill_y + 10.0
+			_:
+				var near: Node2D = null
+				for e in enemies():
+					if near == null or e.global_position.distance_to(player.global_position) < near.global_position.distance_to(player.global_position):
+						near = e
+				if near != null:
+					near.damage(99, player.global_position.x, "fire" if plan[frame] == "burn" else "strike")
 
 
 func _exit_tree() -> void:
@@ -156,6 +200,9 @@ func _physics_process(delta: float) -> void:
 	_time += delta
 	if player.alive and player.global_position.y > _kill_y:
 		player.die("fall")
+	for m in get_tree().get_nodes_in_group("mirages"):
+		if m.global_position.y > _kill_y:
+			m.vanish()
 	for d in active_decoys():
 		if d.global_position.y > _kill_y:
 			d.dispel()
@@ -281,8 +328,15 @@ func _on_player_died(cause: String) -> void:
 	_deaths += 1
 	Engine.time_scale = 1.0
 	var at := player.global_position
-	Services.analytics.log_event("level_fail", {"level": level_id, "cause": cause, "x": int(at.x)})
+	# A pit costs a heart here; a hit already took its heart in Player.take_hit.
+	if cause == "fall":
+		player.lose_heart()
+	Services.analytics.log_event("level_fail", {"level": level_id, "cause": cause, "x": int(at.x),
+		"hearts": player.hearts})
 	hud.flash_death()
+	if LifeRules.is_game_over(player.hearts):
+		_lives_lost(cause, at)
+		return
 	var hint := _hint_after_death(at, cause)
 	await get_tree().create_timer(1.0, false).timeout
 	if not is_inside_tree():
@@ -290,6 +344,22 @@ func _on_player_died(cause: String) -> void:
 	_respawn()
 	if hint != "":
 		_hint.show_for(hint, HINT_SECONDS)
+
+
+## Every heart is gone: a short "Lives lost" moment, then the level starts over from
+## the beginning with full hearts (main.gd rebuilds it on restart_requested).
+func _lives_lost(cause: String, at: Vector2) -> void:
+	if _game_over:
+		return
+	_game_over = true
+	touch.release_all()
+	Services.analytics.log_event("level_restart", {"level": level_id, "cause": cause, "x": int(at.x),
+		"time": int(_time), "deaths": _deaths, "trial": trial_mod})
+	hud.show_lives_lost()
+	Sfx.play("lives_lost")
+	await get_tree().create_timer(GAME_OVER_SECONDS, false).timeout
+	if is_inside_tree():
+		restart_requested.emit(level_id)
 
 
 ## Second death within HintFinder.SPOT px: name the mantra that crosses this stretch.
@@ -319,12 +389,14 @@ func _respawn() -> void:
 		e.return_to_post()
 
 
+## Restart (pause menu or results): the level starts over from the beginning with full
+## hearts. Going back to a lamp here would be a free heal.
 func _on_restart() -> void:
-	if _done:
-		restart_requested.emit(level_id)
-		return
-	toggle_pause()
-	_respawn()
+	if not _done:
+		get_tree().paused = false
+		Services.analytics.log_event("level_restart", {"level": level_id, "cause": "menu",
+			"x": int(player.global_position.x), "time": int(_time), "deaths": _deaths, "trial": trial_mod})
+	restart_requested.emit(level_id)
 
 
 func _on_checkpoint(at: Vector2) -> void:
@@ -453,6 +525,19 @@ func _build_entities() -> void:
 		zone.shown.connect(func(text: String, glyph: String) -> void: hud.show_prompt(text, glyph))
 		zone.hidden_again.connect(func() -> void: hud.hide_prompt())
 		world.add_child(zone)
+	if data.has("heart"):
+		var heart := HeartPickup.new()
+		heart.position = GameConfig.vec(data["heart"])
+		world.add_child(heart)
+	for w in data.get("phantom_walls", []):
+		var pw := PhantomWall.new()
+		pw.position = Vector2(float(w[0]), float(w[1]))
+		pw.height = float(w[2])
+		world.add_child(pw)
+	for f in data.get("false_gates", []):
+		var fg := FalseGate.new()
+		fg.position = GameConfig.vec(f)
+		world.add_child(fg)
 	for o in data.get("orbs", []):
 		var orb := PranaOrb.new()
 		orb.position = GameConfig.vec(o)
@@ -479,6 +564,7 @@ func _build_entities() -> void:
 		var s := Smokebound.new()
 		s.level = self
 		s.kind = str(e.get("type", "soldier"))
+		s.illusion = str(e.get("maya", ""))
 		s.max_hp = int(e.get("hp", Smokebound.default_hp(s.kind, str(data.get("chapter", "")))))
 		s.position = Vector2(float(e.get("x", 0)), float(e.get("y", 600)))
 		s.patrol_min = float(e.get("min", s.position.x - 200))
@@ -495,6 +581,10 @@ func _build_entities() -> void:
 	if data.has("goal"):
 		var gate := GoalGate.new()
 		gate.position = GameConfig.vec(data["goal"])
+		gate.veiled = bool(data.get("goal_veiled", false))
 		gate.reached.connect(_on_goal)
 		world.add_child(gate)
 		_gate = gate
+		if gate.veiled and _arrow != null:
+			_arrow.visible = false
+			gate.unveiled.connect(func() -> void: _arrow.visible = true)

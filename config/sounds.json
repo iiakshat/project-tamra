@@ -52,8 +52,17 @@
   "vo_fall": {"files": ["res://audio/vocal/vo_fall_0.ogg", "res://audio/vocal/vo_fall_1.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 1.0, "loop": false},
   "vo_hurt": {"files": ["res://audio/vocal/vo_hurt_0.ogg", "res://audio/vocal/vo_hurt_2.ogg"], "bus": "SFX", "volume_db": -3, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.3, "loop": false},
   "vo_death": {"files": ["res://audio/vocal/vo_death_0.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.5, "loop": false},
-  "breath_in": {"files": ["res://audio/vocal/breath_in.ogg"], "bus": "SFX", "volume_db": -21, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.4, "loop": false},
-  "breath_out": {"files": ["res://audio/vocal/breath_out.ogg"], "bus": "SFX", "volume_db": -22, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.4, "loop": false},
-  "pant_in": {"files": ["res://audio/vocal/pant_in_0.ogg", "res://audio/vocal/pant_in_1.ogg"], "bus": "SFX", "volume_db": -14, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.1, "loop": false},
-  "pant_out": {"files": ["res://audio/vocal/pant_out_0.ogg", "res://audio/vocal/pant_out_1.ogg", "res://audio/vocal/pant_out_2.ogg"], "bus": "SFX", "volume_db": -10, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.1, "loop": false}
+  "breath_in": {"files": ["res://audio/vocal/breath_in.ogg"], "bus": "SFX", "volume_db": -9, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.4, "loop": false},
+  "breath_out": {"files": ["res://audio/vocal/breath_out.ogg"], "bus": "SFX", "volume_db": -9, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.4, "loop": false},
+  "pant_in": {"files": ["res://audio/vocal/pant_in_0.ogg", "res://audio/vocal/pant_in_1.ogg"], "bus": "SFX", "volume_db": -3, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.1, "loop": false},
+  "pant_out": {"files": ["res://audio/vocal/pant_out_0.ogg", "res://audio/vocal/pant_out_1.ogg", "res://audio/vocal/pant_out_2.ogg"], "bus": "SFX", "volume_db": -3, "pitch_var": 0.06, "max_voices": 1, "min_interval": 0.1, "loop": false},
+  "udaan_whoosh": {"files": ["res://audio/synth/udaan_whoosh.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.2, "loop": false},
+  "glide_wind": {"files": ["res://audio/synth/glide_wind.ogg"], "bus": "SFX", "volume_db": -6, "pitch_var": 0.05, "max_voices": 1, "min_interval": 0.5, "loop": false},
+  "fire_whoomph": {"files": ["res://audio/synth/fire_whoomph.ogg"], "bus": "SFX", "volume_db": -1, "pitch_var": 0.06, "max_voices": 2, "min_interval": 0.1, "loop": false},
+  "burn_crackle": {"files": ["res://audio/synth/burn_crackle.ogg"], "bus": "SFX", "volume_db": -4, "pitch_var": 0.06, "max_voices": 2, "min_interval": 0.1, "loop": false},
+  "heart_pickup": {"files": ["res://audio/synth/heart_pickup.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 0.5, "loop": false},
+  "lives_lost": {"files": ["res://audio/synth/lives_lost.ogg"], "bus": "SFX", "volume_db": -2, "pitch_var": 0.0, "max_voices": 1, "min_interval": 1.0, "loop": false},
+  "enemy_death_cry": {"files": ["res://audio/vocal/enemy_death_0.ogg", "res://audio/vocal/enemy_death_1.ogg"], "bus": "SFX", "volume_db": -4, "pitch_var": 0.06, "max_voices": 2, "min_interval": 0.2, "loop": false},
+  "enemy_burn_cry": {"files": ["res://audio/vocal/enemy_burn_cry_0.ogg", "res://audio/vocal/enemy_burn_cry_1.ogg"], "bus": "SFX", "volume_db": -4, "pitch_var": 0.05, "max_voices": 2, "min_interval": 0.2, "loop": false},
+  "smoke_laugh": {"files": ["res://audio/vocal/smoke_laugh.ogg"], "bus": "SFX", "volume_db": -3, "pitch_var": 0.0, "max_voices": 1, "min_interval": 1.0, "loop": false}
 }
