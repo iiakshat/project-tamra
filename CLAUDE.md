@@ -26,7 +26,8 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
   - **Story:** rewritten for a 12-year-old Tamra; motion comic (`src/ui/story_screen.gd`, `config/story.json` v2, panels in `assets/story`). Voices: `tools/tts_story.py` (Gemini 3.1 TTS emotion tags) + `tools/voice_check.py`. Two finale lines are `voice_pending` (Gemini billing cap hit 2026-10-26).
   - **Feel:** jump apex ~230 px with a forgiving tap; aggressive enemies + brute; JWALA 2 dmg; slower prana; goal door walk-in with no danger after; goal arrow and death hints; fall scream only over real pits; softer UI/foley sounds; audible inhale/exhale synced to the chest animation.
   - **UI:** Material Symbols + game-icons.net icons (credited in Settings > Credits), copper/lacquer theme, journey map level select (`config/map.json`), self-explaining daily panel, badge bug fixed.
-  - **Blocked:** the Google AI key's monthly spending cap is reached; image/TTS/listening checks fail until the owner raises it at ai.studio/billing.
+  - **Blocked:** the Google AI key fell to the free tier (image quota 0; earlier the monthly spend cap). Image/TTS generation fails until the owner restores billing at ai.studio/billing.
+  - **Story animation (owner, 2026-10-26: "looks like a presentation, move the characters"):** `story_screen.gd` supports per-panel `actors` (cut-outs on an empty plate) and per-beat `do` actions (enter, move, pose, flip, exit, draw light strokes, beam, smoke, shake). Only scene 1 uses it so far (painted line erased, the sign drawn live, the chosen shape drawn live). The full version needs `tools/gen_story_plates.sh` + `tools/gen_story_cast.sh` (Gemini) then choreography in `config/story.json`. Offline cut-outs (`tools/story_cutout.py`, rembg) proved unreliable on most panels.
 
 - **Round 3 (2026-10-25)**, from the owner's second device test and feedback:
   - Game name **TAMRA** (ताम्र), and the hero is called Tamra in the story.

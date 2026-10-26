@@ -27,6 +27,8 @@ var _token := 0
 var _stage: Node2D          # holds the painting sprites; moved/scaled as a camera
 var _art: Sprite2D
 var _old_art: Sprite2D
+var _scene: Node2D          # this panel's plate + actors + effects, in plate pixels
+var _actors := {}           # actor id -> Actor
 var _fx_layer: Node2D
 var _cam := Vector3(0.5, 0.5, 1.0)   # focus x, focus y (0..1 of the painting), zoom
 var _cam_tween: Tween
@@ -162,21 +164,30 @@ func _next_panel() -> void:
 
 
 func _show_panel(panel: Dictionary) -> void:
-	var path := "res://assets/story/%s.jpg" % str(panel.get("panel", ""))
+	# An animated panel has an empty background plate with separate character cut-outs;
+	# older panels are a single painting.
+	var plate := "res://assets/story/plates/%s.jpg" % str(panel.get("panel", ""))
+	var path := plate if panel.has("actors") and ResourceLoader.exists(plate) else "res://assets/story/%s.jpg" % str(panel.get("panel", ""))
 	var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
-	if _art != null:
-		_old_art = _art
+	if _scene != null:
+		var old := _scene
 		var fade := create_tween()
-		fade.tween_property(_old_art, "modulate:a", 0.0, 0.7)
-		fade.tween_callback(_old_art.queue_free)
+		fade.tween_property(old, "modulate:a", 0.0, 0.7)
+		fade.tween_callback(old.queue_free)
+	_scene = Node2D.new()
+	_scene.modulate.a = 0.0 if _art != null else 1.0
+	_stage.add_child(_scene)
+	if _scene.modulate.a < 1.0:
+		create_tween().tween_property(_scene, "modulate:a", 1.0, 0.7)
 	_art = Sprite2D.new()
 	_art.texture = tex
 	_art.centered = false
 	_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	_art.modulate.a = 0.0 if _old_art != null else 1.0
-	_stage.add_child(_art)
-	if _old_art != null:
-		create_tween().tween_property(_art, "modulate:a", 1.0, 0.7)
+	_scene.add_child(_art)
+	_actors.clear()
+	if path == plate:
+		for a in panel.get("actors", []):
+			_spawn(a)
 	var from := _vec3(panel.get("from", [0.5, 0.5, 1.0]))
 	var to := _vec3(panel.get("to", [0.5, 0.5, 1.05]))
 	_cam = from
@@ -212,8 +223,6 @@ func _apply_camera() -> void:
 		pos += Vector2(sin(_t * 47.0), cos(_t * 39.0)) * _shake
 	_stage.position = pos
 	_stage.scale = Vector2(s, s)
-	if _old_art != null and is_instance_valid(_old_art) and _old_art.texture != null:
-		_old_art.scale = tex_size / Vector2(_old_art.texture.get_size())
 
 
 func _punch() -> void:
@@ -325,6 +334,9 @@ func _play(beat: Dictionary) -> void:
 		_move_camera(_vec3(beat["focus"]), 1.3)
 	if bool(beat.get("punch", false)):
 		_punch()
+	for id in _actors:
+		(_actors[id] as Actor).talking = id == _speaker
+	_run(beat.get("do", []))
 	var stream: AudioStream = null
 	# "voice_pending": a line whose take is not generated yet; plays once the file exists.
 	var vid := str(beat.get("voice", beat.get("voice_pending", "")))
@@ -346,6 +358,8 @@ func _play(beat: Dictionary) -> void:
 
 
 func _on_voice_finished() -> void:
+	for id in _actors:
+		(_actors[id] as Actor).talking = false
 	var token := _token
 	await get_tree().create_timer(PAUSE_AFTER_VOICE).timeout
 	if token == _token and not _done and not _choices.visible:
@@ -390,6 +404,7 @@ func _pick(choice_id: String, index: int, opt: Dictionary) -> void:
 	Sfx.play("ui_click")
 	Game.save.story_choices[choice_id] = index
 	Services.analytics.log_event("story_choice", {"id": choice_id, "pick": index})
+	_run(opt.get("do", []))
 	var reply: Array = opt.get("reply", [])
 	_queue = reply.duplicate() + _queue
 	_next_beat()
@@ -405,6 +420,212 @@ func _finish() -> void:
 		Game.save.story_seen.append(key)
 	Game.persist()
 	finished.emit()
+
+
+# --- actors and actions -----------------------------------------------------------
+
+## Plate pixels of a 0..1 point on the plate.
+func _at(v) -> Vector2:
+	var a: Array = v
+	var size := Vector2(_art.texture.get_size()) if _art != null and _art.texture != null else Vector2(1600, 900)
+	return Vector2(float(a[0]) * size.x, float(a[1]) * size.y)
+
+
+## A character cut-out (assets/story/cast/<art>.png, feet at bottom centre) placed at
+## `at`, `h` tall (fraction of the plate height), optionally entering from `from`.
+func _spawn(a: Dictionary) -> Actor:
+	var actor := Actor.new()
+	actor.idle = str(a.get("idle", "breathe"))
+	_scene.add_child(actor)
+	var plate_h := float(_art.texture.get_height()) if _art != null and _art.texture != null else 900.0
+	actor.set_art(str(a.get("art", "")), float(a.get("h", 0.5)) * plate_h)
+	actor.sprite.flip_h = bool(a.get("flip", false))
+	actor.z_index = int(a.get("z", 0))
+	var at := _at(a.get("at", [0.5, 0.9]))
+	actor.position = at
+	if a.has("from"):
+		actor.position = _at(a["from"])
+		var tw := actor.create_tween()
+		tw.tween_interval(float(a.get("delay", 0.0)))
+		tw.tween_property(actor, "position", at, float(a.get("time", 1.0))).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if bool(a.get("fade_in", false)):
+		actor.modulate.a = 0.0
+		actor.create_tween().tween_property(actor, "modulate:a", 1.0, 0.8).set_delay(float(a.get("delay", 0.0)))
+	_actors[str(a.get("id", a.get("art", "")))] = actor
+	return actor
+
+
+## Runs a beat's (or a choice's) actions: enter, move, pose, flip, exit, draw, beam,
+## smoke, shake. Each is a small dictionary with an optional "delay"; see config/story.json.
+func _run(actions: Array) -> void:
+	for act in actions:
+		var d: Dictionary = act
+		var delay := float(d.get("delay", 0.0))
+		if delay > 0.0:
+			var later := d.duplicate()
+			later.erase("delay")
+			get_tree().create_timer(delay).timeout.connect(_run.bind([later]))
+			continue
+		var who := _actors.get(str(d.get("actor", "")), null) as Actor
+		if d.has("enter"):
+			_spawn(d["enter"])
+		elif d.has("move") and who != null:
+			var tw := who.create_tween()
+			tw.tween_property(who, "position", _at(d["move"]), float(d.get("time", 1.0))).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+		elif d.has("pose") and who != null:
+			who.pose(str(d["pose"]))
+		elif d.has("flip") and who != null:
+			who.sprite.flip_h = not who.sprite.flip_h
+		elif d.has("exit") and who != null:
+			var tw := who.create_tween()
+			tw.tween_property(who, "position", _at(d["exit"]), float(d.get("time", 1.0))).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+			tw.parallel().tween_property(who, "modulate:a", 0.0, float(d.get("time", 1.0)))
+		elif d.has("draw"):
+			_draw_light(str(d["draw"]), _at(d.get("at", [0.5, 0.5])), float(d.get("size", 0.12)) * 900.0, float(d.get("time", 1.4)))
+		elif d.has("beam"):
+			var b: Array = d["beam"]
+			_beam(_at(b[0]), _at(b[1]), float(d.get("time", 1.0)))
+		elif d.has("smoke"):
+			_smoke_burst(_at(d["smoke"]))
+		elif d.has("shake"):
+			_shake = float(d["shake"])
+
+
+## A sign drawn in the air, stroke by stroke: the light follows a fingertip.
+func _draw_light(shape: String, center: Vector2, size: float, time: float) -> void:
+	var pts := PackedVector2Array()
+	match shape:
+		"circle":
+			for i in 49:
+				var a := -PI / 2.0 + TAU * i / 48.0
+				pts.append(center + Vector2(cos(a), sin(a)) * size * 0.5)
+		"rise":  # an S-curve rising from the fingertip, like the first sign Maa teaches
+			for i in 33:
+				var t := float(i) / 32.0
+				pts.append(center + Vector2(sin(t * TAU * 1.1) * size * 0.22, -t * size * 1.5))
+		"wave":
+			for i in 33:
+				var t := float(i) / 32.0
+				pts.append(center + Vector2((t - 0.5) * size * 1.6, sin(t * TAU * 1.5) * size * 0.18))
+		_:  # "line"; "big_line" is longer
+			var length := size * (2.2 if shape == "big_line" else 1.2)
+			for i in 25:
+				var t := float(i) / 24.0
+				pts.append(center + Vector2((t - 0.5) * length, sin(t * PI) * -size * 0.12))
+	var halo := Line2D.new()
+	halo.width = 22.0
+	halo.default_color = Color(1.0, 0.8, 0.62, 0.22)
+	var core := Line2D.new()
+	core.width = 8.0
+	core.default_color = Color(1.0, 0.93, 0.82)
+	for l in [halo, core]:
+		var line := l as Line2D
+		line.joint_mode = Line2D.LINE_JOINT_ROUND
+		line.begin_cap_mode = Line2D.LINE_CAP_ROUND
+		line.end_cap_mode = Line2D.LINE_CAP_ROUND
+		line.z_index = 20
+		_scene.add_child(line)
+	var tip := Fx.glow(Color(1.0, 0.9, 0.75, 0.9), 26.0)
+	tip.z_index = 21
+	_scene.add_child(tip)
+	Sfx.play("cast_setu")
+	var tw := create_tween()
+	tw.tween_method(func(f: float) -> void:
+		var n := clampi(int(f * pts.size()), 1, pts.size())
+		var part := pts.slice(0, n)
+		halo.points = part
+		core.points = part
+		tip.position = part[part.size() - 1], 0.0, 1.0, time)
+	tw.tween_property(tip, "modulate:a", 0.0, 0.3)
+	tw.tween_interval(2.5)
+	tw.tween_property(halo, "modulate:a", 0.0, 0.8)
+	tw.parallel().tween_property(core, "modulate:a", 0.0, 0.8)
+
+
+## A flat pale beam of light between two points (Maa's signal from the tower).
+func _beam(from: Vector2, to: Vector2, time: float) -> void:
+	var dir := (to - from).normalized()
+	var side := Vector2(-dir.y, dir.x)
+	var poly := Polygon2D.new()
+	poly.polygon = PackedVector2Array([from + side * 10.0, from - side * 10.0, to - side * 60.0, to + side * 60.0])
+	poly.color = Color(0.86, 0.96, 1.0, 0.0)
+	poly.z_index = 15
+	_scene.add_child(poly)
+	var tw := create_tween()
+	tw.tween_property(poly, "color:a", 0.35, time)
+	tw.tween_property(poly, "color:a", 0.2, 1.5).set_trans(Tween.TRANS_SINE)
+
+
+func _smoke_burst(at: Vector2) -> void:
+	var p := CPUParticles2D.new()
+	p.position = at
+	p.amount = 26
+	p.one_shot = true
+	p.explosiveness = 0.85
+	p.lifetime = 1.6
+	p.direction = Vector2(0, -1)
+	p.spread = 70.0
+	p.initial_velocity_min = 60.0
+	p.initial_velocity_max = 180.0
+	p.gravity = Vector2(0, -20)
+	p.scale_amount_min = 30.0
+	p.scale_amount_max = 70.0
+	p.color = Color(0.07, 0.05, 0.1, 0.55)
+	p.z_index = 18
+	p.emitting = true
+	_scene.add_child(p)
+
+
+## One character on the story stage. The sprite breathes, floats, trembles or sways
+## around the actor's position (which tweens move), and bobs while its line plays.
+class Actor extends Node2D:
+	var sprite := Sprite2D.new()
+	var idle := "breathe"
+	var talking := false
+	var _height := 400.0
+	var _k := 1.0
+	var _t := randf() * 10.0
+
+	func _init() -> void:
+		sprite.centered = false
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		add_child(sprite)
+
+	func set_art(art: String, height: float) -> void:
+		_height = height
+		var path := "res://assets/story/cast/%s.png" % art
+		if not ResourceLoader.exists(path):
+			return
+		sprite.texture = load(path)
+		_k = height / float(sprite.texture.get_height())
+		sprite.scale = Vector2(_k, _k)
+		sprite.offset = Vector2(-sprite.texture.get_width() / 2.0, -sprite.texture.get_height())
+
+	## Swap to another pose with a quick squash, like a key frame change.
+	func pose(art: String) -> void:
+		set_art(art, _height)
+		sprite.scale = Vector2(_k * 1.05, _k * 0.95)
+
+	func _process(delta: float) -> void:
+		_t += delta
+		var pos := Vector2.ZERO
+		var rot := 0.0
+		match idle:
+			"float":
+				pos.y = sin(_t * 1.6) * 10.0
+				rot = sin(_t * 1.1) * 0.03
+			"tremble":
+				pos.x = sin(_t * 41.0) * 1.6
+			"sway":
+				rot = sin(_t * 0.9) * 0.025
+		if talking:
+			pos.y -= absf(sin(_t * 9.0)) * 4.0
+			rot += sin(_t * 6.0) * 0.012
+		sprite.position = pos
+		sprite.rotation = rot
+		# Breathing: a slow rise and fall; pose squashes settle back here too.
+		var breath := 1.0 + sin(_t * TAU / 2.8) * 0.012 if idle != "none" else 1.0
+		sprite.scale = sprite.scale.lerp(Vector2(_k, _k * breath), minf(1.0, delta * 12.0))
 
 
 # --- layout -------------------------------------------------------------------------

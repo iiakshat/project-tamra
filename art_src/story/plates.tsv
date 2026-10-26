@@ -1,0 +1,16 @@
+p01_fire	Also remove the glowing line of light in the air. Keep the hut, campfire, sea, palms and moon.
+p02_raid	Keep the burning huts and flames; remove every running villager and soldier too.
+p03_king	Keep the wall of black smoke and the fires; remove the king, the woman, the boy and the soldier.
+p04_fall	Keep the swirling ash pit and the red circle of sky; remove the falling boy and the silhouette at the rim.
+p05_pit	Keep the cavern, rocks, distant palace and moonbeam; remove the boy.
+p06_lights	Keep the cliff, sky and the rivers of light flowing to the palace; remove the boy.
+p07_guard	Keep the smoky cave; remove both the soldier and the boy and the dropped spear.
+p08_rim	Keep the rocky rim and the misty marsh; remove the boy.
+p09_marsh	Keep the mirror-like marsh, mist and drowned temples; remove the boy and his reflection.
+p10_reflection	Keep the still water and temples; remove the boy and the faces reflected in the water, leaving calm empty water.
+p11_smokeface	Keep the giant smoke face in the sky (it is part of the scene); remove only the small boy and the rock he stands on stays.
+p12_walls	Keep the colossal palace walls; remove the boy.
+p13_signal	Keep the tower and battlements; remove the woman in the cage, the boy and the vertical light beam. Keep an empty cage of smoke at the top.
+p14_alarm	Keep the battlements and torches; remove all soldiers, archers, the gong and the boy.
+p15_stair	Keep the tower interior and the spiral stair of smoke with the cage at the top; remove the boy.
+p16_tower	Keep the stormy tower top and the big fire; remove the king, the boy and the woman; keep an empty cage of smoke.

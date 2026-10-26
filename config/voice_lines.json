@@ -82,7 +82,8 @@
    "age": [
     "child",
     "teen"
-   ]
+   ],
+   "age_fix_pitch": 1.08
   },
   "maa": {
    "voice": "Kore",

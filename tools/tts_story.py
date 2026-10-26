@@ -112,6 +112,15 @@ def main() -> None:
             if not why:
                 break
             time.sleep(2)
+        if why.startswith("age") and cfg.get("age_fix_pitch"):
+            # Still sounds older than the character after retries: a gentle pitch lift
+            # (bigger lifts made the boy sound like a girl).
+            pf = cfg["age_fix_pitch"]
+            fixed = WORK / f"{vid}.fixed.wav"
+            subprocess.run([str(FFMPEG), "-y", "-loglevel", "error", "-i", str(WORK / f"{vid}.raw.wav"), "-af",
+                            f"asetrate={int(24000 * pf)},aresample=24000,atempo={1 / pf:.4f}," + TRIM, str(fixed)], check=True)
+            best = fixed
+            print(vid, "pitched", pf, flush=True)
         OUT.mkdir(parents=True, exist_ok=True)
         subprocess.run([str(FFMPEG), "-y", "-loglevel", "error", "-i", str(best), "-c:a", "libvorbis", "-q:a", "4", str(ogg)], check=True)
         time.sleep(1.5)
