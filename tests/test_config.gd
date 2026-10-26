@@ -610,3 +610,25 @@ func test_udaan_physics() -> void:
 		for c in GameConfig.level(id).get("cracked", []):
 			if id != "c1_l1":
 				check(float(c[2]) > full + rise + 20.0, "%s: cracked wall at x=%d (%d px) taller than jump + UDAAN" % [id, c[0], c[2]])
+
+
+## Owner saw coins stuck inside the rock in level 15: no pickup may sit inside ground,
+## a ledge, or a wall.
+func test_pickups_not_inside_solids() -> void:
+	for id in _levels_in_order():
+		var d := GameConfig.level(id)
+		var solids: Array[Rect2] = []
+		for g in d.get("ground", []):
+			solids.append(Rect2(float(g[0]), float(g[1]), float(g[2]), 2000.0))
+		for p in d.get("platforms", []):
+			solids.append(Rect2(float(p[0]), float(p[1]), float(p[2]), 26.0))
+		for key in ["cracked", "barriers"]:
+			for c in d.get(key, []):
+				solids.append(Rect2(float(c[0]) - 30.0, float(c[1]) - float(c[2]), 60.0, float(c[2])))
+		var points: Array = (d.get("embers", []) as Array).duplicate()
+		if d.has("heart"):
+			points.append(d["heart"])
+		for pt in points:
+			var at := Vector2(float(pt[0]), float(pt[1]))
+			for r in solids:
+				check(not r.grow(-4.0).has_point(at + Vector2(0, 20)), "%s: pickup at %s is inside a solid %s" % [id, str(at), str(r)])

@@ -15,13 +15,13 @@
   "prana_max": 100,
   "prana_regen": 1.6,
   "prana_regen_delay": 2.5,
-  "fatigue_run_after": 6.0,
-  "fatigue_run_rate": 12.0,
-  "fatigue_strike": 12.0,
+  "fatigue_run_after": 3.0,
+  "fatigue_run_rate": 20.0,
+  "fatigue_strike": 16.0,
   "fatigue_combo_window": 1.2,
-  "fatigue_jump": 7.0,
+  "fatigue_jump": 10.0,
   "fatigue_jump_window": 5.0,
-  "fatigue_decay": 6.0,
-  "fatigue_threshold": 60.0,
-  "pant_cooldown": 20.0
+  "fatigue_decay": 4.0,
+  "fatigue_threshold": 45.0,
+  "pant_cooldown": 12.0
 }

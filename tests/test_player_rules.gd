@@ -35,18 +35,18 @@ func test_hearts_last_the_level() -> void:
 func test_short_runs_do_not_tire() -> void:
 	var f := Fatigue.new(_cfg())
 	for i in 5:
-		_run_for(f, 5.0, "run")
+		_run_for(f, 2.5, "run")
 		_run_for(f, 0.5, "rest")
-	check(f.level < 1.0, "five 5 s dashes with pauses: not tired (%.1f)" % f.level)
+	check(f.level < 1.0, "five short dashes with pauses: not tired (%.1f)" % f.level)
 	check(not f.wants_pant(), "no pant")
 
 
 func test_long_run_tires() -> void:
 	var f := Fatigue.new(_cfg())
-	_run_for(f, 6.0, "run")
-	check(f.level < 1.0, "the first 6 s of running are free")
-	_run_for(f, 6.0, "run")
-	check(f.wants_pant(), "12 s of non-stop running: he wants to catch his breath (%.1f)" % f.level)
+	_run_for(f, 3.0, "run")
+	check(f.level < 1.0, "the first 3 s of running are free")
+	_run_for(f, 3.0, "run")
+	check(f.wants_pant(), "6 s of non-stop running: he wants to catch his breath (%.1f)" % f.level)
 	# Jumps inside the run do not break it.
 	var g := Fatigue.new(_cfg())
 	for i in 12:
@@ -60,7 +60,7 @@ func test_rest_drains_fatigue() -> void:
 	_run_for(f, 12.0, "run")
 	var tired := f.level
 	_run_for(f, 5.0, "rest")
-	check(f.level < tired - 25.0, "five seconds of walking drain it (%.1f -> %.1f)" % [tired, f.level])
+	check(f.level < tired - 15.0, "five seconds of walking drain it (%.1f -> %.1f)" % [tired, f.level])
 
 
 func test_fighting_tires() -> void:
@@ -95,8 +95,8 @@ func test_panting_is_rare() -> void:
 	check(f.wants_pant(), "tired")
 	f.panted()
 	check_eq(f.level, 0.0, "catching breath rests him")
-	_run_for(f, 12.0, "run")
+	_run_for(f, 8.0, "run")
 	check(not f.wants_pant(), "no second pant within the cooldown")
-	_run_for(f, 10.0, "run")
+	_run_for(f, 6.0, "run")
 	check(f.wants_pant(), "after the cooldown he can tire again")
-	check(float(_cfg()["pant_cooldown"]) >= 15.0, "cooldown at least 15 s")
+	check(float(_cfg()["pant_cooldown"]) >= 10.0, "cooldown at least 10 s")

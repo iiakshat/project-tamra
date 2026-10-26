@@ -35,6 +35,7 @@ var _bound := false
 var _land_t := 0.0
 var _hurt_t := 0.0
 var _breath_phase := 0.0
+var _air_t := 0.0  # time off the ground; brief blips at ground seams don't count
 var _inhaling := false
 var _mat: ShaderMaterial
 
@@ -99,6 +100,7 @@ func face(dir: int) -> void:
 
 
 func jumped() -> void:
+	_air_t = 1.0
 	_squash.value = 1.18
 	_squash.velocity = 0.0
 
@@ -220,6 +222,11 @@ func animate(delta: float, move: float, on_floor: bool, vy: float) -> void:
 		body.position.x = sin(_time * 60.0) * 1.2
 		return
 	body.position.x = 0.0
+	# A frame or two off the ground at a seam between ground pieces must not flash the
+	# jump/fall pose mid-run (owner: "hero still flickered a little while running").
+	_air_t = 0.0 if on_floor else _air_t + delta
+	if not on_floor and _air_t < 0.1 and vy > -150.0:
+		on_floor = true
 	var run := clampf(absf(move), 0.0, 1.0)
 	var forward := 1.0 if move * _facing >= 0.0 else -1.0
 	var breath_period := 0.0

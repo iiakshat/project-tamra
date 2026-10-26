@@ -135,8 +135,9 @@ func _ready() -> void:
 	_progress_back.anchor_top = 1.0
 	_progress_back.anchor_bottom = 1.0
 	_progress_back.anchor_right = 1.0
-	_progress_back.offset_top = -5
-	_progress_back.offset_bottom = -2
+	# Sits on the top edge of the bottom cinematic band, just under the picture.
+	_progress_back.offset_top = -47
+	_progress_back.offset_bottom = -44
 	root.add_child(_progress_back)
 	_progress = ColorRect.new()
 	_progress.color = Color(UiKit.ACCENT, 0.45)

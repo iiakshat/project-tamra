@@ -284,8 +284,7 @@ func _on_breathed(inhale: bool) -> void:
 	if _pant_left > 0:
 		var fade := -6.0 * (1.0 - _pant_timer / PANT_TIME)
 		Sfx.play("pant_in" if inhale else "pant_out", global_position, fade)
-	elif _breathing:
-		Sfx.play("breath_in" if inhale else "breath_out", global_position)
+	# No sound for resting breaths (owner: remove the idle breathing sound).
 
 
 ## The fall scream is for a fall into a pit, never for a jump that lands: it plays at

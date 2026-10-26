@@ -294,8 +294,12 @@ func _move_or_engage() -> float:
 	_state = State.CHASE
 	var dx := target.global_position.x - global_position.x
 	var dy := target.global_position.y - global_position.y
-	if absf(dx) > 6.0:
+	if absf(dx) > 24.0:
 		dir = 1 if dx > 0.0 else -1
+	# Hero almost straight below or above, out of spear reach: stand and watch him
+	# instead of pacing back and forth over him (owner saw guards jitter on stairs).
+	if absf(dy) >= 70.0 and absf(dx) < 70.0:
+		return 0.0
 	var reach := BRUTE_RANGE if kind == "brute" else ATTACK_RANGE
 	if absf(dx) < reach and absf(dy) < 70.0 and is_on_floor():
 		_start_windup(SLAM_WINDUP if kind == "brute" else WINDUP_TIME)
