@@ -277,7 +277,7 @@ func vanish() -> void:
 		_slam_mark.visible = false
 	Sfx.play("decoy_pop", global_position, 0.0, 0.7)
 	Fx.burst(get_parent(), global_position + Vector2(0, -60), Color(0.32, 0.3, 0.36, 0.85), 30, 180.0, false, 1.1)
-	puppet.shatter(get_parent(), global_position.y)
+	puppet.shatter(get_parent(), Puppet.ground_below(self, global_position))
 	get_tree().create_timer(1.5, false).timeout.connect(queue_free)
 
 
@@ -694,12 +694,12 @@ func _die(cause: String) -> void:
 		Sfx.play("fire_whoomph", global_position)
 		Sfx.play("burn_crackle", global_position)
 		Sfx.play("enemy_burn_cry" if kind != "brute" else "enemy_death_cry", global_position, 0.0, 0.8 if kind == "brute" else 1.0)
-		puppet.shatter(get_parent(), global_position.y, "fire")
+		puppet.shatter(get_parent(), Puppet.ground_below(self, global_position), "fire")
 		get_tree().create_timer(BurnFx.DISSOLVE + 0.8, false).timeout.connect(queue_free)
 	else:
 		Sfx.play("enemy_hurt", global_position, 2.0, 0.8)
 		Sfx.play("enemy_death_cry", global_position, 0.0, 0.8 if kind == "brute" else 1.0)
-		puppet.shatter(get_parent(), global_position.y)
+		puppet.shatter(get_parent(), Puppet.ground_below(self, global_position))
 		get_tree().create_timer(2.0, false).timeout.connect(queue_free)
 
 

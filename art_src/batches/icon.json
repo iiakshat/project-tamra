@@ -1,0 +1,35 @@
+{
+ "model": "gemini-3-pro-image",
+ "jobs": [
+  {
+   "key": "icon_a",
+   "out": "art_src/icon/icon_a.png",
+   "prompt": "Mobile game app icon artwork, square, NO text, NO letters, NO border. The boy hero from the reference image (same face, big dark eyes, wild black hair in a topknot with a copper ring, two tiny curved horn nubs, warm brown skin, faint copper tattoo lines). Flat 2D illustration style: bold simple shapes, thick clean dark outline, crisp, high contrast, readable when tiny. Deep indigo background. No glow, no bloom, no orange or yellow lighting, no 3D render look. Composition: front-facing close-up of his face and shoulders filling the frame, determined confident expression, eyes looking at the viewer.",
+   "refs": [
+    "art_src/chars/hero_ref.png"
+   ],
+   "aspect": "1:1",
+   "size": "1K"
+  },
+  {
+   "key": "icon_b",
+   "out": "art_src/icon/icon_b.png",
+   "prompt": "Mobile game app icon artwork, square, NO text, NO letters, NO border. The boy hero from the reference image (same face, big dark eyes, wild black hair in a topknot with a copper ring, two tiny curved horn nubs, warm brown skin, faint copper tattoo lines). Flat 2D illustration style: bold simple shapes, thick clean dark outline, crisp, high contrast, readable when tiny. Deep indigo background. No glow, no bloom, no orange or yellow lighting, no 3D render look. Composition: three-quarter view of his face, one finger raised beside his cheek drawing a single bright pale-copper line sign in the air, focused expression, simple flat circle shape behind his head in a slightly lighter indigo.",
+   "refs": [
+    "art_src/chars/hero_ref.png"
+   ],
+   "aspect": "1:1",
+   "size": "1K"
+  },
+  {
+   "key": "icon_c",
+   "out": "art_src/icon/icon_c.png",
+   "prompt": "Mobile game app icon artwork, square, NO text, NO letters, NO border. The boy hero from the reference image (same face, big dark eyes, wild black hair in a topknot with a copper ring, two tiny curved horn nubs, warm brown skin, faint copper tattoo lines). Flat 2D illustration style: bold simple shapes, thick clean dark outline, crisp, high contrast, readable when tiny. Deep indigo background. No glow, no bloom, no orange or yellow lighting, no 3D render look. Composition: front-facing head and shoulders, a big brave grin, his copper-banded staff held diagonally behind him across the frame, a flat crimson sash fluttering at the bottom edge.",
+   "refs": [
+    "art_src/chars/hero_ref.png"
+   ],
+   "aspect": "1:1",
+   "size": "1K"
+  }
+ ]
+}

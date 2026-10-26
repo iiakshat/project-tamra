@@ -518,7 +518,7 @@ func die(cause: String) -> void:
 	_end_glide()
 	Fx.burst(get_parent(), global_position + Vector2(0, -45), Color(0.95, 0.4, 0.6), 30, 240.0)
 	if cause != "fall":
-		puppet.shatter(get_parent(), global_position.y)
+		puppet.shatter(get_parent(), Puppet.ground_below(self, global_position))
 	else:
 		puppet.visible = false
 	Sfx.play("death", global_position)

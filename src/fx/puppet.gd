@@ -163,6 +163,16 @@ func flash(color: Color) -> void:
 ## The figure is left behind as a copy so this node can respawn right away. The copy
 ## keeps the on-screen size: a brute is drawn through a scaled rig, so the whole
 ## parent chain's scale is used, not just this node's (which only carries the facing).
+## Height of the first solid below `from` (world solids, collision layer 1), or a point
+## far below when there is only a pit. Deaths use it so a body killed mid-air drops.
+static func ground_below(node: Node2D, from: Vector2, reach: float = 1600.0) -> float:
+	var space := node.get_world_2d().direct_space_state
+	var q := PhysicsRayQueryParameters2D.create(from + Vector2(0, -4), from + Vector2(0, reach), 1)
+	q.hit_from_inside = false
+	var hit := space.intersect_ray(q)
+	return float(hit["position"].y) if not hit.is_empty() else from.y + reach
+
+
 func shatter(into: Node, ground_y: float, cause: String = "") -> void:
 	var ghost := Node2D.new()
 	var rel := get_global_transform()
@@ -172,7 +182,11 @@ func shatter(into: Node, ground_y: float, cause: String = "") -> void:
 	ghost.scale = Vector2(size.x * _facing, size.y)
 	ghost.z_index = 30
 	into.add_child(ghost)
-	ghost.global_position = Vector2(global_position.x, ground_y)
+	# Killed in the air: the body falls to the ground first (gravity-like ease), then
+	# the death plays out where it lands.
+	ghost.global_position = global_position
+	var drop := ground_y - global_position.y
+	var fall_time := sqrt(2.0 * maxf(drop, 0.0) / 2300.0) if drop > 6.0 else 0.0
 	var spr := Sprite2D.new()
 	spr.centered = false
 	spr.scale = sprite.scale
@@ -182,22 +196,33 @@ func shatter(into: Node, ground_y: float, cause: String = "") -> void:
 	spr.material = mat
 	ghost.add_child(spr)
 	var tw := ghost.create_tween()
+	if fall_time > 0.0:
+		_frame_into(spr, "fall" if _anims().has("fall") else _anim, 0 if _anims().has("fall") else _frame)
+		tw.tween_property(ghost, "global_position:y", ground_y, fall_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_callback(func() -> void: Fx.burst(into, Vector2(ghost.global_position.x, ground_y), Color(0.55, 0.5, 0.62, 0.7), 10, 120.0, false, 0.6))
 	if style == "hero" and _anims().has("death"):
-		_frame_into(spr, "death", 0)
+		tw.tween_callback(func() -> void: _frame_into(spr, "death", 0))
 		tw.tween_interval(0.3)
 		tw.tween_callback(func() -> void: _frame_into(spr, "death", 1))
 		tw.tween_interval(0.9)
 		tw.tween_property(ghost, "modulate:a", 0.0, 0.5)
 	elif cause == "fire":
-		_frame_into(spr, _anim, _frame)
-		tw.kill()
-		BurnFx.burn(into, ghost, mat, height() * size.y)
+		if fall_time <= 0.0:
+			_frame_into(spr, _anim, _frame)
+		var burn_h := height() * size.y
+		tw.tween_callback(func() -> void:
+			_frame_into(spr, _anim, _frame)
+			BurnFx.burn(into, ghost, mat, burn_h))
 		visible = false
 		return
 	else:
-		_frame_into(spr, _anim, _frame)
+		if fall_time <= 0.0:
+			_frame_into(spr, _anim, _frame)
+		var puff_at := Vector2(global_position.x, ground_y - height() * 0.5)
+		tw.tween_callback(func() -> void:
+			_frame_into(spr, _anim, _frame)
+			Fx.burst(into, puff_at, Color(0.12, 0.1, 0.12, 0.85), 26, 160.0, false, 1.3))
 		mat.set_shader_parameter("dissolve_edge", Color(1.0, 0.45, 0.15))
-		Fx.burst(into, global_position + Vector2(0, -height() * 0.5), Color(0.12, 0.1, 0.12, 0.85), 26, 160.0, false, 1.3)
 		tw.tween_method(func(v: float) -> void: mat.set_shader_parameter("dissolve", v), 0.0, 1.0, 0.85)
 	tw.tween_callback(ghost.queue_free)
 	visible = false
