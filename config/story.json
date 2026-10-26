@@ -831,38 +831,6 @@
    ]
   }
  ],
- "after_c1_l3": [
-  {
-   "panel": "p08_rim",
-   "fx": "light",
-   "from": [
-    0.4,
-    0.6,
-    1.1
-   ],
-   "to": [
-    0.6,
-    0.45,
-    1.0
-   ],
-   "beats": [
-    {
-     "speaker": "maa",
-     "hi": "ताम्र... जल्दी... धुआँ मेरी साँसें छीन रहा है।",
-     "en": "Tamra... hurry... the smoke is stealing my breath.",
-     "tag": "weak, coughing, far away",
-     "voice": "st_a13_00"
-    },
-    {
-     "speaker": "tamra",
-     "hi": "माँ? माँ, मैं आपको सुन सकता हूँ! बस थोड़ा और!",
-     "en": "Maa? Maa, I can hear you! Just a little longer!",
-     "tag": "hopeful, emotional",
-     "voice": "st_a13_01"
-    }
-   ]
-  }
- ],
  "c2_intro": [
   {
    "panel": "p09_marsh",
@@ -1005,38 +973,6 @@
    ]
   }
  ],
- "after_c2_l3": [
-  {
-   "panel": "p12_walls",
-   "fx": "embers",
-   "from": [
-    0.5,
-    0.7,
-    1.1
-   ],
-   "to": [
-    0.5,
-    0.3,
-    1.0
-   ],
-   "beats": [
-    {
-     "speaker": "narrator",
-     "hi": "दलदल के पार, महल की दीवारें। सोने की... पर काली राख में दबी हुई।",
-     "en": "Beyond the marsh, the palace walls. Gold... but buried in black ash.",
-     "tag": "grim, awed, clear storytelling voice",
-     "voice": "st_a23_00"
-    },
-    {
-     "speaker": "tamra",
-     "hi": "इतनी ऊँची... पर माँ ऊपर है। तो मैं भी ऊपर जाऊँगा।",
-     "en": "So high... but Maa is up there. So up I go.",
-     "tag": "nervous, then brave",
-     "voice": "st_a23_01"
-    }
-   ]
-  }
- ],
  "c3_intro": [
   {
    "panel": "p13_signal",
@@ -1152,7 +1088,71 @@
    ]
   }
  ],
- "after_c3_l3": [
+ "after_c1_l5": [
+  {
+   "panel": "p08_rim",
+   "fx": "light",
+   "from": [
+    0.4,
+    0.6,
+    1.1
+   ],
+   "to": [
+    0.6,
+    0.45,
+    1.0
+   ],
+   "beats": [
+    {
+     "speaker": "maa",
+     "hi": "ताम्र... जल्दी... धुआँ मेरी साँसें छीन रहा है।",
+     "en": "Tamra... hurry... the smoke is stealing my breath.",
+     "tag": "weak, coughing, far away",
+     "voice": "st_a13_00"
+    },
+    {
+     "speaker": "tamra",
+     "hi": "माँ? माँ, मैं आपको सुन सकता हूँ! बस थोड़ा और!",
+     "en": "Maa? Maa, I can hear you! Just a little longer!",
+     "tag": "hopeful, emotional",
+     "voice": "st_a13_01"
+    }
+   ]
+  }
+ ],
+ "after_c2_l5": [
+  {
+   "panel": "p12_walls",
+   "fx": "embers",
+   "from": [
+    0.5,
+    0.7,
+    1.1
+   ],
+   "to": [
+    0.5,
+    0.3,
+    1.0
+   ],
+   "beats": [
+    {
+     "speaker": "narrator",
+     "hi": "दलदल के पार, महल की दीवारें। सोने की... पर काली राख में दबी हुई।",
+     "en": "Beyond the marsh, the palace walls. Gold... but buried in black ash.",
+     "tag": "grim, awed, clear storytelling voice",
+     "voice": "st_a23_00"
+    },
+    {
+     "speaker": "tamra",
+     "hi": "इतनी ऊँची... पर माँ ऊपर है। तो मैं भी ऊपर जाऊँगा।",
+     "en": "So high... but Maa is up there. So up I go.",
+     "tag": "nervous, then brave",
+     "voice": "st_a23_01"
+    }
+   ]
+  }
+ ],
+ "after_c3_l5": [
   {
    "panel": "p16_tower",
    "fx": "embers_heavy",
