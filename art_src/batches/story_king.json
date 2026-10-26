@@ -1,0 +1,16 @@
+{
+ "model": "gemini-3-pro-image",
+ "jobs": [
+  {
+   "key": "cast_king",
+   "out": "art_src/story/cast/king.png",
+   "prompt": "Pose sheet of a towering fantasy tyrant king (an asura emperor) for a family-friendly animated story. Grid of 2 columns x 2 rows: 1) standing facing left, sceptre raised high, stern smile. 2) leaning forward facing left, pointing down. 3) facing left, arms spread wide, laughing. 4) standing facing left, arms crossed, triumphant. Robe ends in flat curls of black smoke. Plain flat pure green background (#00FF00). Art style: EXACTLY the flat 2D animated-film style of the FIRST reference image (a flat 2D night scene) (bold flat colour shapes, crisp clean outlines, limited palette, subtle paper grain, no glow, no 3D, no realistic lighting). The character design (face, hair, costume, colours) follows the OTHER reference image exactly. Each pose is a separate full-body figure in its own equal cell, all at the SAME SCALE, fully inside the cell with margin, no props unless named, no shadows, no ground. No text.",
+   "refs": [
+    "art_src/story/plates/p01_fire.png",
+    "art_src/chars/king_ref.png"
+   ],
+   "aspect": "1:1",
+   "size": "2K"
+  }
+ ]
+}

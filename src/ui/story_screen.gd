@@ -276,18 +276,20 @@ func _build_fx(kind: String) -> void:
 			p.direction = Vector2(1, -0.2)
 			p.initial_velocity_min = 10.0
 			p.initial_velocity_max = 30.0
-			p.scale_amount_min = 60.0
-			p.scale_amount_max = 140.0
-			p.color = Color(0.06, 0.04, 0.09, 0.22)
+			p.texture = Fx.glow_texture()
+			p.scale_amount_min = 60.0 / 40.0
+			p.scale_amount_max = 140.0 / 40.0
+			p.color = Color(0.06, 0.04, 0.09, 0.3)
 		"mist":
 			p.amount = 12
 			p.lifetime = 8.0
 			p.direction = Vector2(1, 0)
 			p.initial_velocity_min = 8.0
 			p.initial_velocity_max = 24.0
-			p.scale_amount_min = 80.0
-			p.scale_amount_max = 160.0
-			p.color = Color(0.55, 0.85, 0.85, 0.08)
+			p.texture = Fx.glow_texture()
+			p.scale_amount_min = 80.0 / 40.0
+			p.scale_amount_max = 160.0 / 40.0
+			p.color = Color(0.55, 0.85, 0.85, 0.1)
 		"light":
 			p.amount = 26
 			p.direction = Vector2(0, -1)
@@ -568,9 +570,10 @@ func _smoke_burst(at: Vector2) -> void:
 	p.initial_velocity_min = 60.0
 	p.initial_velocity_max = 180.0
 	p.gravity = Vector2(0, -20)
-	p.scale_amount_min = 30.0
-	p.scale_amount_max = 70.0
-	p.color = Color(0.07, 0.05, 0.1, 0.55)
+	p.texture = Fx.glow_texture()
+	p.scale_amount_min = 60.0 / 40.0
+	p.scale_amount_max = 130.0 / 40.0
+	p.color = Color(0.07, 0.05, 0.1, 0.7)
 	p.z_index = 18
 	p.emitting = true
 	_scene.add_child(p)

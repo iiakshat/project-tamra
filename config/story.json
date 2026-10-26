@@ -38,10 +38,10 @@
       {
        "draw": "rise",
        "at": [
-        0.52,
-        0.6
+        0.6,
+        0.66
        ],
-       "size": 0.2,
+       "size": 0.22,
        "time": 2.2,
        "delay": 0.8
       }
@@ -57,6 +57,43 @@
       0.58,
       0.48,
       1.2
+     ],
+     "do": [
+      {
+       "actor": "tamra",
+       "move": [
+        0.65,
+        0.86
+       ],
+       "time": 0.14
+      },
+      {
+       "actor": "tamra",
+       "move": [
+        0.65,
+        0.91
+       ],
+       "time": 0.2,
+       "delay": 0.16
+      },
+      {
+       "actor": "tamra",
+       "move": [
+        0.65,
+        0.87
+       ],
+       "time": 0.14,
+       "delay": 0.5
+      },
+      {
+       "actor": "tamra",
+       "move": [
+        0.65,
+        0.91
+       ],
+       "time": 0.2,
+       "delay": 0.66
+      }
      ]
     },
     {
@@ -79,7 +116,7 @@
          "draw": "big_line",
          "at": [
           0.52,
-          0.4
+          0.42
          ],
          "size": 0.18,
          "time": 1.6
@@ -103,7 +140,7 @@
          "draw": "circle",
          "at": [
           0.52,
-          0.36
+          0.38
          ],
          "size": 0.26,
          "time": 1.6
@@ -129,10 +166,41 @@
      "hi": "वादा, माँ।",
      "en": "I promise, Maa.",
      "tag": "sincere, sleepy",
-     "voice": "st_c1_05"
+     "voice": "st_c1_05",
+     "do": [
+      {
+       "actor": "tamra",
+       "pose": "tamra_12"
+      }
+     ]
     }
    ],
-   "actors": []
+   "actors": [
+    {
+     "id": "maa",
+     "art": "maa_1",
+     "at": [
+      0.36,
+      0.91
+     ],
+     "h": 0.52
+    },
+    {
+     "id": "tamra",
+     "art": "tamra_1",
+     "at": [
+      0.65,
+      0.91
+     ],
+     "h": 0.42,
+     "flip": true,
+     "from": [
+      1.1,
+      0.91
+     ],
+     "time": 1.6
+    }
+   ]
   },
   {
    "panel": "p02_raid",
@@ -167,6 +235,24 @@
       0.35,
       0.55,
       1.2
+     ],
+     "do": [
+      {
+       "actor": "maa",
+       "move": [
+        0.3,
+        0.95
+       ],
+       "time": 0.8
+      },
+      {
+       "actor": "guard2",
+       "move": [
+        0.56,
+        0.95
+       ],
+       "time": 1.2
+      }
      ]
     },
     {
@@ -190,6 +276,16 @@
          "tag": "breathless, running",
          "voice": "st_c1_09a"
         }
+       ],
+       "do": [
+        {
+         "actor": "maa",
+         "exit": [
+          -0.2,
+          0.95
+         ],
+         "time": 1.2
+        }
        ]
       },
       {
@@ -204,9 +300,91 @@
          "voice": "st_c1_09b",
          "punch": true
         }
+       ],
+       "do": [
+        {
+         "draw": "line",
+         "at": [
+          0.62,
+          0.5
+         ],
+         "size": 0.25,
+         "time": 0.7
+        },
+        {
+         "actor": "guard",
+         "pose": "guard_6",
+         "delay": 0.7
+        },
+        {
+         "actor": "guard2",
+         "move": [
+          0.78,
+          0.95
+         ],
+         "time": 0.4,
+         "delay": 0.7
+        },
+        {
+         "shake": 10,
+         "delay": 0.7
+        },
+        {
+         "smoke": [
+          0.75,
+          0.6
+         ],
+         "delay": 0.7
+        }
        ]
       }
      ]
+    }
+   ],
+   "actors": [
+    {
+     "id": "maa",
+     "art": "maa_2",
+     "at": [
+      0.4,
+      0.95
+     ],
+     "h": 0.66,
+     "from": [
+      0.12,
+      0.95
+     ],
+     "time": 1.2
+    },
+    {
+     "id": "guard",
+     "art": "guard_1",
+     "at": [
+      0.84,
+      0.93
+     ],
+     "h": 0.6,
+     "from": [
+      1.15,
+      0.93
+     ],
+     "time": 1.0,
+     "delay": 0.3
+    },
+    {
+     "id": "guard2",
+     "art": "guard_5",
+     "at": [
+      0.68,
+      0.95
+     ],
+     "h": 0.56,
+     "from": [
+      1.25,
+      0.95
+     ],
+     "time": 1.6,
+     "delay": 0.9
     }
    ]
   },
@@ -229,7 +407,38 @@
      "hi": "और फिर... धुएँ से वो निकला। धुएँ का राजा।",
      "en": "And then... out of the smoke he came. The Smoke King.",
      "tag": "tense, ominous, full clear voice",
-     "voice": "st_c1_10"
+     "voice": "st_c1_10",
+     "do": [
+      {
+       "enter": {
+        "id": "king",
+        "art": "king_1",
+        "at": [
+         0.27,
+         0.95
+        ],
+        "h": 0.95,
+        "flip": true,
+        "from": [
+         0.27,
+         1.3
+        ],
+        "time": 2.4,
+        "fade_in": true
+       }
+      },
+      {
+       "smoke": [
+        0.27,
+        0.7
+       ],
+       "delay": 0.3
+      },
+      {
+       "shake": 6,
+       "delay": 0.4
+      }
+     ]
     },
     {
      "speaker": "king",
@@ -241,6 +450,12 @@
       0.66,
       0.3,
       1.25
+     ],
+     "do": [
+      {
+       "actor": "king",
+       "pose": "king_2"
+      }
      ]
     },
     {
@@ -261,7 +476,48 @@
      "en": "Your light will make my fire eternal. And the boy... throw him into the Ash Pits.",
      "tag": "cruel, slow",
      "voice": "st_c1_13",
-     "punch": true
+     "punch": true,
+     "do": [
+      {
+       "actor": "king",
+       "pose": "king_3"
+      },
+      {
+       "smoke": [
+        0.55,
+        0.7
+       ]
+      },
+      {
+       "actor": "maa",
+       "pose": "maa_3"
+      },
+      {
+       "actor": "maa",
+       "move": [
+        0.45,
+        0.5
+       ],
+       "time": 2.0
+      },
+      {
+       "enter": {
+        "id": "guard",
+        "art": "guard_6",
+        "at": [
+         0.9,
+         0.94
+        ],
+        "h": 0.62,
+        "from": [
+         1.2,
+         0.94
+        ],
+        "time": 0.8,
+        "delay": 1.2
+       }
+      }
+     ]
     },
     {
      "speaker": "tamra",
@@ -269,7 +525,52 @@
      "en": "MAA! No! Maa!",
      "tag": "screaming, sobbing",
      "voice": "st_c1_14",
-     "punch": true
+     "punch": true,
+     "do": [
+      {
+       "actor": "tamra",
+       "pose": "tamra_3"
+      },
+      {
+       "actor": "maa",
+       "move": [
+        0.36,
+        0.3
+       ],
+       "time": 2.5
+      },
+      {
+       "actor": "maa",
+       "exit": [
+        0.3,
+        0.05
+       ],
+       "time": 1.5,
+       "delay": 2.5
+      }
+     ]
+    }
+   ],
+   "actors": [
+    {
+     "id": "maa",
+     "art": "maa_6",
+     "at": [
+      0.55,
+      0.92
+     ],
+     "h": 0.5
+    },
+    {
+     "id": "tamra",
+     "art": "tamra_2",
+     "at": [
+      0.76,
+      0.93
+     ],
+     "h": 0.44,
+     "flip": true,
+     "idle": "tremble"
     }
    ]
   },
@@ -293,14 +594,47 @@
      "hi": "अँधेरा। राख। और गिरते हुए... बस माँ की आख़िरी बात।",
      "en": "Darkness. Ash. And falling... only his mother's last words.",
      "tag": "sorrowful, slow, full voice",
-     "voice": "st_c1_15"
+     "voice": "st_c1_15",
+     "do": [
+      {
+       "actor": "tamra",
+       "move": [
+        0.53,
+        0.8
+       ],
+       "time": 6.0
+      }
+     ]
     },
     {
      "speaker": "maa",
      "hi": "ताम्र... बचाने के लिए। याद रखना।",
      "en": "Tamra... to protect. Remember.",
      "tag": "calling out loudly, emotional",
-     "voice": "st_c1_16"
+     "voice": "st_c1_16",
+     "do": [
+      {
+       "actor": "tamra",
+       "exit": [
+        0.56,
+        1.25
+       ],
+       "time": 3.0,
+       "delay": 1.0
+      }
+     ]
+    }
+   ],
+   "actors": [
+    {
+     "id": "tamra",
+     "art": "tamra_4",
+     "at": [
+      0.5,
+      0.5
+     ],
+     "h": 0.4,
+     "idle": "float"
     }
    ]
   },
@@ -347,7 +681,24 @@
       0.3,
       0.7,
       1.3
+     ],
+     "do": [
+      {
+       "actor": "tamra",
+       "pose": "tamra_6"
+      }
      ]
+    }
+   ],
+   "actors": [
+    {
+     "id": "tamra",
+     "art": "tamra_5",
+     "at": [
+      0.3,
+      0.93
+     ],
+     "h": 0.4
     }
    ]
   }
@@ -430,7 +781,7 @@
          "speaker": "tamra",
          "hi": "बचाने के लिए... जलाने के लिए नहीं। माँ ने सिखाया था। जाओ।",
          "en": "To protect... not to burn. Maa taught me that. Go.",
-         "tag": "conflicted, then calm",
+         "tag": "conflicted, then firm, clear voice",
          "voice": "st_a12_01b"
         },
         {
@@ -512,7 +863,7 @@
      "speaker": "tamra",
      "hi": "मेरी आँखें... जल रही हैं। मैं... धोखे के पार देख सकता हूँ!",
      "en": "My eyes... they're burning. I can... see through the lies!",
-     "tag": "amazed, breathless",
+     "tag": "amazed, excited, clear voice",
      "voice": "st_c2_02",
      "punch": true
     }
@@ -802,8 +1153,8 @@
      "speaker": "tamra",
      "hi": "देर? नहीं, राजा। अभी तो शुरुआत है।",
      "en": "Too late? No, King. This is only the beginning.",
-     "tag": "quiet fury, determined",
-     "voice_pending": "st_a33_02",
+     "tag": "fierce, defiant, loud and clear",
+     "voice": "st_a33_02",
      "punch": true,
      "focus": [
       0.3,
@@ -816,7 +1167,7 @@
      "hi": "धुएँ की मीनार पर, आख़िरी युद्ध शुरू होने वाला है... जारी रहेगा।",
      "en": "On the Tower of Smoke, the last battle is about to begin... to be continued.",
      "tag": "dramatic, slow",
-     "voice_pending": "st_a33_03"
+     "voice": "st_a33_03"
     }
    ]
   }

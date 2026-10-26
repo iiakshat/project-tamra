@@ -1,0 +1,99 @@
+{
+ "model": "gemini-3-pro-image",
+ "jobs": [
+  {
+   "key": "p01_fire_plate",
+   "out": "art_src/story/plates/p01_fire.png",
+   "prompt": "Recreate this exact image: same composition, camera, environment, colours and flat 2D style, but completely EMPTY of people and creatures: remove every character and fill the space they covered with the matching background so nothing looks cut out. Also remove the glowing line of light in the air. Keep the hut, campfire, sea, palms and moon. No text, no glow, no orange or yellow lighting.",
+   "refs": [
+    "art_src/story/p01_fire.png"
+   ],
+   "aspect": "16:9",
+   "size": "2K"
+  },
+  {
+   "key": "p02_raid_plate",
+   "out": "art_src/story/plates/p02_raid.png",
+   "prompt": "Recreate this exact image: same composition, camera, environment, colours and flat 2D style, but completely EMPTY of people and creatures: remove every character and fill the space they covered with the matching background so nothing looks cut out. Keep the burning huts and flames; remove every running villager and soldier too. No text, no glow, no orange or yellow lighting.",
+   "refs": [
+    "art_src/story/p02_raid.png"
+   ],
+   "aspect": "16:9",
+   "size": "2K"
+  },
+  {
+   "key": "p03_king_plate",
+   "out": "art_src/story/plates/p03_king.png",
+   "prompt": "Recreate this exact image: same composition, camera, environment, colours and flat 2D style, but completely EMPTY of people and creatures: remove every character and fill the space they covered with the matching background so nothing looks cut out. Keep the wall of black smoke and the fires; remove the king, the woman, the boy and the soldier. No text, no glow, no orange or yellow lighting.",
+   "refs": [
+    "art_src/story/p03_king.png"
+   ],
+   "aspect": "16:9",
+   "size": "2K"
+  },
+  {
+   "key": "p04_fall_plate",
+   "out": "art_src/story/plates/p04_fall.png",
+   "prompt": "Recreate this exact image: same composition, camera, environment, colours and flat 2D style, but completely EMPTY of people and creatures: remove every character and fill the space they covered with the matching background so nothing looks cut out. Keep the swirling ash pit and the red circle of sky; remove the falling boy and the silhouette at the rim. No text, no glow, no orange or yellow lighting.",
+   "refs": [
+    "art_src/story/p04_fall.png"
+   ],
+   "aspect": "16:9",
+   "size": "2K"
+  },
+  {
+   "key": "p05_pit_plate",
+   "out": "art_src/story/plates/p05_pit.png",
+   "prompt": "Recreate this exact image: same composition, camera, environment, colours and flat 2D style, but completely EMPTY of people and creatures: remove every character and fill the space they covered with the matching background so nothing looks cut out. Keep the cavern, rocks, distant palace and moonbeam; remove the boy. No text, no glow, no orange or yellow lighting.",
+   "refs": [
+    "art_src/story/p05_pit.png"
+   ],
+   "aspect": "16:9",
+   "size": "2K"
+  },
+  {
+   "key": "cast_tamra",
+   "out": "art_src/story/cast/tamra.png",
+   "prompt": "Pose sheet of the boy TAMRA (12 years old) for animated story cutscenes. Grid of 4 columns x 3 rows, reading order: 1) sitting cross-legged facing right, pointing his index finger forward, delighted smile. 2) standing facing right, frightened, hands up near his face. 3) facing right, screaming and crying, reaching forward with both arms. 4) falling backwards, arms flailing up. 5) sitting on the ground facing right, bruised, looking up with hope. 6) standing facing right, looking up, determined, fists clenched. 7) standing facing right holding his copper-banded staff ready. 8) kneeling facing right, looking down, surprised. 9) running facing right with the staff. 10) fierce battle stance facing right, staff raised high. 11) standing facing right, exhausted, bent forward, panting. 12) standing facing right, smiling softly, sleepy. Plain flat pure green background (#00FF00). Art style: EXACTLY the flat 2D animated-film style of the FIRST reference image (bold flat colour shapes, crisp clean outlines, limited palette, subtle paper grain, no glow, no 3D, no realistic lighting). The character design (face, hair, costume, colours) follows the OTHER reference image exactly. Each pose is a separate full-body figure in its own equal cell, all at the SAME SCALE, fully inside the cell with margin, no props unless named, no shadows, no ground. No text.",
+   "refs": [
+    "art_src/story/p01_fire.png",
+    "art_src/chars/hero_ref2.png"
+   ],
+   "aspect": "4:3",
+   "size": "2K"
+  },
+  {
+   "key": "cast_maa",
+   "out": "art_src/story/cast/maa.png",
+   "prompt": "Pose sheet of MAA, the boy's mother. Grid of 3 columns x 2 rows, reading order: 1) kneeling facing right, guiding with her index finger extended, smiling. 2) standing facing right, one arm out shielding someone behind her, looking back in panic. 3) lifted in the air, legs dangling, reaching down with both arms, crying. 4) standing facing right, hand on her heart, loving smile. 5) kneeling facing left, one hand raised high, palm open, calling out. 6) slumped sitting facing left, weak, one hand reaching forward. Plain flat pure magenta background (#FF00FF). Art style: EXACTLY the flat 2D animated-film style of the FIRST reference image (bold flat colour shapes, crisp clean outlines, limited palette, subtle paper grain, no glow, no 3D, no realistic lighting). The character design (face, hair, costume, colours) follows the OTHER reference image exactly. Each pose is a separate full-body figure in its own equal cell, all at the SAME SCALE, fully inside the cell with margin, no props unless named, no shadows, no ground. No text.",
+   "refs": [
+    "art_src/story/p01_fire.png",
+    "art_src/chars/maa_ref.png"
+   ],
+   "aspect": "3:2",
+   "size": "2K"
+  },
+  {
+   "key": "cast_king",
+   "out": "art_src/story/cast/king.png",
+   "prompt": "Pose sheet of THE SMOKE KING. Grid of 2 columns x 2 rows: 1) standing facing left, sceptre raised high, cruel smile. 2) leaning forward facing left, pointing down. 3) facing left, arms spread wide, laughing. 4) standing facing left, arms crossed, triumphant. Robe ends in flat curls of black smoke. Plain flat pure green background (#00FF00). Art style: EXACTLY the flat 2D animated-film style of the FIRST reference image (bold flat colour shapes, crisp clean outlines, limited palette, subtle paper grain, no glow, no 3D, no realistic lighting). The character design (face, hair, costume, colours) follows the OTHER reference image exactly. Each pose is a separate full-body figure in its own equal cell, all at the SAME SCALE, fully inside the cell with margin, no props unless named, no shadows, no ground. No text.",
+   "refs": [
+    "art_src/story/p03_king.png",
+    "art_src/chars/king_ref.png"
+   ],
+   "aspect": "1:1",
+   "size": "2K"
+  },
+  {
+   "key": "cast_guard",
+   "out": "art_src/story/cast/guard.png",
+   "prompt": "Pose sheet of SMOKEBOUND SOLDIERS. Grid of 3 columns x 2 rows: 1) facing left, shouting, spear raised, torch in the other hand. 2) a YOUNG soldier, mask off, scared teenage face, sitting facing left, palms raised, begging. 3) facing right, striking a large bronze gong (gong included). 4) a hooded archer facing right drawing a bow. 5) facing left, running with spear lowered. 6) facing left, grabbing forward, menacing. Plain flat pure green background (#00FF00). Art style: EXACTLY the flat 2D animated-film style of the FIRST reference image (bold flat colour shapes, crisp clean outlines, limited palette, subtle paper grain, no glow, no 3D, no realistic lighting). The character design (face, hair, costume, colours) follows the OTHER reference image exactly. Each pose is a separate full-body figure in its own equal cell, all at the SAME SCALE, fully inside the cell with margin, no props unless named, no shadows, no ground. No text.",
+   "refs": [
+    "art_src/story/p02_raid.png",
+    "art_src/chars/soldier_ref.png"
+   ],
+   "aspect": "3:2",
+   "size": "2K"
+  }
+ ]
+}
