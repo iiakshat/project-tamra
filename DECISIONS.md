@@ -2,6 +2,9 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-26 — UI overhaul: real icon sets, copper-and-lacquer theme, journey map
+Owner feedback on 0.3.0: hand-drawn icons were unclear, the HUD looked "basic old game", level select should be a map, the daily panel did not say what it was for, the settings heart was confusing, and the gift badge stayed red after claiming. Changes: icons now come from Material Symbols (Apache 2.0) and game-icons.net (CC BY 3.0, credited), never from copyrighted sets (that would risk a Play takedown). Every screen uses the generated panel, medallion and pill textures, with icon + one or two word labels where an icon alone is ambiguous. Motion is flat: scale pulses, fades, a shimmer; no glows or bloom (owner art direction). Level select is a scrollable painted journey map whose node positions live in `config/map.json`, so new art needs no code. The badge bug: `daily_waiting()` counted an unplayed daily trial as "waiting"; a trial is something to play, not to claim, so the badge now shows only for a claimable blessing or finished vow (`DailyRules.claimable`, tested). Changes if: retention data shows the trial needs its own nudge (then a separate, non-red marker).
+
 ## 2026-10-25 — Prana: mantras cost energy
 The owner asked whether unlimited casting was intended (it wasn't). Their log showed Mirror Marsh cleared in 23 s with JWALA spam. Each mantra now costs Prana (max 100, regenerates 3/s after 1.5 s idle). Orbs and defeated guards refill it. Staff strikes matter again.
 

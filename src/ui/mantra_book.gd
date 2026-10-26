@@ -33,7 +33,8 @@ func _ready() -> void:
 		margin.add_theme_constant_override("margin_" + side, 24)
 	add_child(margin)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UiKit.panel_style(0.95))
+	panel.add_theme_stylebox_override("panel", UiKit.frame_style(0.6, 4))
+	panel.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	margin.add_child(panel)
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 10)
@@ -42,9 +43,12 @@ func _ready() -> void:
 	var header := HBoxContainer.new()
 	var icon := UiKit.IconView.new()
 	icon.icon = "book"
-	icon.color = UiKit.ACCENT
-	icon.custom_minimum_size = Vector2(48, 48)
+	icon.color = UiKit.COPPER
+	icon.custom_minimum_size = Vector2(44, 44)
 	header.add_child(icon)
+	var heading := UiKit.title("Mantras", 34, UiKit.TEXT, 6)
+	heading.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(heading)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)

@@ -202,11 +202,11 @@ func claim_vows() -> int:
 	return reward
 
 
-## Something waiting to be collected on the title screen: drives the badge dot.
+## Something waiting to be collected right now: drives the menu badge. False once every
+## claimable reward is claimed (an unplayed trial does not count; it is not a claim).
 func daily_waiting() -> bool:
 	daily.refresh(today())
-	return daily.blessing_available(today()) or daily.unclaimed_vows() > 0 \
-		or (not daily.trial(today(), cleared_levels()).is_empty() and not daily.trial_done(today()))
+	return daily.claimable(today())
 
 
 ## Records the run. Returns {"banked", "buyable", "stars", "trial_reward"} for the results.

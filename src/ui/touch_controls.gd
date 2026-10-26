@@ -151,8 +151,10 @@ class PadView extends Control:
 			var pressed := controls.is_pressed(role)
 			var r: float = TouchControls.RADIUS[role]
 			var center: Vector2 = c[role]
-			draw_circle(center, r, Color(0.05, 0.02, 0.03, 0.42 if pressed else 0.26))
-			draw_arc(center, r, 0.0, TAU, 48, Color(UiKit.ACCENT, 0.75 if pressed else 0.35), 2.5, true)
+			# Themed like the HUD: an indigo disc with a copper rim (jade while held).
+			draw_circle(center, r, Color(0.06, 0.05, 0.16, 0.5 if pressed else 0.3))
+			draw_arc(center, r, 0.0, TAU, 56, Color(UiKit.ACCENT if pressed else UiKit.COPPER, 0.85 if pressed else 0.5), 3.0, true)
+			draw_arc(center, r - 6.0, 0.0, TAU, 56, Color(UiKit.COPPER, 0.18), 1.5, true)
 			var ink := Color(UiKit.TEXT, 0.9 if pressed else 0.55)
 			var s := r * 0.32
 			match role:
