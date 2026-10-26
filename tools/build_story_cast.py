@@ -25,17 +25,22 @@ def main() -> None:
         name = sheet.stem
         keyed = key_out(np.array(Image.open(sheet).convert("RGBA")), KEYS.get(name, "green"))
         figs = figures(keyed)
-        n = 0
+        crops = []
         for f in figs:
             ys, xs = np.nonzero(f[..., 3] > 30)
             f = f[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
             if (f[..., 3] > 30).mean() < 0.12:
                 continue  # an empty grid cell (thin lines only), not a figure
+            crops.append(f)
+        # One scale for the whole sheet: a standing pose stays taller than a sitting one.
+        k = min(1.0, MAX_H / max(c.shape[0] for c in crops))
+        n = 0
+        for f in crops:
             n += 1
             i = n
             im = Image.fromarray(f)
-            if im.height > MAX_H:
-                im = im.resize((round(im.width * MAX_H / im.height), MAX_H), Image.LANCZOS)
+            if k < 1.0:
+                im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
             im.save(OUT / f"{name}_{i}.png", optimize=True)
         print(name, n, "poses")
     plates = ROOT / "art_src" / "story" / "plates"

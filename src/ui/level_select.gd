@@ -13,6 +13,7 @@ signal closed
 const NODE_D := 72.0
 const DRAG_SLOP := 12.0
 const HERO_PNG := "res://assets/chars/hero/idle.png"
+const DEVA_FONT := preload("res://assets/fonts/YatraOne-Regular.ttf")
 
 var _cfg: Dictionary
 var _tex: Texture2D
@@ -63,9 +64,14 @@ func _ready() -> void:
 	_world.add_child(_route)
 
 	_current = Game.continue_level()
+	# After a cleared level the hero walks to the level right after it, even when the
+	# player replayed an old one (the furthest level stays reachable from the map).
+	if walk_from != "" and Game.next_level(walk_from) != "":
+		_current = Game.next_level(walk_from)
 	var n := 0
 	for ch in Game.game_cfg.get("chapters", []):
-		var plate := _chapter_label(str(ch.get("name", "")))
+		var hi_name := str(GameConfig.read("names_hi").get(str(ch.get("id", "")), ""))
+		var plate := _chapter_label(str(ch.get("name", "")) + ("   " + hi_name if hi_name != "" else ""))
 		_world.add_child(plate)
 		_labels[str(ch.get("id", ""))] = plate
 		for id in ch.get("levels", []):
@@ -402,7 +408,13 @@ func _open_card(id: String, number: int) -> void:
 	(head.get_child(0) as Label).add_theme_font_size_override("font_size", 22)
 	(head.get_child(0) as Label).add_theme_color_override("font_color", UiKit.COPPER)
 	col.add_child(head)
-	var name := UiKit.title(Game.level_name(id), 40, UiKit.TEXT, 8)
+	var hi := str(GameConfig.read("names_hi").get(id, ""))
+	if hi != "":
+		var deva := UiKit.title(hi, 44, UiKit.TEXT, 8)
+		deva.add_theme_font_override("font", DEVA_FONT)
+		deva.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(deva)
+	var name := UiKit.title(Game.level_name(id), 26 if hi != "" else 40, Color(UiKit.TEXT, 0.8) if hi != "" else UiKit.TEXT, 6)
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(name)
 

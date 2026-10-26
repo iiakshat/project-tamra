@@ -26,6 +26,9 @@ func _ready() -> void:
 	elif args.has("story"):
 		_show_story(args["story"], "")
 	else:
+		# Debug runs open screens directly; the launch intro only with --intro=1.
+		if not args.is_empty() and not args.has("intro"):
+			MenuScreen._intro_shown = true
 		show_menu()
 		if args.has("book"):
 			(_screen as MenuScreen).open_book()

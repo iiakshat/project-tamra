@@ -183,6 +183,7 @@ def main() -> None:
     ap.add_argument("--key", default="green")
     ap.add_argument("--anchor", default="head", choices=["head", "mass", "feet", "torso"])
     ap.add_argument("--pad", type=int, default=12)
+    ap.add_argument("--even", action="store_true", help="scale every frame to the same height (sheets drawn at uneven sizes flicker)")
     ap.add_argument("--flip", action="store_true", help="mirror frames (art drawn facing left)")
     ap.add_argument("--pick", default="", help="1-based cells to output, in order, e.g. 2,3,4")
     ap.add_argument("--calib", type=int, default=0, help="1-based cell of a standing pose whose height maps to --height")
@@ -241,11 +242,13 @@ def main() -> None:
     fw = int(np.ceil(left + right)) + 2 * a.pad
     fh = int(np.ceil(tallest)) + 2 * a.pad
     strip = Image.new("RGBA", (fw * count, fh), (0, 0, 0, 0))
+    med = float(np.median([c[2] for c in crops]))
     for i, (crop, ax, hgt) in enumerate(crops):
         im = Image.fromarray(crop)
-        nw, nh = max(1, round(im.width * scale)), max(1, round(im.height * scale))
+        fs = scale * (med / hgt if a.even else 1.0)
+        nw, nh = max(1, round(im.width * fs)), max(1, round(im.height * fs))
         im = im.resize((nw, nh), Image.LANCZOS)
-        x = round(i * fw + a.pad + left - ax * scale)
+        x = round(i * fw + a.pad + left - ax * fs)
         y = fh - a.pad - nh  # feet on the baseline
         strip.alpha_composite(im, (x, y))
     if a.flip:

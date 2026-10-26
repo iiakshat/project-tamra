@@ -19,18 +19,43 @@ var _panel: Control
 var _jyoti: PanelContainer
 var _badge: Control
 var _book_button: Button
+## 0 while the intro holds the camera on Tamra, 1 for the normal title view.
+var _reveal := 1.0
+static var _intro_shown := false
+const HERO_AT := Vector2(520, 700)  # Tamra on the cliff, in key-art pixels
 
 
 func _ready() -> void:
 	_art = Sprite2D.new()
 	_art.texture = KEYART
 	_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	var wind := ShaderMaterial.new()
+	wind.shader = preload("res://src/ui/keyart.gdshader")
+	_art.material = wind
 	add_child(_art)
 	add_child(_motes())
 	_build_ui()
+	if not _intro_shown and not Engine.is_editor_hint():
+		_intro_shown = true
+		_play_intro()
 	_process(0.0)
 	Game.jyoti_changed.connect(func(_t: int) -> void: _refresh())
 	Sfx.scene("menu")
+
+
+## Launch intro: clouds over a running Tamra, then they burst away and the camera
+## pulls back from him to the full title screen; the buttons rise in last.
+func _play_intro() -> void:
+	_reveal = 0.0
+	_ui_root.modulate.a = 0.0
+	var curtain := IntroCurtain.new()
+	add_child(curtain)
+	curtain.opened.connect(func() -> void:
+		var tw := create_tween()
+		tw.tween_property(self, "_reveal", 1.0, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(_ui_root, "modulate:a", 1.0, 0.45)
+		_ui_root.position.y = 40.0
+		tw.parallel().tween_property(_ui_root, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT))
 
 
 ## Debug and deep-link entry: "levels"/"map", "daily", "shop", "settings", "book".
@@ -71,8 +96,16 @@ func _process(delta: float) -> void:
 	var cover := maxf(vp.x / KEYART.get_width(), vp.y / KEYART.get_height())
 	var k := cover * (1.07 + 0.03 * sin(_t * 0.05))
 	var slack := (Vector2(KEYART.get_size()) * k - vp) / 2.0
+	var pos := vp / 2.0 + Vector2(sin(_t * 0.061), sin(_t * 0.043 + 1.0)) * slack * 0.85
+	if _reveal < 1.0:
+		# Intro: start close on Tamra, pull back to the title view.
+		var zk := cover * 2.6
+		var zpos := vp / 2.0 - (HERO_AT - Vector2(KEYART.get_size()) / 2.0) * zk
+		var e := ease(_reveal, -2.2)
+		k = lerpf(zk, k, e)
+		pos = zpos.lerp(pos, e)
 	_art.scale = Vector2(k, k)
-	_art.position = vp / 2.0 + Vector2(sin(_t * 0.061), sin(_t * 0.043 + 1.0)) * slack * 0.85
+	_art.position = pos
 
 
 func _build_ui() -> void:

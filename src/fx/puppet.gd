@@ -65,7 +65,8 @@ func build(style_name: String, overrides: Dictionary = {}) -> void:
 	add_child(body)
 	sprite = Sprite2D.new()
 	sprite.centered = false
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	# Plain linear: mipmaps blurred the figure at phone resolution (owner: "blurry").
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var s := float(_actor.get("scale", 0.5))
 	sprite.scale = Vector2(s, s)
 	_mat = ShaderMaterial.new()
@@ -265,7 +266,7 @@ func _update_breath(delta: float, period: float) -> void:
 		return
 	_breath_phase += delta * TAU / period
 	var b := sin(_breath_phase)
-	var strength := 1.8 if period >= IDLE_BREATH_PERIOD else 3.2
+	var strength := 0.9 if period >= IDLE_BREATH_PERIOD else 2.0
 	_mat.set_shader_parameter("breath", b * strength)
 	var inhaling := cos(_breath_phase) > 0.0
 	if inhaling != _inhaling:

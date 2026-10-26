@@ -9,7 +9,7 @@ O=assets/chars
 cut() { python -I tools/slice_sheet.py "$@" > /dev/null; }
 
 H=250  # standing hero height in px (the game draws him at ~0.47 scale)
-cut $S/hero_run.png     $O/hero/run.png    --grid 4x2 --height 232 --calib 1 --anchor head
+cut $S/hero_run.png     $O/hero/run.png    --grid 4x2 --height 232 --calib 1 --anchor head --even
 cut $S/hero_actions.png $O/hero/idle.png   --grid 4x2 --height $H --calib 1 --pick 1 --anchor torso --pad 24
 cut $S/hero_actions.png $O/hero/jump.png   --grid 4x2 --height $H --calib 1 --pick 2,3,4 --anchor torso
 cut $S/hero_actions.png $O/hero/fall.png   --grid 4x2 --height $H --calib 1 --pick 7 --anchor torso

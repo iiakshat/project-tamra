@@ -45,6 +45,10 @@ var _choices: HBoxContainer
 var _typing: Tween
 var _voice: AudioStreamPlayer
 var _t := 0.0
+var _progress: ColorRect     # thin bar along the bottom edge: how much of this story is left
+var _progress_back: ColorRect
+var _beats_total := 1
+var _beats_done := 0
 
 
 ## Seen-flags carry the script version, so a rewritten story plays once more for
@@ -121,6 +125,24 @@ func _ready() -> void:
 	add_child(_voice)
 
 	_panels = GameConfig.read("story").get(story_id, [])
+	_beats_total = 0
+	for panel in _panels:
+		_beats_total += (panel.get("beats", []) as Array).size()
+	_beats_total = maxi(_beats_total, 1)
+	_progress_back = ColorRect.new()
+	_progress_back.color = Color(1, 1, 1, 0.08)
+	_progress_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_progress_back.anchor_top = 1.0
+	_progress_back.anchor_bottom = 1.0
+	_progress_back.anchor_right = 1.0
+	_progress_back.offset_top = -5
+	_progress_back.offset_bottom = -2
+	root.add_child(_progress_back)
+	_progress = ColorRect.new()
+	_progress.color = Color(UiKit.ACCENT, 0.45)
+	_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_progress_back.add_child(_progress)
+	_progress.size = Vector2(0, 3)
 	Services.analytics.log_event("story_view", {"id": story_id})
 	Sfx.scene("story")
 	_next_panel()
@@ -311,6 +333,10 @@ func _next_beat() -> void:
 		_next_panel()
 		return
 	var beat: Dictionary = _queue.pop_front()
+	if not beat.has("_reply"):
+		_beats_done += 1
+		var w := _progress_back.size.x * clampf(float(_beats_done) / _beats_total, 0.0, 1.0)
+		create_tween().tween_property(_progress, "size:x", w, 0.4)
 	if beat.has("choice"):
 		_show_choice(beat)
 	else:
@@ -407,8 +433,12 @@ func _pick(choice_id: String, index: int, opt: Dictionary) -> void:
 	Game.save.story_choices[choice_id] = index
 	Services.analytics.log_event("story_choice", {"id": choice_id, "pick": index})
 	_run(opt.get("do", []))
-	var reply: Array = opt.get("reply", [])
-	_queue = reply.duplicate() + _queue
+	var reply: Array = []
+	for r in opt.get("reply", []):
+		var tagged: Dictionary = (r as Dictionary).duplicate()
+		tagged["_reply"] = true  # replies don't count toward the progress bar
+		reply.append(tagged)
+	_queue = reply + _queue
 	_next_beat()
 
 
@@ -491,6 +521,8 @@ func _run(actions: Array) -> void:
 			_smoke_burst(_at(d["smoke"]))
 		elif d.has("shake"):
 			_shake = float(d["shake"])
+		elif d.has("sfx"):
+			Sfx.play(str(d["sfx"]))
 
 
 ## A sign drawn in the air, stroke by stroke: the light follows a fingertip.
@@ -504,7 +536,7 @@ func _draw_light(shape: String, center: Vector2, size: float, time: float) -> vo
 		"rise":  # an S-curve rising from the fingertip, like the first sign Maa teaches
 			for i in 33:
 				var t := float(i) / 32.0
-				pts.append(center + Vector2(sin(t * TAU * 1.1) * size * 0.22, -t * size * 1.5))
+				pts.append(center + Vector2(sin(t * TAU * 1.1) * size * 0.18 + t * size * 0.35, -t * size * 1.4))
 		"wave":
 			for i in 33:
 				var t := float(i) / 32.0
@@ -604,9 +636,14 @@ class Actor extends Node2D:
 		sprite.scale = Vector2(_k, _k)
 		sprite.offset = Vector2(-sprite.texture.get_width() / 2.0, -sprite.texture.get_height())
 
-	## Swap to another pose with a quick squash, like a key frame change.
+	## Swap to another pose with a quick squash, like a key frame change. Poses from one
+	## sheet share a drawing scale, so the scale is kept (standing is taller than sitting).
 	func pose(art: String) -> void:
-		set_art(art, _height)
+		var path := "res://assets/story/cast/%s.png" % art
+		if not ResourceLoader.exists(path):
+			return
+		sprite.texture = load(path)
+		sprite.offset = Vector2(-sprite.texture.get_width() / 2.0, -sprite.texture.get_height())
 		sprite.scale = Vector2(_k * 1.05, _k * 0.95)
 
 	func _process(delta: float) -> void:
