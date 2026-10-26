@@ -3,6 +3,11 @@ extends Area2D
 ## The ember gate at the end of a level: a pointed arch with fire burning inside.
 
 signal reached
+## Maya levels: the gate is veiled (only a faint shimmer) until DRISHTI shows it or the
+## hero comes close; once seen it stays seen.
+signal unveiled
+
+var veiled := false
 
 var _done := false
 var _inner: Sprite2D
@@ -47,11 +52,35 @@ func _ready() -> void:
 	sparks.color_ramp = Fx.fade_ramp()
 	add_child(sparks)
 	body_entered.connect(_on_body_entered)
+	if veiled:
+		add_to_group("maya")
+
+
+func _process(_delta: float) -> void:
+	if not veiled:
+		return
+	modulate.a = 0.08 + 0.05 * sin(Time.get_ticks_msec() * 0.006)
+	var tree := get_tree()
+	var p: Node2D = tree.get_first_node_in_group("hero") if tree != null else null
+	if p != null and absf(p.global_position.x - global_position.x) < 160.0:
+		set_revealed(true)
+
+
+func set_revealed(on: bool) -> void:
+	if not on or not veiled:
+		return
+	veiled = false
+	modulate.a = 1.0
+	remove_from_group("maya")
+	Fx.burst(get_parent(), global_position + Vector2(0, -90), Color(0.6, 1.0, 0.85, 0.8), 30, 220.0, false, 0.8)
+	Sfx.play("checkpoint", global_position, -4.0, 1.3)
+	unveiled.emit()
 
 
 func _on_body_entered(body: Node) -> void:
 	if _done or not body is Player:
 		return
+	set_revealed(true)
 	_done = true
 	Fx.burst(get_parent(), global_position + Vector2(0, -90), Color(0.9, 0.85, 1.0), 60, 360.0, true, 1.0)
 	Sfx.play("goal", global_position)

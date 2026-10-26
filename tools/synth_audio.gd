@@ -4,6 +4,10 @@ extends SceneTree
 ##   godot --headless --path . --script res://tools/synth_audio.gd
 ##   godot --headless --path . --import
 ## Add `-- --only=footstep,ui_tap` to write only those sounds (base names).
+## Round 5 sounds (udaan_whoosh, glide_wind, fire_whoomph, burn_crackle, heart_pickup,
+## lives_lost) ship as OGG to stay under the 3 MB audio budget: after rendering them,
+## convert with ../_tools/ffmpeg/ffmpeg.exe -i X.wav -c:a libvorbis -q:a 4 X.ogg and
+## delete the WAV.
 ## Seeds are fixed, so output is reproducible. Loops are rendered so their ends join
 ## without a click, and their .import files are set to loop forward.
 
@@ -19,7 +23,8 @@ const MAX_SECONDS := {
 	"cast_kavach": 2.0, "cast_drishti": 1.5, "cast_udaan": 1.2, "cast_tarang": 1.3,
 	"cast_bandhan": 1.3, "barrier_burn": 1.7, "ember_pickup": 0.55, "checkpoint": 1.6,
 	"goal": 2.4, "mantra_learned": 2.3, "footstep": 0.22, "land": 0.35, "ui_tap": 0.3,
-	"ui_back": 0.35, "strike_hit": 0.3,
+	"ui_back": 0.35, "strike_hit": 0.3, "udaan_whoosh": 1.0, "glide_wind": 1.6,
+	"fire_whoomph": 1.0, "burn_crackle": 1.6, "heart_pickup": 1.4, "lives_lost": 2.2,
 }
 
 enum { LOW, BAND, HIGH }
@@ -80,6 +85,13 @@ func _initialize() -> void:
 	_save("cast_tarang", cast_tarang())
 	_save("cast_bandhan", cast_bandhan())
 	_save("barrier_burn", barrier_burn())
+	# Round 5: UDAAN flight, JWALA burning, hearts.
+	_save("udaan_whoosh", udaan_whoosh())
+	_save("glide_wind", glide_wind())
+	_save("fire_whoomph", fire_whoomph())
+	_save("burn_crackle", burn_crackle())
+	_save("heart_pickup", heart_pickup())
+	_save("lives_lost", lives_lost())
 	var scale := [SA, RE, GA, PA, DHA]
 	for v in scale.size():
 		_save("ember_pickup_%d" % v, ember_pickup(scale[v]))
@@ -392,6 +404,73 @@ func cast_udaan() -> PackedFloat32Array:
 	tone(b, 0.0, 280.0, 0.25, 0.1, 0.4, 950.0, 0.7)
 	tone(b, 0.0, 560.0, 0.1, 0.1, 0.4, 1900.0, 0.7)
 	return finish(reverb(b, 0.3, 0.8, 0.3, 0.8), 0.85)
+
+
+## UDAAN's leap: a fast rising rush of air with a soft low push under it.
+func udaan_whoosh() -> PackedFloat32Array:
+	_seed("udaan_whoosh", 0)
+	var b := buf(1.0)
+	noise(b, 0.0, 0.9, BAND, func(u: float) -> float: return 250.0 * pow(12.0, sqrt(u)), 1.1,
+		func(u: float) -> float: return env(u, 0.3, 2.0))
+	noise(b, 0.0, 0.7, LOW, func(_u: float) -> float: return 180.0, 0.8,
+		func(u: float) -> float: return 0.7 * env(u, 0.1, 2.5))
+	thump(b, 0.0, 95.0, 55.0, 0.45, 0.12)
+	return finish(reverb(b, 0.2, 0.7, 0.4, 0.5), 0.9)
+
+
+## The glide: soft wing beats in a band of moving air.
+func glide_wind() -> PackedFloat32Array:
+	_seed("glide_wind", 0)
+	var b := buf(1.6)
+	noise(b, 0.0, 1.55, BAND, func(u: float) -> float: return 700.0 + 300.0 * sin(u * TAU * 2.0), 1.6,
+		func(u: float) -> float: return 0.45 * env(u, 0.15, 1.2))
+	for k in 4:
+		var t0 := 0.05 + k * 0.36
+		noise(b, t0, 0.22, LOW, func(_u: float) -> float: return 420.0, 0.9,
+			func(u: float) -> float: return 0.9 * env(u, 0.35, 2.0) * (1.0 - k * 0.18))
+	return finish(reverb(b, 0.2, 0.6, 0.5, 0.4), 0.7)
+
+
+## A body catching fire: a deep "whoomph" of air sucked into flame.
+func fire_whoomph() -> PackedFloat32Array:
+	_seed("fire_whoomph", 0)
+	var b := buf(1.0)
+	noise(b, 0.0, 0.9, LOW, func(u: float) -> float: return lerpf(300.0, 1400.0, sqrt(u)), 0.9,
+		func(u: float) -> float: return env(u, 0.12, 1.8))
+	thump(b, 0.0, 70.0, 40.0, 0.8, 0.2)
+	noise(b, 0.05, 0.8, HIGH, func(_u: float) -> float: return 3000.0, 0.7,
+		func(u: float) -> float: return 0.25 * env(u, 0.2, 2.0))
+	return finish(reverb(b, 0.2, 0.7, 0.4, 0.4), 0.95)
+
+
+## Burning: a fizzing roar thick with crackles that dies down to embers.
+func burn_crackle() -> PackedFloat32Array:
+	_seed("burn_crackle", 0)
+	var b := buf(1.7)
+	noise(b, 0.0, 1.6, BAND, func(u: float) -> float: return lerpf(900.0, 400.0, u), 0.6,
+		func(u: float) -> float: return 0.55 * env(u, 0.05, 1.4))
+	crackle(b, 0.0, 1.6, 90.0, 0.9, func(u: float) -> float: return 1.0 - u * 0.7)
+	return finish(b, 0.85)
+
+
+## The rare heart: a warm low bell and a rising pair of notes.
+func heart_pickup() -> PackedFloat32Array:
+	_seed("heart_pickup", 0)
+	var b := buf(1.4)
+	bell(b, 0.0, SA / 2.0, 0.6, 0.9)
+	bell(b, 0.12, GA / 2.0, 0.45, 0.8)
+	bell(b, 0.24, PA / 2.0, 0.5, 1.0)
+	pad(b, 0.0, SA / 4.0, 0.3, 0.1, 0.8)
+	return finish(reverb(b, 0.35, 0.8, 0.3, 0.6), 0.85)
+
+
+## Every heart gone: a slow sinking gong.
+func lives_lost() -> PackedFloat32Array:
+	_seed("lives_lost", 0)
+	var b := buf(2.2)
+	gong(b, 0.0, 98.0, 0.8, 1.2, 0.85, 1.5)
+	tone(b, 0.15, 196.0, 0.25, 0.05, 0.6, 147.0, 1.2)
+	return finish(reverb(b, 0.35, 0.85, 0.3, 0.6), 0.9)
 
 
 func cast_tarang() -> PackedFloat32Array:

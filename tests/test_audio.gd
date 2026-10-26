@@ -15,6 +15,8 @@ const REQUIRED := [
 	"ui_click", "ui_back", "page_turn",
 	"amb_wind", "amb_fire", "music_drone",
 	"vo_jump", "vo_fall", "vo_hurt", "vo_death", "pant_in", "pant_out", "breath_in", "breath_out",
+	"udaan_whoosh", "glide_wind", "fire_whoomph", "burn_crackle", "heart_pickup", "lives_lost",
+	"enemy_death_cry", "enemy_burn_cry", "smoke_laugh",
 ]
 const LOOPS := ["amb_wind", "amb_fire", "music_drone"]
 
@@ -25,6 +27,16 @@ func test_required_ids_exist() -> void:
 		check(sounds.has(id), "sound %s is defined" % id)
 	for id in LOOPS:
 		check(bool(sounds.get(id, {}).get("loop", false)), "%s is marked loop" % id)
+
+
+## Owner (round 5): the panting was still inaudible. Pants sit near full volume and
+## resting breaths clearly above the old -21 dB.
+func test_breathing_is_audible() -> void:
+	var sounds := GameConfig.read("sounds")
+	for id in ["pant_in", "pant_out"]:
+		check(float(sounds[id]["volume_db"]) >= -4.0, "%s at least -4 dB" % id)
+	for id in ["breath_in", "breath_out"]:
+		check(float(sounds[id]["volume_db"]) >= -10.0, "%s at least -10 dB" % id)
 
 
 func test_entries_are_valid() -> void:

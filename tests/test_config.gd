@@ -5,7 +5,9 @@ extends "res://tests/test_case.gd"
 ## Tallest step-up a plain jump is trusted with. A quick tap on the touch pad rises
 ## ~172 px and a held jump ~230 px, so every required step-up works with a sloppy tap.
 const JUMP_RISE := 170.0
-const UDAAN_RISE := 400.0  # jump, then UDAAN at the top (apex is ~460)
+## Jump, then UDAAN at the top: apex ~598 px (230 jump + 368 leap); 58 px margin.
+## test_udaan_physics keeps this in step with mantras.json.
+const UDAAN_RISE := 540.0
 const SETU_MAX_SLOPE := 40.0
 const ENEMY_TYPES := ["soldier", "archer", "brute"]
 const MAX_PROMPT_WORDS := 6
@@ -21,17 +23,24 @@ func _jump_distance(player: Dictionary) -> float:
 
 
 ## Horizontal distance of a running jump that lands `rise` px higher (negative: lower).
-## `lift` is UDAAN's extra upward speed, cast at the apex (0 for a plain jump).
-## Returns -1 when the height cannot be reached. Keeps a 10% margin like the gap test.
-func _reach(player: Dictionary, rise: float, lift: float) -> float:
+## `lift` is UDAAN's extra upward speed, cast at the apex (0 for a plain jump), and
+## `glide` the seconds of slow glide after it. Returns -1 when the height cannot be
+## reached. Keeps a 10% margin like the gap test.
+func _reach(player: Dictionary, rise: float, lift: float, glide: float = 0.0) -> float:
 	var g := float(player["gravity"])
 	var v := float(player["jump_velocity"])
 	var apex := v * v / (2.0 * g) + lift * lift / (2.0 * g)
 	if rise > apex - 8.0:
 		return -1.0
 	var t_up := (v + lift) / g
-	var t_down := sqrt(2.0 * (apex - rise) / (g * float(player["fall_gravity_mult"])))
-	return float(player["run_speed"]) * (t_up + t_down) * 0.9
+	var drift := Player.glide_reach(glide, player)
+	var top := apex - drift.y
+	if rise > top:
+		# Lands during the glide: only part of it is used.
+		var t_glide := (apex - rise) / Player.GLIDE_FALL
+		return float(player["run_speed"]) * (t_up + t_glide) * 0.9
+	var t_down := sqrt(2.0 * (top - rise) / (g * float(player["fall_gravity_mult"])))
+	return float(player["run_speed"]) * (t_up + glide + t_down) * 0.9
 
 
 func _levels_in_order() -> Array[String]:
@@ -179,7 +188,7 @@ func _obstacles(level: Dictionary, tarang: bool) -> Array:
 
 
 func _can_move(a: Dictionary, b: Dictionary, obstacles: Array, player: Dictionary, known: Array, lift: float,
-		setu_len: float) -> bool:
+		setu_len: float, glide: float = 0.0) -> bool:
 	var ax0 := float(a["x0"])
 	var ax1 := float(a["x1"])
 	var bx0 := float(b["x0"])
@@ -197,7 +206,7 @@ func _can_move(a: Dictionary, b: Dictionary, obstacles: Array, player: Dictionar
 					return false
 	if rise <= JUMP_RISE and dx <= _reach(player, rise, 0.0):
 		return true
-	if known.has("udaan") and rise <= UDAAN_RISE and dx <= _reach(player, rise, lift):
+	if known.has("udaan") and rise <= UDAAN_RISE and dx <= _reach(player, rise, lift, glide):
 		return true
 	if known.has("setu"):
 		# The bridge climbs what a jump cannot, at up to 40°; a jump covers the rest.
@@ -222,6 +231,7 @@ func _reachable(level: Dictionary, surfaces: Array, known: Array, tarang: bool) 
 	var player := GameConfig.read("player")
 	var mantras := GameConfig.read("mantras")
 	var lift := float(mantras["udaan"]["lift"])
+	var glide := float(mantras["udaan"].get("glide", 0.0))
 	var setu_len := float(mantras["setu"]["max_length"]) if known.has("setu") else 0.0
 	var obstacles := _obstacles(level, tarang)
 	var seen := {}
@@ -233,7 +243,7 @@ func _reachable(level: Dictionary, surfaces: Array, known: Array, tarang: bool) 
 	while not queue.is_empty():
 		var i: int = queue.pop_front()
 		for j in surfaces.size():
-			if not seen.has(j) and _can_move(surfaces[i], surfaces[j], obstacles, player, known, lift, setu_len):
+			if not seen.has(j) and _can_move(surfaces[i], surfaces[j], obstacles, player, known, lift, setu_len, glide):
 				seen[j] = true
 				queue.append(j)
 	return seen
@@ -460,3 +470,143 @@ func test_hint_finder() -> void:
 		"", "no hint for a mantra not learned")
 	check_eq(HintFinder.mantra_for(GameConfig.level("c1_l1"), Vector2(4700, 600), "hit", ["jwala", "setu"], [4950.0], player, mantras),
 		"jwala", "a standing thorn wall wants JWALA")
+
+
+# --- Round 5: more levels, maya mechanics, UDAAN, hearts ------------------------------
+
+## Keys whose use needs DRISHTI to be fair (sight shows the truth). Phantom walls and
+## false gates do not: you walk through them, and they ripple (chapter 1 uses them).
+const SIGHT_KEYS := ["maya_hidden"]
+
+
+func test_fifteen_levels_five_per_chapter() -> void:
+	var chapters: Array = GameConfig.read("game")["chapters"]
+	check_eq(chapters.size(), 3, "three chapters")
+	for ch in chapters:
+		check_eq((ch["levels"] as Array).size(), 5, "chapter %s has 5 levels" % ch["id"])
+	check_eq(_levels_in_order().size(), 15, "15 levels")
+	for id in _levels_in_order():
+		check_eq(str(GameConfig.level(id).get("id", "")), id, "%s: id matches its file" % id)
+
+
+## Every maya mechanic is met first in a level that teaches it: a prompt zone that
+## starts before the first one, within 1500 px.
+func test_maya_mechanics_are_taught_first() -> void:
+	var first := {}  # mechanic -> [level id, x]
+	for id in _levels_in_order():
+		var level := GameConfig.level(id)
+		var found := {}
+		for w in level.get("phantom_walls", []):
+			found["phantom_walls"] = minf(float(found.get("phantom_walls", INF)), float(w[0]))
+		for f in level.get("false_gates", []):
+			found["false_gates"] = minf(float(found.get("false_gates", INF)), float(f[0]))
+		for e in level.get("enemies", []):
+			var m := str(e.get("maya", ""))
+			if m != "":
+				found[m] = minf(float(found.get(m, INF)), float(e.get("min", e.get("x", 0))))
+		if bool(level.get("goal_veiled", false)):
+			found["goal_veiled"] = float(level["goal"][0])
+		for key in found:
+			if first.has(key):
+				continue
+			first[key] = [id, found[key]]
+			var taught := false
+			for p in level.get("prompts", []):
+				var px := float(p.get("x", 0))
+				if px <= float(found[key]) and float(found[key]) - px <= 1500.0:
+					taught = true
+			check(taught, "%s: first %s at x=%d has a prompt before it" % [id, key, found[key]])
+	for key in ["phantom_walls", "false_gates", "mirage", "veiled", "goal_veiled"]:
+		check(first.has(key), "some level uses %s" % key)
+
+
+func test_maya_rules() -> void:
+	var known_by := _known_before_each_level()
+	for id in _levels_in_order():
+		var level := GameConfig.level(id)
+		var known: Array = known_by[id]
+		var sight := bool(level.get("goal_veiled", false))
+		for key in SIGHT_KEYS:
+			sight = sight or not level.get(key, []).is_empty()
+		for e in level.get("enemies", []):
+			var m := str(e.get("maya", ""))
+			check(["", "mirage", "veiled"].has(m), "%s: maya kind '%s' known" % [id, m])
+			if m == "mirage":
+				check(str(e.get("type", "soldier")) != "archer", "%s: mirages are soldiers or brutes" % id)
+			sight = sight or m != ""
+		if sight:
+			check(known.has("drishti"), "%s: uses sight-maya before DRISHTI is taught" % id)
+		var size := GameConfig.vec(level.get("size"))
+		for w in level.get("phantom_walls", []):
+			check(w is Array and w.size() == 3, "%s: phantom wall is [x, base_y, height]" % id)
+			check(_on_surface(level, ["ground", "platforms"], float(w[0]), float(w[0]) + PhantomWall.WIDTH, float(w[1])),
+				"%s: phantom wall at x=%d stands on a surface" % [id, w[0]])
+			check(float(w[2]) >= 200.0, "%s: phantom wall at x=%d tall enough to read as a wall" % [id, w[0]])
+		for f in level.get("false_gates", []):
+			var p := GameConfig.vec(f)
+			check(_on_surface(level, ["ground", "platforms"], p.x - 30.0, p.x + 30.0, p.y), "%s: false gate at x=%d on a surface" % [id, p.x])
+			check(p.x > 0.0 and p.x < size.x, "%s: false gate inside the level" % id)
+			check(absf(p.x - float(level["goal"][0])) > 150.0, "%s: false gate apart from the real one" % id)
+
+
+## Hearts are rare (LifeRules): at most one pickup per level, and it is off the easy
+## path: well above any floor (a big leap) or tucked behind a smoke wall.
+func test_heart_pickups_are_rare_and_reachable() -> void:
+	var all_mantras: Array = GameConfig.read("mantras").keys()
+	var with_heart := 0
+	for id in _levels_in_order():
+		var level := GameConfig.level(id)
+		for key in level:
+			check(key == "heart" or not str(key).begins_with("heart"), "%s: one heart key only (%s)" % [id, key])
+		if not level.has("heart"):
+			continue
+		with_heart += 1
+		var h := GameConfig.vec(level["heart"])
+		check(level["heart"] is Array and level["heart"].size() == 2, "%s: heart is one [x, y]" % id)
+		var hidden := false
+		for w in level.get("phantom_walls", []):
+			if h.x >= float(w[0]) - 20.0 and h.x <= float(w[0]) + PhantomWall.WIDTH + 140.0:
+				hidden = true
+		# The heart may rest on a lone stone (its perch); then the perch must be high.
+		var tops: Array = []
+		for key in ["ground", "platforms", "crumble", "maya_hidden"]:
+			for s in level.get(key, []):
+				if h.x >= float(s[0]) and h.x <= float(s[0]) + float(s[2]) and float(s[1]) >= h.y:
+					tops.append(float(s[1]))
+		tops.sort()
+		var from := h.y
+		if not tops.is_empty() and float(tops[0]) - h.y <= 100.0:
+			from = float(tops[0])
+			tops.pop_front()
+		var below: float = (float(tops[0]) - from) if not tops.is_empty() else INF
+		check(hidden or below >= 180.0, "%s: heart at %s is hard to reach (%d px over a floor)" % [id, str(h), below])
+		var full := _surfaces(level, all_mantras, true)
+		var seen := _reachable(level, full, all_mantras, true)
+		var ok := false
+		for i in seen:
+			var s: Dictionary = full[i]
+			if h.x >= float(s["x0"]) - 40.0 and h.x <= float(s["x1"]) + 40.0 and h.y >= float(s["top"]) - 440.0 and h.y <= float(s["low"]):
+				ok = true
+		check(ok, "%s: heart at %s reachable" % [id, str(h)])
+	check(with_heart >= 6, "the new levels carry a heart (%d levels)" % with_heart)
+	check_eq(LifeRules.MAX_HEART_PICKUPS, 1, "one heart pickup per level")
+
+
+## UDAAN (owner, round 5): about 1.6x a full jump, then a glide of about 1.5 s.
+func test_udaan_physics() -> void:
+	var player := GameConfig.read("player")
+	var udaan: Dictionary = GameConfig.read("mantras")["udaan"]
+	var full := Player.jump_rise(player, 10.0)
+	var rise := Player.udaan_rise(float(udaan["lift"]), player)
+	check(rise >= 1.5 * full and rise <= 1.7 * full, "UDAAN rises %d px, about 1.6x a %d px jump" % [rise, full])
+	var glide := float(udaan.get("glide", 0.0))
+	check(glide >= 1.2 and glide <= 1.8, "glide lasts %.1f s" % glide)
+	var drift := Player.glide_reach(glide, player)
+	check(drift.y <= 150.0, "the glide sinks only %d px" % drift.y)
+	check(drift.x >= 400.0, "the glide carries %d px" % drift.x)
+	check(UDAAN_RISE <= full + rise - 40.0, "the step-up rule (%d) keeps a margin under jump + UDAAN (%d)" % [UDAAN_RISE, full + rise])
+	# TARANG-only secrets stay TARANG-only: no cracked wall can be leapt.
+	for id in _levels_in_order():
+		for c in GameConfig.level(id).get("cracked", []):
+			if id != "c1_l1":
+				check(float(c[2]) > full + rise + 20.0, "%s: cracked wall at x=%d (%d px) taller than jump + UDAAN" % [id, c[0], c[2]])

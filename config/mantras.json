@@ -40,13 +40,14 @@
   },
   "udaan": {
     "gesture": "line_up",
-    "prana": 20,
+    "prana": 30,
     "label": "UDAAN",
     "meaning": "flight",
-    "description": "Leap high, even in mid-air.",
+    "description": "Soar high, even in mid-air, then glide.",
     "unlock": {"level": "c1_l2"},
-    "cooldown": 2.0,
-    "lift": 1050,
+    "cooldown": 3.5,
+    "lift": 1330,
+    "glide": 1.5,
     "color": "#d6c8ff"
   },
   "kavach": {

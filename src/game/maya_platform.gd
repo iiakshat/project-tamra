@@ -4,6 +4,10 @@ extends StaticBody2D
 ## seconds); "hidden" ones are real but invisible and only solid while revealed. DRISHTI (sight) shows the truth for a while:
 ## real stones glow cyan, lies flicker red and fade.
 
+## False stones waver once every TELL_PERIOD seconds, for TELL_TIME seconds.
+const TELL_PERIOD := 2.4
+const TELL_TIME := 0.6
+
 var kind := "false"
 var size := Vector2(160, 26)
 
@@ -45,9 +49,13 @@ func _process(_delta: float) -> void:
 	if _revealed and kind == "false":
 		_aura.modulate.a = 0.4 + 0.6 * absf(sin(Time.get_ticks_msec() * 0.012))
 	elif kind == "false":
-		# A fair tell: every few seconds a lie wavers like heat haze.
-		var t := fmod(Time.get_ticks_msec() * 0.001 + position.x * 0.0007, 3.2)
-		_visual.modulate.a = 1.0 - 0.35 * maxf(0.0, sin(t * PI / 0.5)) if t < 0.5 else 1.0
+		# A fair tell: every couple of seconds a lie wavers like heat haze. Round 5
+		# (owner stuck at c2_l3's false stones): deeper fade, longer, with a sideways
+		# shiver, so it reads even in a glance.
+		var t := fmod(Time.get_ticks_msec() * 0.001 + position.x * 0.0007, TELL_PERIOD)
+		var k := maxf(0.0, sin(t * PI / TELL_TIME)) if t < TELL_TIME else 0.0
+		_visual.modulate.a = 1.0 - 0.6 * k
+		_visual.position.x = sin(Time.get_ticks_msec() * 0.07) * 4.0 * k
 
 
 func set_revealed(on: bool) -> void:

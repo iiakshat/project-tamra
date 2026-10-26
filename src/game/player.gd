@@ -5,14 +5,19 @@ extends CharacterBody2D
 
 signal died(cause: String)
 signal hearts_changed(hearts: int, max_hearts: int)
+## -1 when a heart is lost, +1 when one is healed (the HUD animates it).
+signal heart_delta(delta: int)
 signal prana_changed(prana: float, max_prana: float)
 
 const SIZE := Vector2(30, 88)
 const STRIKE_COOLDOWN := 0.42
 const STRIKE_WINDOW := Vector2(0.08, 0.2)  # seconds after the swing starts when it can hit
 const STRIKE_REACH := 84.0
-const PANT_TIME := 2.6  # seconds of catching breath after a long run
+const PANT_TIME := 2.6  # seconds of catching breath when tired
 const STEP_DISTANCE := 46.0
+## UDAAN's glide: how slowly he sinks (px/s), and the gentle pull that gets him there.
+const GLIDE_FALL := 80.0
+const GLIDE_GRAVITY := 900.0
 
 var cfg: Dictionary
 var level: Level
@@ -41,9 +46,9 @@ var _struck: Array[Node] = []
 var max_prana := 100.0
 var prana := 100.0
 var _since_cast := 99.0
-var _run_time := 0.0
 var _idle_time := 0.0
-var _pant_left := 0  # 1 while catching breath after a long run
+var fatigue: Fatigue
+var _pant_left := 0  # 1 while catching breath
 var _pant_timer := 0.0  # seconds of panting left
 var _screamed := false
 var _scream_check := 0.0
@@ -54,6 +59,9 @@ var _breathing := false
 var _jump_t := -1.0
 var _cut_pending := false
 var _walk_to := 0.0
+## UDAAN: seconds of glide left once the leap tops out (-1: no glide waiting).
+var _glide := -1.0
+var _wings: UdaanWings
 
 
 func setup(config: Dictionary, hearts_max: int, prana_max: float = -1.0) -> void:
@@ -62,6 +70,7 @@ func setup(config: Dictionary, hearts_max: int, prana_max: float = -1.0) -> void
 	hearts = hearts_max
 	max_prana = prana_max if prana_max > 0.0 else float(config.get("prana_max", 100.0))
 	prana = max_prana
+	fatigue = Fatigue.new(config)
 
 
 ## Full prana (checkpoints): traversal mantras must always be castable after a rest.
@@ -87,6 +96,7 @@ func _ready() -> void:
 	collision_layer = 2
 	collision_mask = 1
 	floor_snap_length = 8.0
+	add_to_group("hero")
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = SIZE
@@ -103,6 +113,11 @@ func _ready() -> void:
 	puppet.breathed.connect(_on_breathed)
 	_shield = _make_shield()
 	add_child(_shield)
+	_wings = UdaanWings.new()
+	_wings.position = Vector2(0, -58)
+	add_child(_wings)
+	if fatigue == null:
+		fatigue = Fatigue.new(cfg)
 
 
 func _num(key: String, fallback: float) -> float:
@@ -129,7 +144,11 @@ func _physics_process(delta: float) -> void:
 	var gravity := _num("gravity", 2400.0)
 	if velocity.y > 0.0:
 		gravity *= _num("fall_gravity_mult", 1.4)
-	velocity.y = minf(velocity.y + gravity * delta, _num("max_fall", 1300.0))
+	if gliding():
+		velocity.y = minf(velocity.y + GLIDE_GRAVITY * delta, GLIDE_FALL)
+	else:
+		velocity.y = minf(velocity.y + gravity * delta, _num("max_fall", 1300.0))
+	_update_glide(delta, on_floor)
 
 	if on_floor:
 		_coyote = _num("coyote_time", 0.1)
@@ -147,6 +166,7 @@ func _physics_process(delta: float) -> void:
 		# A buffered tap may already be released by the time the jump starts.
 		_cut_pending = not Input.is_action_pressed("jump")
 		puppet.jumped()
+		fatigue.on_jump()
 		Sfx.play("jump", global_position)
 		Sfx.play("vo_jump", global_position)
 		Fx.burst(get_parent(), global_position, Color(0.5, 0.4, 0.35, 0.6), 10, 90.0, false, 0.4)
@@ -220,22 +240,29 @@ func _update_prana(delta: float) -> void:
 		add_prana(_num("prana_regen", 3.0) * delta)
 
 
-## After a long run he stops, bends over and catches his breath; standing still he
-## breathes softly. Small, but it makes the puppet feel alive.
+## When he is really tired (Fatigue: a long non-stop run, a fight, many jumps close
+## together) and stops, he bends over and catches his breath. Rare by design. Standing
+## still he breathes softly. Small, but it makes the puppet feel alive.
 func _update_breath(delta: float, on_floor: bool) -> void:
 	var speed := absf(velocity.x)
-	if on_floor and speed > 200.0:
-		_run_time += delta
+	if not on_floor:
+		fatigue.update(delta, "air")
 		_idle_time = 0.0
-	elif on_floor and speed < 20.0:
-		if _run_time >= _num("run_tired_after", 4.0) and _pant_left == 0:
-			_pant_left = 1
-			_pant_timer = PANT_TIME
-			puppet.pant(PANT_TIME)
-		_run_time = 0.0
-		_idle_time += delta
+	elif speed > 200.0:
+		fatigue.update(delta, "run")
+		_idle_time = 0.0
 	else:
-		_idle_time = 0.0
+		fatigue.update(delta, "rest")
+		if speed < 20.0:
+			if _pant_left == 0 and fatigue.wants_pant():
+				_pant_left = 1
+				_pant_timer = PANT_TIME
+				fatigue.panted()
+				puppet.pant(PANT_TIME)
+				GameLog.info("player", "tired", {"x": int(global_position.x)})
+			_idle_time += delta
+		else:
+			_idle_time = 0.0
 	if _pant_left > 0:
 		_pant_timer -= delta
 		if _pant_timer <= 0.0 or speed > 60.0:
@@ -245,13 +272,17 @@ func _update_breath(delta: float, on_floor: bool) -> void:
 	_breathing = breathe
 
 
-## Every breath of the chest animation (Puppet.breathed) has a sound: quick, soft
-## "hah" pants after a long run, fading as he recovers; barely audible breaths at rest.
+func is_panting() -> bool:
+	return _pant_left > 0
+
+
+## Every breath of the chest animation (Puppet.breathed) has a sound: quick "hah"
+## pants when tired, fading a little as he recovers; soft breaths at rest.
 func _on_breathed(inhale: bool) -> void:
 	if not alive:
 		return
 	if _pant_left > 0:
-		var fade := -10.0 * (1.0 - _pant_timer / PANT_TIME)
+		var fade := -6.0 * (1.0 - _pant_timer / PANT_TIME)
 		Sfx.play("pant_in" if inhale else "pant_out", global_position, fade)
 	elif _breathing:
 		Sfx.play("breath_in" if inhale else "breath_out", global_position)
@@ -329,6 +360,7 @@ func strike() -> void:
 	_strike_cool = STRIKE_COOLDOWN
 	_strike_t = 0.0
 	_struck.clear()
+	fatigue.on_strike()
 	puppet.strike()
 	Sfx.play("strike_swing", global_position)
 
@@ -384,22 +416,87 @@ func _walk_into_gate(delta: float) -> void:
 	_was_on_floor = is_on_floor()
 
 
-## UDAAN: a burst of lift, usable in mid-air. Releasing the jump pad never trims it.
-func udaan(lift: float) -> void:
+## UDAAN: a strong burst of lift (about 1.6x a full jump), usable in mid-air, then a
+## glide of `glide` seconds once the leap tops out: he sinks slowly and can steer.
+## Releasing the jump pad never trims it.
+func udaan(lift: float, glide: float = 0.0) -> void:
 	velocity.y = -lift
 	_coyote = 0.0
 	_jump_t = -1.0
 	_cut_pending = false
+	_glide = glide if glide > 0.0 else -1.0
 	puppet.jumped()
-	Fx.burst(get_parent(), global_position, Color(1.0, 0.9, 0.55), 20, 200.0)
+	fatigue.on_jump()
+	_wings.lift()
+	Sfx.play("udaan_whoosh", global_position)
+	_udaan_ring()
+
+
+## True while the glide after an UDAAN leap holds him up.
+func gliding() -> bool:
+	return _glide > 0.0 and velocity.y >= -40.0 and alive and not finishing
+
+
+func _update_glide(delta: float, on_floor: bool) -> void:
+	if _glide < 0.0:
+		return
+	if on_floor and velocity.y >= 0.0:
+		_end_glide()
+		return
+	if not gliding():
+		return
+	if not _wings.spread:
+		_wings.glide()
+		Sfx.play("glide_wind", global_position)
+	_glide -= delta
+	if _glide <= 0.0:
+		_end_glide()
+
+
+func _end_glide() -> void:
+	_glide = -1.0
+	if _wings != null:
+		_wings.fold()
+
+
+## Height an UDAAN leap adds when cast at the top of a jump (vy = 0), in px.
+static func udaan_rise(lift: float, cfg: Dictionary) -> float:
+	return lift * lift / (2.0 * float(cfg.get("gravity", 2400.0)))
+
+
+## Glide after UDAAN: x = distance covered at full steer, y = height lost doing it.
+static func glide_reach(glide: float, cfg: Dictionary) -> Vector2:
+	return Vector2(float(cfg.get("run_speed", 330.0)) * glide, GLIDE_FALL * glide)
+
+
+## A flat ring of pale light that spreads from his feet as he leaps.
+func _udaan_ring() -> void:
+	var parent := get_parent()
+	if parent == null:
+		return
+	var ring := Line2D.new()
+	ring.points = Fx.ellipse(Vector2.ZERO, Vector2(1.0, 0.3), 32)
+	ring.closed = true
+	ring.width = 0.05
+	ring.default_color = Color(0.86, 0.8, 1.0, 0.9)
+	ring.position = global_position
+	ring.scale = Vector2.ONE * 20.0
+	ring.z_index = 6
+	parent.add_child(ring)
+	var t := ring.create_tween().set_parallel()
+	t.tween_property(ring, "scale", Vector2.ONE * 110.0, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	t.tween_property(ring, "modulate:a", 0.0, 0.45)
+	t.chain().tween_callback(ring.queue_free)
 
 
 func take_hit(from_x: float) -> void:
 	if not alive or finishing or _invulnerable > 0.0 or shield_time > 0.0:
 		return
-	hearts -= 1
+	hearts = LifeRules.after_hit(hearts)
 	hearts_changed.emit(hearts, max_hearts)
+	heart_delta.emit(-1)
 	_invulnerable = _num("invulnerable_after_hit", 1.2)
+	_end_glide()
 	var away := signf(global_position.x - from_x)
 	if away == 0.0:
 		away = -facing
@@ -410,7 +507,7 @@ func take_hit(from_x: float) -> void:
 	Services.analytics.log_event("player_hit", {"x": int(global_position.x), "hearts": hearts,
 		"level": level.level_id if level != null else ""})
 	Game.vibrate(70)
-	if hearts <= 0:
+	if LifeRules.is_game_over(hearts):
 		die("hit")
 
 
@@ -419,6 +516,7 @@ func die(cause: String) -> void:
 		return
 	alive = false
 	velocity = Vector2.ZERO
+	_end_glide()
 	Fx.burst(get_parent(), global_position + Vector2(0, -45), Color(0.95, 0.4, 0.6), 30, 240.0)
 	if cause != "fall":
 		puppet.shatter(get_parent(), global_position.y)
@@ -432,10 +530,28 @@ func die(cause: String) -> void:
 	died.emit(cause)
 
 
+## A pit fall costs a heart (the level respawns him while any are left).
+func lose_heart() -> void:
+	hearts = LifeRules.after_fall(hearts)
+	hearts_changed.emit(hearts, max_hearts)
+	heart_delta.emit(-1)
+
+
+## The rare heart pickup. Returns false (and the pickup stays) at full health.
+func heal(amount: int = 1) -> bool:
+	if not alive or hearts >= max_hearts:
+		return false
+	hearts = LifeRules.after_heal(hearts, max_hearts, amount)
+	hearts_changed.emit(hearts, max_hearts)
+	heart_delta.emit(1)
+	return true
+
+
+## Back at the last lamp. Hearts are NOT refilled (owner rule: healing is rare); prana
+## is, so traversal mantras can always be cast again.
 func respawn(at: Vector2) -> void:
 	global_position = at
 	velocity = Vector2.ZERO
-	hearts = max_hearts
 	alive = true
 	shield_time = 0.0
 	_invulnerable = 1.0
@@ -443,6 +559,8 @@ func respawn(at: Vector2) -> void:
 	_jump_t = -1.0
 	_cut_pending = false
 	_screamed = false
+	_end_glide()
+	_pant_left = 0
 	puppet.restore()
 	prana = max_prana
 	prana_changed.emit(prana, max_prana)

@@ -156,11 +156,18 @@ func flash(color: Color) -> void:
 	tw.tween_method(func(a: float) -> void: _mat.set_shader_parameter("flash_color", Color(color.r, color.g, color.b, a)), 0.75, 0.0, 0.3)
 
 
-## Death. The hero sinks to his knees and falls; the smoke-born dissolve into ash.
-## The figure is left behind as a copy so this node can respawn right away.
-func shatter(into: Node, ground_y: float) -> void:
+## Death. The hero sinks to his knees and falls; the smoke-born dissolve into smoke,
+## or, killed by fire (cause "fire"), burn away into ash (BurnFx).
+## The figure is left behind as a copy so this node can respawn right away. The copy
+## keeps the on-screen size: a brute is drawn through a scaled rig, so the whole
+## parent chain's scale is used, not just this node's (which only carries the facing).
+func shatter(into: Node, ground_y: float, cause: String = "") -> void:
 	var ghost := Node2D.new()
-	ghost.scale = scale
+	var rel := get_global_transform()
+	if into is CanvasItem:
+		rel = (into as CanvasItem).get_global_transform().affine_inverse() * rel
+	var size := Vector2(rel.x.length(), rel.y.length())
+	ghost.scale = Vector2(size.x * _facing, size.y)
 	ghost.z_index = 30
 	into.add_child(ghost)
 	ghost.global_position = Vector2(global_position.x, ground_y)
@@ -179,6 +186,12 @@ func shatter(into: Node, ground_y: float) -> void:
 		tw.tween_callback(func() -> void: _frame_into(spr, "death", 1))
 		tw.tween_interval(0.9)
 		tw.tween_property(ghost, "modulate:a", 0.0, 0.5)
+	elif cause == "fire":
+		_frame_into(spr, _anim, _frame)
+		tw.kill()
+		BurnFx.burn(into, ghost, mat, height() * size.y)
+		visible = false
+		return
 	else:
 		_frame_into(spr, _anim, _frame)
 		mat.set_shader_parameter("dissolve_edge", Color(1.0, 0.45, 0.15))

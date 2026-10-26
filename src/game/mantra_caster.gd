@@ -90,7 +90,7 @@ func _execute(id: String, m: Dictionary, result: Dictionary) -> String:
 			bolt.position = p.global_position + Vector2(p.facing * 26.0, -55.0)
 			level.world.add_child(bolt)
 		"udaan":
-			p.udaan(float(m.get("lift", 1050.0)))
+			p.udaan(float(m.get("lift", 1330.0)), float(m.get("glide", 1.5)))
 		"kavach":
 			p.shield_time = float(m.get("duration", 3.0))
 		"drishti":

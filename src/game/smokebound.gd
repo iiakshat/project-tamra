@@ -9,6 +9,10 @@ extends CharacterBody2D
 ## - "brute" is big, slow and shielded: fire from the front only staggers it. It slams
 ##   the ground after a long telegraph; jump or step back.
 ## Touching an enemy never hurts: every attack is telegraphed (design rule).
+## Maya (level data "maya"): a "mirage" guard is smoke, a harmless decoy that bursts
+## when struck or seen through with DRISHTI; a "veiled" guard is real but invisible
+## (a faint shimmer, and his wind-up glint still shows) until DRISHTI reveals him or a
+## blow tears the veil for good.
 
 signal died(at: Vector2, cause: String)
 
@@ -66,6 +70,8 @@ var kind := "soldier"
 var fire_interval := ARCHER_INTERVAL
 var combo_chance := COMBO_CHANCE
 var drop_prana := 20.0
+## "", "mirage" or "veiled" (see the class notes).
+var illusion := ""
 
 var _fire_t := 0.6
 var _state := State.PATROL
@@ -85,6 +91,9 @@ var _daze_fx: Node2D
 var _roots: Node2D
 var _pips: Pips
 var _slam_mark: Line2D
+var _aura: Sprite2D
+var _revealed := false
+var _veil_torn := false
 
 
 ## Hit points when the level data gives none. Chapter 1 guards fall to one JWALA (2).
@@ -117,6 +126,7 @@ func _ready() -> void:
 	var aura := Fx.glow(Color(0.9, 0.15, 0.1, 0.2), 95.0 * k)
 	aura.position = Vector2(0, -60 * k)
 	add_child(aura)
+	_aura = aura
 	hp = max_hp
 	# The puppet sits in a rig so the brute can be drawn bigger: face() owns scale.x.
 	_rig = Node2D.new()
@@ -153,6 +163,11 @@ func _ready() -> void:
 	if kind == "brute":
 		_slam_mark = _make_slam_mark()
 		add_child(_slam_mark)
+	if illusion != "":
+		add_to_group("maya")
+	if illusion == "mirage":
+		add_to_group("mirages")
+		drop_prana = 0.0
 
 
 func is_alive() -> bool:
@@ -216,6 +231,54 @@ func _process(delta: float) -> void:
 	if _slam_mark != null and _slam_mark.visible:
 		_slam_mark.scale.x = dir
 		_slam_mark.modulate.a = 0.45 + 0.45 * absf(sin(Time.get_ticks_msec() * 0.02))
+	if illusion == "veiled" and _state != State.DEAD:
+		_apply_veil()
+
+
+# --- Maya ---------------------------------------------------------------------------
+
+
+func is_mirage() -> bool:
+	return illusion == "mirage"
+
+
+## True while a veiled guard cannot be seen.
+func is_veiled() -> bool:
+	return illusion == "veiled" and not _revealed and not _veil_torn
+
+
+## DRISHTI: mirages burst into smoke; veiled guards show themselves while it lasts.
+func set_revealed(on: bool) -> void:
+	_revealed = on
+	if on and is_mirage():
+		vanish()
+
+
+## Veiled: only a faint heat-haze shimmer where he stands.
+func _apply_veil() -> void:
+	var hidden := is_veiled()
+	var shimmer := 0.07 + 0.05 * sin(Time.get_ticks_msec() * 0.009 + position.x)
+	_rig.modulate.a = shimmer if hidden else 1.0
+	_aura.visible = not hidden
+
+
+## A mirage is struck, burnt or seen through: it was only smoke.
+func vanish() -> void:
+	if _state == State.DEAD:
+		return
+	_state = State.DEAD
+	collision_layer = 0
+	remove_from_group("enemies")
+	remove_from_group("maya")
+	remove_from_group("mirages")
+	_glint.visible = false
+	_pips.visible = false
+	if _slam_mark != null:
+		_slam_mark.visible = false
+	Sfx.play("decoy_pop", global_position, 0.0, 0.7)
+	Fx.burst(get_parent(), global_position + Vector2(0, -60), Color(0.32, 0.3, 0.36, 0.85), 30, 180.0, false, 1.1)
+	puppet.shatter(get_parent(), global_position.y)
+	get_tree().create_timer(1.5, false).timeout.connect(queue_free)
 
 
 # --- Soldiers and brutes -------------------------------------------------------------
@@ -366,6 +429,10 @@ func _check_spear() -> void:
 	var p := level.player
 	if p != null and p.alive and spear.intersects(p.hitbox()):
 		_thrust_hit = true
+		if is_mirage():
+			# The spear is smoke: it passes through him in a grey puff.
+			Fx.burst(get_parent(), p.global_position + Vector2(0, -60), Color(0.4, 0.38, 0.45, 0.7), 14, 120.0, false, 0.6)
+			return
 		if p.shield_time > 0.0:
 			Sfx.play("kavach_block", p.global_position)
 			Fx.burst(get_parent(), p.global_position + Vector2(0, -50), Color(1.0, 0.85, 0.5), 18, 220.0)
@@ -392,6 +459,8 @@ func _slam() -> void:
 		return
 	var dx := (p.global_position.x - global_position.x) * dir
 	if dx > -40.0 and dx < SLAM_REACH and absf(p.global_position.y - global_position.y) < 40.0 and p.is_on_floor():
+		if is_mirage():
+			return
 		if p.shield_time > 0.0:
 			Sfx.play("kavach_block", p.global_position)
 		else:
@@ -460,6 +529,12 @@ func _loose_bolt() -> void:
 func damage(amount: int, from_x: float, cause: String) -> void:
 	if _state == State.DEAD:
 		return
+	if is_mirage():
+		vanish()
+		return
+	if illusion == "veiled" and not _veil_torn:
+		_veil_torn = true  # the blow tears the veil: he stays visible from now on
+		Fx.burst(get_parent(), global_position + Vector2(0, -70), Color(0.6, 1.0, 0.85, 0.8), 20, 200.0, false, 0.6)
 	hp -= amount
 	var away := signf(global_position.x - from_x)
 	if away == 0.0:
@@ -496,6 +571,9 @@ static func fire_damage(kind_name: String, facing: int, bolt_dir: int, amount: i
 ## JWALA's bolt. `bolt_dir` is the way the bolt flies.
 func fire_hit(amount: int, bolt_dir: int) -> void:
 	if _state == State.DEAD:
+		return
+	if is_mirage():
+		vanish()
 		return
 	if fire_damage(kind, dir, bolt_dir, amount) == 0:
 		Sfx.play("kavach_block", global_position, -2.0, 0.7)
@@ -605,15 +683,18 @@ func _die(cause: String) -> void:
 		orb.amount = drop_prana
 		orb.position = global_position + Vector2(0, -60)
 		get_parent().call_deferred("add_child", orb)
+	_rig.modulate.a = 1.0
+	_aura.visible = false
 	if cause == "fire":
-		Sfx.play("enemy_burn", global_position)
-		Fx.burst(get_parent(), global_position + Vector2(0, -55), Color(1.0, 0.5, 0.15), 48, 320.0)
-		Fx.burst(get_parent(), global_position + Vector2(0, -55), Color(0.15, 0.1, 0.1, 0.8), 20, 120.0, false, 1.2)
-		var t := create_tween()
-		t.tween_property(puppet, "modulate", Color(1.0, 0.4, 0.1, 0.0), 0.45)
-		t.tween_callback(queue_free)
+		# Burnt: he catches, a flat fire edge eats through him, and ash settles.
+		Sfx.play("fire_whoomph", global_position)
+		Sfx.play("burn_crackle", global_position)
+		Sfx.play("enemy_burn_cry" if kind != "brute" else "enemy_death_cry", global_position, 0.0, 0.8 if kind == "brute" else 1.0)
+		puppet.shatter(get_parent(), global_position.y, "fire")
+		get_tree().create_timer(BurnFx.DISSOLVE + 0.8, false).timeout.connect(queue_free)
 	else:
 		Sfx.play("enemy_hurt", global_position, 2.0, 0.8)
+		Sfx.play("enemy_death_cry", global_position, 0.0, 0.8 if kind == "brute" else 1.0)
 		puppet.shatter(get_parent(), global_position.y)
 		get_tree().create_timer(2.0, false).timeout.connect(queue_free)
 
