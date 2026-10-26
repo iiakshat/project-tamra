@@ -14,13 +14,13 @@ const TRIAL_REWARD := 100
 
 const VOW_POOL := [
 	{"id": "strike_kills", "goal": 4, "icon": "trial"},
-	{"id": "fire_kills", "goal": 3, "icon": "prana"},
-	{"id": "casts", "goal": 15, "icon": "prana"},
+	{"id": "fire_kills", "goal": 3, "icon": "fire"},
+	{"id": "casts", "goal": 15, "icon": "cast"},
 	{"id": "jyoti", "goal": 20, "icon": "jyoti"},
-	{"id": "levels", "goal": 2, "icon": "play"},
+	{"id": "levels", "goal": 2, "icon": "flag"},
 	{"id": "clean_clear", "goal": 1, "icon": "heart"},
-	{"id": "setu", "goal": 5, "icon": "up"},
-	{"id": "udaan", "goal": 5, "icon": "up"},
+	{"id": "setu", "goal": 5, "icon": "bridge"},
+	{"id": "udaan", "goal": 5, "icon": "leap"},
 ]
 
 const TRIAL_MODS := ["frail", "thin_prana", "fierce"]
@@ -99,6 +99,12 @@ func claim_vows() -> int:
 		total += ALL_VOWS_BONUS
 	save.jyoti += total
 	return total
+
+
+## True when a reward can be collected right now (drives the menu badge). The trial is
+## not counted: it is something to play, not something waiting to be picked up.
+func claimable(date: String) -> bool:
+	return blessing_available(date) or unclaimed_vows() > 0
 
 
 func unclaimed_vows() -> int:

@@ -2,7 +2,7 @@
 
 > Live file. Claude keeps this current: update it whenever a decision, status or rule changes, in the same session. The parent file `../CLAUDE.md` holds the business strategy and general rules. This file holds project specifics. If they conflict, the owner's live instructions win, then this file, then the parent.
 
-Last updated: 2026-10-25
+Last updated: 2026-10-26
 
 ## What this is
 
@@ -42,8 +42,10 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
 - **Not yet verified:**
   - Feel on a real phone (the owner is testing the first APK).
   - Performance on low-end devices.
-- **Diagnostics:** the `GameLog` autoload writes `user://logs/game.log` and flushes every line, so the log survives a crash. It captures every engine error and warning, plus analytics events, a perf sample every 10 s, and device and GPU info. A crashed previous session is flagged and kept as `game.prev.log`. Testers send logs without USB: **Pause → "Copy debug log"** (or the button on the title screen), then paste into any chat. Debug builds show a red error counter on the HUD.
+- **Diagnostics:** the `GameLog` autoload writes `user://logs/game.log` and flushes every line, so the log survives a crash. It captures every engine error and warning, plus analytics events, a perf sample every 10 s, and device and GPU info. A crashed previous session is flagged and kept as `game.prev.log`. Testers send logs without USB: **Settings → "Copy debug log"** (Settings is on the title screen and in Pause; after a crash the title screen also shows a red log button), then paste into any chat. Debug builds show a red error counter on the HUD.
 - `ra_html.html`: discarded prototype. Git-ignored, reference only.
+
+- **UI overhaul (2026-10-26):** themed with `assets/ui` textures (lacquer panel, copper medallions, pills) via `UiKit`; icons are SVGs in `assets/icons` from Material Symbols and game-icons.net (fetched by `tools/fetch_icons.ps1`; add a new icon there, then list it in `tests/test_ui_assets.gd`). Menu: drifting key art, title, Play pill, labelled Map / Mantras / Shop / Daily / Settings. Level select is the journey map (`src/ui/level_select.gd`, layout in `config/map.json`). Settings has Credits (keep `SettingsPanel.credits_text()` in step with ASSETS.md). Style rule: flat 2D, no glows or bloom, no orange.
 
 ## Open decisions (do not assume)
 
@@ -64,7 +66,7 @@ See `DECISIONS.md` for the reasons.
 - The Godot editor/CLI lives **outside the repo** at `../_tools/godot/Godot_v4.7.2-stable_win64_console.exe` (shared by future games). There are no Android tools on the laptop; Android builds run in GitHub Actions.
 - Import (after adding or renaming scripts): `godot --headless --path . --import`
 - Tests: `godot --headless --path . --script res://tests/run_tests.gd`
-- Debug args (debug builds only, after `--`, always `key=value`): `--level=c1_l1 --x=2500 --hold=move_right --cast=line --frames=N --screenshot=path --preview=puppets --book=1 --story=c2_intro`. See `src/main.gd`. Use `--fixed-fps 60` for deterministic runs. Delete `%APPDATA%\Godot\app_userdata\Project Tamra\save.json` to test as a new player.
+- Debug args (debug builds only, after `--`, always `key=value`): `--level=c1_l1 --x=2500 --hold=move_right --cast=line --frames=N --screenshot=path --preview=puppets --book=1 --story=c2_intro --panel=map|daily|shop|settings --card=c2_l2 --focus=c3_l3`. See `src/main.gd`. Use `--fixed-fps 60` for deterministic runs. Delete `%APPDATA%\Godot\app_userdata\Project Tamra\save.json` to test as a new player.
 - GDScript gotcha: `:=` on an untyped value (dictionary access, `event.pressed` on an `InputEvent`) is a parse error. Give it an explicit type.
 
 ## Code layout

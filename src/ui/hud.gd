@@ -55,42 +55,51 @@ func _ready() -> void:
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_flash)
 
+	# Status plate, top-left: hearts, prana, light gathered. Clear of the touch pads.
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", UiKit.frame_style(0.3, 4))
+	plate.position = Vector2(12, 10)
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_root.add_child(plate)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 2)
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_child(stack)
 	_hearts = HeartsView.new()
-	_hearts.position = Vector2(20, 14)
-	_hearts.size = Vector2(200, 60)
-	_root.add_child(_hearts)
+	_hearts.custom_minimum_size = Vector2(196, 34)
+	stack.add_child(_hearts)
 	_prana = PranaBar.new()
-	_prana.position = Vector2(26, 74)
-	_prana.size = Vector2(210, 26)
-	_root.add_child(_prana)
-
-	var ember_row := UiKit.stat("jyoti", "0", UiKit.JYOTI, 22)
-	ember_row.position = Vector2(22, 106)
+	_prana.custom_minimum_size = Vector2(196, 26)
+	stack.add_child(_prana)
+	var ember_row := UiKit.stat("jyoti", "0", UiKit.JYOTI, 20)
 	ember_row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	_ember_label = ember_row.get_child(1)
-	_root.add_child(ember_row)
+	UiKit.glint(ember_row.get_child(0), 4.0)
+	stack.add_child(ember_row)
 
 	_error_badge = UiKit.label("", 16, UiKit.DANGER, 4)
-	_error_badge.position = Vector2(30, 146)
+	_error_badge.position = Vector2(24, 150)
 	_error_badge.visible = false
 	_root.add_child(_error_badge)
 
-	_pause_button = UiKit.icon_button("pause", 72)
+	_pause_button = UiKit.icon_button("pause", 64)
 	_pause_button.anchor_left = 1.0
 	_pause_button.anchor_right = 1.0
-	_pause_button.offset_left = -96
-	_pause_button.offset_right = -24
-	_pause_button.offset_top = 18
-	_pause_button.offset_bottom = 90
+	_pause_button.offset_left = -84
+	_pause_button.offset_right = -20
+	_pause_button.offset_top = 14
+	_pause_button.offset_bottom = 78
 	_pause_button.pressed.connect(func() -> void: pause_pressed.emit())
 	_root.add_child(_pause_button)
 
 	_slot_row = HBoxContainer.new()
 	_slot_row.anchor_left = 1.0
 	_slot_row.anchor_right = 1.0
-	_slot_row.offset_right = -112
-	_slot_row.offset_left = -112
-	_slot_row.offset_top = 22
+	_slot_row.offset_right = -98
+	_slot_row.offset_left = -98
+	_slot_row.offset_top = 18
+	_slot_row.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_slot_row.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_slot_row.add_theme_constant_override("separation", 8)
 	_slot_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -124,7 +133,7 @@ func refresh_slots() -> void:
 		var strokes := Game.save.sign_strokes(id)
 		slot.custom = strokes[0] if not strokes.is_empty() else PackedVector2Array()
 		slot.color = GameConfig.color(m.get("color", ""), UiKit.ACCENT)
-		slot.custom_minimum_size = Vector2(54, 54)
+		slot.custom_minimum_size = Vector2(56, 56)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_slot_row.add_child(slot)
 		_slots.append(slot)
@@ -243,33 +252,41 @@ func show_pause(on: bool) -> void:
 	if not on:
 		return
 	var box := _overlay_box()
+	var title := UiKit.title("Paused", 46, UiKit.TEXT, 8)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	var resume := UiKit.pill("Resume", "play", "jade", 76, 280)
+	resume.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	resume.pressed.connect(func() -> void: resume_pressed.emit())
+	box.add_child(resume)
 	var row := _icon_row()
-	row.add_child(_icon("play", resume_pressed, 112, UiKit.ACCENT))
-	row.add_child(_icon("restart", restart_pressed))
-	var book := UiKit.icon_button("book", 96)
+	row.add_child(UiKit.labeled(_icon("restart", restart_pressed, 72), "Restart"))
+	var book := UiKit.icon_button("book", 72)
 	book.pressed.connect(open_book)
-	row.add_child(book)
-	var gear := UiKit.icon_button("gear", 96)
+	row.add_child(UiKit.labeled(book, "Mantras"))
+	var gear := UiKit.icon_button("gear", 72)
 	gear.pressed.connect(_open_settings)
-	row.add_child(gear)
-	row.add_child(_icon("home", menu_pressed))
+	row.add_child(UiKit.labeled(gear, "Settings"))
+	row.add_child(UiKit.labeled(_icon("home", menu_pressed, 72), "Menu"))
 	box.add_child(row)
-	var small := _icon_row()
-	small.add_child(_icon("log", copy_log_pressed, 60, UiKit.MUTED))
-	box.add_child(small)
 
 
 ## outcome: from Game.complete_level.
 func show_results(outcome: Dictionary, time: float, embers: int, total: int, deaths: int, has_next: bool) -> void:
 	_clear_overlay()
 	var box := _overlay_box()
+	var title := UiKit.title("Cleared!", 46, UiKit.TEXT, 8)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
 	var stars := _icon_row()
+	stars.add_theme_constant_override("separation", 8)
 	for i in 3:
 		var view := UiKit.IconView.new()
-		view.custom_minimum_size = Vector2(84, 84)
-		view.icon = "star" if i < int(outcome.get("stars", 1)) else "star_empty"
-		view.color = UiKit.JYOTI
-		view.pivot_offset = Vector2(42, 42)
+		view.custom_minimum_size = Vector2(76, 76)
+		var lit := i < int(outcome.get("stars", 1))
+		view.icon = "star" if lit else "star_empty"
+		view.color = UiKit.STAR if lit else Color(UiKit.TEXT, 0.5)
+		view.pivot_offset = Vector2(38, 38)
 		view.scale = Vector2.ZERO
 		stars.add_child(view)
 		var t := view.create_tween()
@@ -280,9 +297,9 @@ func show_results(outcome: Dictionary, time: float, embers: int, total: int, dea
 	box.add_child(stars)
 	var stats := _icon_row()
 	stats.add_theme_constant_override("separation", 34)
-	stats.add_child(UiKit.stat("clock", UiKit.format_time(time)))
-	stats.add_child(UiKit.stat("jyoti", "%d/%d" % [embers, total], UiKit.JYOTI))
-	stats.add_child(UiKit.stat("skull", str(deaths), UiKit.MUTED))
+	stats.add_child(UiKit.stat("clock", UiKit.format_time(time), UiKit.TEXT, 26))
+	stats.add_child(UiKit.stat("jyoti", "%d/%d" % [embers, total], UiKit.JYOTI, 26))
+	stats.add_child(UiKit.stat("skull", str(deaths), UiKit.MUTED, 26))
 	box.add_child(stats)
 	var gained := int(outcome.get("banked", 0)) + int(outcome.get("trial_reward", 0))
 	if gained > 0:
@@ -290,20 +307,26 @@ func show_results(outcome: Dictionary, time: float, embers: int, total: int, dea
 	var buyable: Array = outcome.get("buyable", [])
 	if not buyable.is_empty():
 		var row := _icon_row()
+		row.add_theme_constant_override("separation", 8)
+		row.add_child(UiKit.stat("book", "Can learn:", UiKit.TEXT, 20))
 		for id in buyable:
 			var g := GlyphView.new()
 			g.custom_minimum_size = Vector2(56, 56)
 			g.show_mantra(str(id))
 			row.add_child(g)
 		box.add_child(row)
-	var buttons := _icon_row()
 	if has_next:
-		buttons.add_child(_icon("next", next_pressed, 112, UiKit.ACCENT))
-	buttons.add_child(_icon("restart", restart_pressed))
-	var book := UiKit.icon_button("book", 96)
+		var next := UiKit.pill("Next", "next", "red", 76, 260)
+		next.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		next.pressed.connect(func() -> void: next_pressed.emit())
+		UiKit.pulse(next, 0.035, 1.6)
+		box.add_child(next)
+	var buttons := _icon_row()
+	buttons.add_child(UiKit.labeled(_icon("restart", restart_pressed, 68), "Again"))
+	var book := UiKit.icon_button("book", 68)
 	book.pressed.connect(open_book)
-	buttons.add_child(book)
-	buttons.add_child(_icon("home", menu_pressed))
+	buttons.add_child(UiKit.labeled(book, "Mantras"))
+	buttons.add_child(UiKit.labeled(_icon("home", menu_pressed, 68), "Menu"))
 	box.add_child(buttons)
 
 
@@ -351,9 +374,10 @@ func _next_popup() -> void:
 	center.add_child(col)
 	var halo := Control.new()
 	halo.custom_minimum_size = Vector2(260, 260)
-	var glow := Fx.glow(Color(color, 0.5), 150.0)
-	glow.position = Vector2(130, 130)
-	halo.add_child(glow)
+	var disc := Disc.new()
+	disc.color = Color(color, 0.16)
+	UiKit.full_rect(disc)
+	halo.add_child(disc)
 	var glyph := GlyphView.new()
 	glyph.animate = true
 	glyph.line_width = 8.0
@@ -367,7 +391,7 @@ func _next_popup() -> void:
 	var meaning := UiKit.label(str(m.get("meaning", "")), 22, UiKit.MUTED, 4)
 	meaning.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(meaning)
-	var ok := UiKit.icon_button("check", 80, UiKit.ACCENT)
+	var ok := UiKit.pill("Got it", "check", "jade", 64, 200)
 	ok.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	ok.pressed.connect(_next_popup)
 	col.add_child(ok)
@@ -501,12 +525,15 @@ func _overlay_box() -> VBoxContainer:
 	var center := UiKit.full_rect(CenterContainer.new())
 	_overlay.add_child(center)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UiKit.panel_style())
+	panel.add_theme_stylebox_override("panel", UiKit.frame_style(0.6, 12))
+	panel.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	center.add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
+	box.add_theme_constant_override("separation", 14)
+	box.custom_minimum_size = Vector2(440, 0)
 	panel.add_child(box)
 	_root.add_child(_overlay)
+	UiKit.pop_in(panel)
 	if _book != null:
 		_root.move_child(_book, -1)
 	return box
@@ -531,52 +558,94 @@ func _clear_overlay() -> void:
 		_overlay = null
 
 
-## Life as lamps: lit ones burn crimson, spent ones smoke.
+## Life as hearts: lit ones are crimson and flicker faintly like lamp flames; spent ones
+## are dark shells.
 class HeartsView extends Control:
 	var hearts := 3
 	var max_hearts := 3
+	var _t := 0.0
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+
+	func _process(delta: float) -> void:
+		_t += delta
+		queue_redraw()
 
 	func _draw() -> void:
 		for i in max_hearts:
-			var x := 28.0 + i * 56.0
-			var y := 40.0
-			var lit := i < hearts
-			if lit:
-				draw_texture_rect(Fx.glow_texture(), Rect2(x - 26, y - 46, 52, 52), false, Color(0.95, 0.3, 0.5, 0.85))
-				draw_colored_polygon(PackedVector2Array([Vector2(x - 5, y - 2), Vector2(x, y - 22), Vector2(x + 5, y - 2)]), Color(1.0, 0.85, 0.9))
+			var c := Vector2(17.0 + i * 36.0, size.y / 2.0)
+			if i < hearts:
+				var f := 0.5 + 0.5 * sin(_t * 5.3 + i * 1.9) * sin(_t * 3.1 + i)
+				Icons.draw(self, "heart", c, 16.0, Color(0.02, 0.01, 0.05, 0.9))
+				Icons.draw(self, "heart", c, 14.0 + f * 0.8, UiKit.DANGER.lerp(Color(1.0, 0.62, 0.68), f * 0.35))
 			else:
-				draw_line(Vector2(x, y - 4), Vector2(x + 3, y - 16), Color(0.5, 0.45, 0.55, 0.6), 2.0)
-			var bowl := PackedVector2Array([Vector2(x - 19, y), Vector2(x + 19, y), Vector2(x + 10, y + 12), Vector2(x - 10, y + 12)])
-			draw_colored_polygon(bowl, Color(0.14, 0.06, 0.14) if lit else Color(0.08, 0.06, 0.1))
-			draw_polyline(PackedVector2Array([bowl[0], bowl[1], bowl[2], bowl[3], bowl[0]]), Color(UiKit.ACCENT, 0.7 if lit else 0.25), 1.5, true)
+				Icons.draw(self, "heart", c, 14.0, Color(0.2, 0.18, 0.28, 0.85))
 
 
-## The prana meter: an icon and a bar that flashes when a cast is short of it.
+## The prana meter: a lotus and a copper-rimmed bar with a shimmer running through it;
+## it flashes crimson when a cast is short of prana.
 class PranaBar extends Control:
 	var value := 100.0
 	var max_value := 100.0
 	var _flash := 0.0
+	var _t := 0.0
+	var _frame: StyleBoxFlat
+	var _fill: StyleBoxFlat
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		_frame = StyleBoxFlat.new()
+		_frame.bg_color = Color(0.02, 0.02, 0.07, 0.9)
+		_frame.border_color = UiKit.COPPER
+		_frame.set_border_width_all(2)
+		_frame.set_corner_radius_all(8)
+		_fill = StyleBoxFlat.new()
+		_fill.set_corner_radius_all(6)
 
 	func flash() -> void:
 		_flash = 1.0
-		queue_redraw()
 
 	func _process(delta: float) -> void:
-		if _flash > 0.0:
-			_flash = maxf(0.0, _flash - delta * 2.0)
-			queue_redraw()
+		_t += delta
+		_flash = maxf(0.0, _flash - delta * 2.0)
+		queue_redraw()
 
 	func _draw() -> void:
-		Icons.draw(self, "prana", Vector2(12, 13), 13.0, Color(0.5, 1.0, 0.85))
-		var r := Rect2(30, 6, size.x - 34, 14)
-		draw_rect(r, Color(0.04, 0.03, 0.1, 0.85))
+		Icons.draw(self, "prana", Vector2(13, size.y / 2.0), 13.0, Color(0.5, 1.0, 0.85))
+		var r := Rect2(32, size.y / 2.0 - 8.0, size.x - 34, 16)
+		draw_style_box(_frame, r)
 		var k := clampf(value / maxf(max_value, 1.0), 0.0, 1.0)
-		var fill := Color(0.35, 0.95, 0.8).lerp(UiKit.DANGER, _flash)
-		draw_rect(Rect2(r.position, Vector2(r.size.x * k, r.size.y)), fill)
-		draw_rect(r, Color(UiKit.ACCENT, 0.6), false, 1.5)
+		var inner := r.grow(-3.0)
+		if k <= 0.0:
+			return
+		var w := inner.size.x * k
+		_fill.bg_color = Color(0.35, 0.95, 0.8).lerp(UiKit.DANGER, _flash)
+		draw_style_box(_fill, Rect2(inner.position, Vector2(maxf(w, 8.0), inner.size.y)))
+		# Shimmer: a pale band sweeping along the filled part every few seconds.
+		var x := fposmod(_t * 0.5, 1.4) * inner.size.x - 20.0
+		var a := clampf(x, 0.0, w)
+		var b := clampf(x + 18.0, 0.0, w)
+		if b > a:
+			draw_rect(Rect2(inner.position + Vector2(a, 2), Vector2(b - a, inner.size.y - 4)), Color(1, 1, 1, 0.35))
 
 
-## A learned mantra: its sign, a dark sweep while it recharges, dimmed if prana is short.
+## A flat disc behind the new-mantra glyph.
+class Disc extends Control:
+	var color := Color.WHITE
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		draw_circle(size / 2.0, minf(size.x, size.y) * 0.46, color)
+		draw_arc(size / 2.0, minf(size.x, size.y) * 0.46, 0.0, TAU, 64, Color(color, 0.5), 2.0, true)
+
+
+## A learned mantra in a copper medallion: its sign, a dark sweep while it recharges,
+## dimmed if prana is short.
 class SlotView extends Control:
 	var id := ""
 	var glyph := ""
@@ -587,10 +656,11 @@ class SlotView extends Control:
 
 	func _draw() -> void:
 		var c := size / 2.0
-		var r := minf(size.x, size.y) * 0.5 - 2.0
+		var r := minf(size.x, size.y) * 0.5
 		var ready := ratio <= 0.0 and not starved
-		draw_circle(c, r, Color(0.04, 0.03, 0.1, 0.78))
-		draw_arc(c, r, 0.0, TAU, 40, Color(color, 0.85 if ready else 0.3), 2.0, true)
+		draw_texture_rect(UiKit.ROUND_TEX, Rect2(c - Vector2(r, r), Vector2(r, r) * 2.0), false,
+			Color.WHITE if ready else Color(0.6, 0.6, 0.66))
+		var inner := r * 0.7
 		var src := custom if not custom.is_empty() else GlyphShapes.canonical(glyph)
 		if src.size() >= 2:
 			var box := Rect2(src[0], Vector2.ZERO)
@@ -599,11 +669,11 @@ class SlotView extends Control:
 			var half := maxf(maxf(box.size.x, box.size.y) / 2.0, 0.001)
 			var pts := PackedVector2Array()
 			for p in src:
-				pts.append(c + (p - box.get_center()) / half * r * 0.55)
+				pts.append(c + (p - box.get_center()) / half * inner * 0.68)
 			draw_polyline(pts, Color(color, 1.0 if ready else 0.35), 2.6, true)
 		if ratio > 0.01:
 			var pie := PackedVector2Array([c])
 			var steps := maxi(2, int(ratio * 32))
 			for i in steps + 1:
-				pie.append(c + Vector2.from_angle(-PI / 2.0 + TAU * ratio * i / steps) * r)
-			draw_colored_polygon(pie, Color(0, 0, 0, 0.5))
+				pie.append(c + Vector2.from_angle(-PI / 2.0 + TAU * ratio * i / steps) * inner)
+			draw_colored_polygon(pie, Color(0, 0, 0, 0.55))

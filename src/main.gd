@@ -9,6 +9,9 @@ extends Node
 ##   --cast=line        draw this mantra glyph after --cast_frame frames (default 60)
 ##   --screenshot=path  save a PNG after --frames frames, then quit
 ##   --frames=N         quit after N frames
+##   --panel=daily      open a menu panel: map, daily, shop, settings, book
+##   --card=c1_l2       open the journey map with this level's card
+##   --focus=c3_l3      open the journey map centred on this level
 
 var _screen: Node
 
@@ -28,6 +31,10 @@ func _ready() -> void:
 			(_screen as MenuScreen).open_book()
 		if args.has("panel"):
 			(_screen as MenuScreen).open_panel(args["panel"])
+		if args.has("focus"):
+			(_screen as MenuScreen).open_map().focus(args["focus"])
+		if args.has("card"):
+			(_screen as MenuScreen).open_map().open_card(args["card"])
 	if args.has("hold"):
 		Input.action_press(args["hold"])
 	if args.has("cast"):
@@ -43,7 +50,14 @@ func show_menu() -> void:
 	menu.begin_pressed.connect(_on_begin)
 	menu.continue_pressed.connect(_continue)
 	menu.level_chosen.connect(func(id: String, mod: String) -> void: _start_level(id, -1.0, mod))
+	menu.story_chosen.connect(func(id: String) -> void: _play_stories([id], _show_map))
 	_switch(menu)
+
+
+## Back to the journey map (after replaying a chapter's story from it).
+func _show_map() -> void:
+	show_menu()
+	(_screen as MenuScreen).open_map()
 
 
 func _on_begin() -> void:

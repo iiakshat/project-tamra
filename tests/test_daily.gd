@@ -56,3 +56,18 @@ func test_save_v2_migrates_currency() -> void:
 	var s := SaveData.from_dict({"version": 2, "embers_bank": 17})
 	check_eq(s.jyoti, 17, "embers become jyoti")
 	check_eq(s.skin, "classic", "default skin")
+
+
+func test_claimable_is_false_once_everything_is_collected() -> void:
+	# The menu badge: it must clear after claiming, even though today's trial is still playable.
+	var d := DailyRules.new(SaveData.new())
+	d.refresh("2026-10-25")
+	check(d.claimable("2026-10-25"), "a fresh day has a blessing waiting")
+	d.claim_blessing("2026-10-25")
+	check(not d.claimable("2026-10-25"), "nothing left to claim after the blessing (the trial is play, not a claim)")
+	var v: Dictionary = d.vows()[0]
+	d.track(v["id"], int(v["goal"]))
+	check(d.claimable("2026-10-25"), "a finished vow is claimable")
+	d.claim_vows()
+	check(not d.claimable("2026-10-25"), "claimed vows clear the badge")
+	check(d.claimable("2026-10-26"), "the next day brings a new blessing")

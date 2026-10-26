@@ -4,7 +4,11 @@ Every asset in the game must be listed here with its source and licence. Nothing
 
 | Asset | Type | Source / tool | Licence / rights | Added |
 |---|---|---|---|---|
-| All visuals (sky, skylines, puppets, rocks, effects, HUD icons) | Procedural code | Written for this project (`src/fx/`, `src/ui/`) | Original, owned by the project | 2026-10-25 |
+| Procedural visuals (sky, skylines, puppets, rocks, effects, map route dots, HUD bars) | Procedural code | Written for this project (`src/fx/`, `src/ui/`) | Original, owned by the project | 2026-10-25 |
+| `assets/icons/{play,next,pause,restart,home,close,check,gear,music,music_off,sound,sound_off,vibration,lock,star,star_empty,clock,hourglass,question,pen,log,up,map,info,shop,heart,back,chevron}.svg` | UI icons (SVG, recoloured white, renamed) | Google Material Symbols Rounded, https://github.com/google/material-design-icons (`symbols/web/<name>/materialsymbolsrounded/`). Source name per file is in its header comment. Fetched by `tools/fetch_icons.ps1`. | Apache License 2.0 (copy in `assets/icons/LICENSE-material-symbols-apache-2.0.txt`). Credited in the in-game Credits. | 2026-10-26 |
+| `assets/icons/{jyoti,prana,trial,vow,story,book,fire,cast,skin}.svg` (Lorc: candlebright, lotus, crossed-swords, tied-scroll, scroll-unfurled, open-book, fireball, magic-swirl, robe); `{gift,flag,bridge,leap}.svg` (Delapouite: present, level-end-flag, stone-bridge, jump-across); `skull.svg` (Sbed: death-skull) | Game icons (SVG, background removed, recoloured, padded) | game-icons.net, https://github.com/game-icons/icons. Fetched by `tools/fetch_icons.ps1`. | CC BY 3.0. **Attribution required:** authors listed in the in-game Credits (Settings > Credits). Licence notice in `assets/icons/LICENSE-game-icons.txt`. | 2026-10-26 |
+| `assets/ui/panel.png`, `button_round.png`, `pill_red.png`, `pill_jade.png` | UI textures (indigo lacquer panel with copper border, copper medallion, copper-rimmed pills) | AI-generated with Google Gemini by the main session; prompts to be recorded by that session | AI-generated; Gemini API terms allow use of output. Re-check before release. | 2026-10-25 |
+| `assets/ui/menu_keyart.png` (1920x1080), `assets/ui/journey_map.png` (2546x1080) | Key art and journey map, flat 2D | AI-generated with Google Gemini by the main session; 2K sources in `art_src/ui/`, downscaled with ffmpeg (lanczos) | AI-generated; Gemini API terms. Re-check before release. | 2026-10-26 |
 | `icon.svg` | Vector icon | Hand-written SVG for this project | Original, owned by the project | 2026-10-25 |
 | UI font | Font | Godot engine's built-in default font | Ships with Godot, open licence. Confirm exact font and licence before release. | 2026-10-25 |
 | Godot Engine | Engine | godotengine.org, 4.7.2 | MIT. **The licence notice must appear in the app (credits screen) before release.** | 2026-10-25 |
@@ -24,5 +28,5 @@ Rules:
 - Fonts and audio need a licence that allows commercial use in an app.
 
 Release to-dos:
-- [ ] Credits screen with the Godot MIT notice and the licences of its bundled third-party libraries.
+- [x] Credits screen (Settings > Credits) with the Godot MIT notice, its third-party component list, game-icons.net attribution, Material Symbols, Kenney, Gemini/Sarvam and Yatra One. Keep it in step with this file (`SettingsPanel.credits_text()`).
 - [ ] Replace the default font with a chosen OFL font and log it here.
