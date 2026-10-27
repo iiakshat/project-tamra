@@ -83,8 +83,8 @@ jobs:
 
       - name: Install Android build template and Firebase plugin
         run: |
-          tools/ci/install_android_template.sh
-          tools/ci/install_firebase.sh
+          bash tools/ci/install_android_template.sh
+          bash tools/ci/install_firebase.sh
           ~/godot/godot --headless --path . --import
 
       - name: Firebase config
