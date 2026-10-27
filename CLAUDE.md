@@ -2,7 +2,7 @@
 
 > Live file. Claude keeps this current: update it whenever a decision, status or rule changes, in the same session. The parent file `../CLAUDE.md` holds the business strategy and general rules. This file holds project specifics. If they conflict, the owner's live instructions win, then this file, then the parent.
 
-Last updated: 2026-10-26
+Last updated: 2026-10-27
 
 ## What this is
 
@@ -20,6 +20,8 @@ Design detail: `docs/GDD.md`. Build, test and release steps: `docs/RELEASE.md`.
 The folder is still called `RaOne`. That name came from the discarded prototype and is a trademark risk (Ra.One / G.One are film IP). Do not use it in anything player-facing, in the package ID, or in the store listing. Rename the folder once the real name is chosen.
 
 ## Status
+
+- **Round 6 (2026-10-27, v0.5.0):** story flow and ending, from the owner's request. A chapter's story (`c1_intro`, `c2_intro`, `c3_intro`) plays **every time its first level (1, 6, 11) is opened** from the map or Play, with Skip; levels 2-5 etc., retries and daily trials start straight away (logic in `src/core/story_flow.gd`, tested). The short after-level beats stay once-only. **First launch of a new install skips the cloud curtain**: the player goes straight into `c1_intro`, then level 1, and the curtain shows from the next app launch (first-run = no results and the opening story not yet finished or skipped). After the final level, the closing beat is followed by a **"To be continued…" card** (`src/ui/ending_screen.gd`, text in `config/game.json` "ending"). Bug fixed: the last level had no Next button, so its closing beat and an ending could never play; Next is now shown on every non-trial level. Debug args `--ending=1`, `--firstrun=1`. Version 0.5.0 (code 5).
 
 - **Round 5 (2026-10-26, owner's 4th device test):** 15 levels (5 per chapter) with new illusion mechanics (phantom walls, false gates/doors, mirage and veiled guards, false floors, hidden stairs/bridges; see docs/LEVELS.md). UDAAN is a 1.6x leap + 1.5 s glide. Hearts persist (pits cost a heart, no refill on respawn; one rare heart pickup per level); 0 hearts restarts the level. Fatigue-driven panting (rare). JWALA kills burn to ash (src/fx/burn_fx.gd). Story: opening 5 scenes animated (plates + cast cut-outs via the Gemini Batch API, tools/gen_batch.py), progress bar, sound effects; chapter-closing beats moved to each chapter's last level. Launch intro (clouds part, camera pulls back from Tamra), wind in his hair on the title. Hindi level names on the map (config/names_hi.json). Gemini spend: owner wants it minimal — use the Batch API and confirm before large generations.
 

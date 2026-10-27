@@ -3,6 +3,12 @@
   "max_hearts": 3,
   "gesture_min_score": 0.72,
   "slowmo_while_drawing": 0.35,
+  "ending": {
+    "title": "To be continued…",
+    "hi": "जारी रहेगा…",
+    "line": "Tamra has entered the palace. Maa is still waiting.",
+    "plate": "p16_tower"
+  },
   "chapters": [
     {
       "id": "c1",

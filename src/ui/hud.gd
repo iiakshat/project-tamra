@@ -314,6 +314,7 @@ func show_pause(on: bool) -> void:
 
 
 ## outcome: from Game.complete_level.
+## `has_next` shows the Next pill (on the very last level it leads to the ending card).
 func show_results(outcome: Dictionary, time: float, embers: int, total: int, deaths: int, has_next: bool) -> void:
 	_clear_overlay()
 	var box := _overlay_box()

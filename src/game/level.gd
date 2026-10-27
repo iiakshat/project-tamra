@@ -437,7 +437,7 @@ func _on_goal() -> void:
 	create_tween().tween_property(player, "modulate:a", 0.0, 0.5)
 	await get_tree().create_timer(0.8, false).timeout
 	if is_inside_tree():
-		hud.show_results(outcome, _time, _embers, _embers_total, _deaths, Game.next_level(level_id) != "" and trial_mod == "")
+		hud.show_results(outcome, _time, _embers, _embers_total, _deaths, trial_mod == "")
 
 
 ## The level is won: guards stand down and every bolt in the air fades. Hazards
