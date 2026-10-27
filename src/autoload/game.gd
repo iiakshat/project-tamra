@@ -30,8 +30,13 @@ func _ready() -> void:
 	grimoire.shop = shop_cfg
 	daily = DailyRules.new(save)
 	daily.refresh(today())
+	Services.analytics.set_consent(analytics_consent() == "yes")
+	# Device facts (model, Android version, screen) show which phones struggle; nothing personal.
+	var screen := DisplayServer.screen_get_size()
 	Services.analytics.log_event("session_start", {"version": str(ProjectSettings.get_setting("application/config/version", "")),
-		"learned": save.learned.size(), "jyoti": save.jyoti, "stars": save.total_stars()})
+		"learned": save.learned.size(), "jyoti": save.jyoti, "stars": save.total_stars(),
+		"model": OS.get_model_name(), "os": OS.get_version(), "gpu": RenderingServer.get_video_adapter_name(),
+		"screen": "%dx%d" % [screen.x, screen.y]})
 	apply_audio_settings.call_deferred()
 
 
@@ -232,6 +237,19 @@ func set_setting(key: String, value: Variant) -> void:
 	persist()
 	apply_audio_settings()
 	settings_changed.emit()
+
+
+## "ask" until the player answers the data card, then "yes" or "no".
+func analytics_consent() -> String:
+	var v := str(save.settings.get("share_data", "ask"))
+	return v if v == "yes" or v == "no" else "ask"
+
+
+func set_analytics_consent(granted: bool) -> void:
+	set_setting("share_data", "yes" if granted else "no")
+	Services.analytics.set_consent(granted)
+	if granted:  # Never send anything once the player has said no.
+		Services.analytics.log_event("consent_granted")
 
 
 func apply_audio_settings() -> void:

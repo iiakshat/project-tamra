@@ -2,7 +2,7 @@
 
 > Live file. Claude keeps this current: update it whenever a decision, status or rule changes, in the same session. The parent file `../CLAUDE.md` holds the business strategy and general rules. This file holds project specifics. If they conflict, the owner's live instructions win, then this file, then the parent.
 
-Last updated: 2026-10-27
+Last updated: 2026-10-28
 
 ## What this is
 
@@ -20,6 +20,8 @@ Design detail: `docs/GDD.md`. Build, test and release steps: `docs/RELEASE.md`.
 The folder is still called `RaOne`. That name came from the discarded prototype and is a trademark risk (Ra.One / G.One are film IP). Do not use it in anything player-facing, in the package ID, or in the store listing. Rename the folder once the real name is chosen.
 
 ## Status
+
+- **Round 7 (2026-10-28, v0.6.0): release prep**, after a market review (see DECISIONS.md 2026-10-28). (1) **Control options:** Settings > Pad size (S/M/L/XL) and Left-handed; geometry in `src/core/control_layout.gd` (tested). (2) **Analytics with consent:** `FirebaseAnalytics` (`src/platform/firebase_analytics.gd`) wraps the log service and sends to Firebase only when the Godotx Firebase plugin is in the build (release job only) **and** the player said yes on the one-time data card (`src/ui/consent_panel.gd`) or in Settings > Share play data (`share_data` = ask/yes/no). Events are cleaned to Firebase limits (`AnalyticsSanitizer`); `session_start` now carries phone model, Android version, GPU and screen; crash reports carry the level id. **Not live yet**: it needs the final package ID, a Firebase project and `google-services.json`. (3) **Release bundle:** `Android Release` preset (AAB) and `.github/workflows/release-aab.yml` with a no-secrets dry-run; the owner-only steps are listed in `docs/RELEASE.md`. (4) `docs/PRIVACY.md` is a draft with `[...]` blanks. (5) Proposed kill/fix launch rules are in DECISIONS.md and need the owner's confirmation. The CI dry run has **not** been run yet (needs a push of a `release/**` branch). 92 tests pass.
 
 - **Round 6 (2026-10-27, v0.5.0):** story flow and ending, from the owner's request. A chapter's story (`c1_intro`, `c2_intro`, `c3_intro`) plays **every time its first level (1, 6, 11) is opened** from the map or Play, with Skip; levels 2-5 etc., retries and daily trials start straight away (logic in `src/core/story_flow.gd`, tested). The short after-level beats stay once-only. **First launch of a new install skips the cloud curtain**: the player goes straight into `c1_intro`, then level 1, and the curtain shows from the next app launch (first-run = no results and the opening story not yet finished or skipped). After the final level, the closing beat is followed by a **"To be continued…" card** (`src/ui/ending_screen.gd`, text in `config/game.json` "ending"). Bug fixed: the last level had no Next button, so its closing beat and an ending could never play; Next is now shown on every non-trial level. Debug args `--ending=1`, `--firstrun=1`. Version 0.5.0 (code 5).
 
@@ -63,7 +65,7 @@ The folder is still called `RaOne`. That name came from the discarded prototype 
 
 | Decision | State | Notes |
 |---|---|---|
-| Game name | **OPEN** | Needs a trademark check (IP India public search, Play Store search). The package ID (`com.iiakshat.projecttamra` placeholder in `export_presets.cfg`) is permanent after the first Play upload. |
+| Game name | **OPEN, blocks release** | Needs a trademark check (IP India public search, Play Store search). The package ID (`com.iiakshat.projecttamra` placeholder in `export_presets.cfg`) is permanent after the first Play upload. |
 | Hero's name | OPEN | "Tamra" is a placeholder in `config/game.json`. |
 | Engine | **Godot 4.7.2, Compatibility renderer** | Recommended by Claude. The owner said "start building", so the build went ahead with it. The owner can still overrule. |
 | Play account type | OPEN | See parent file section 7. |

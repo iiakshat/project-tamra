@@ -39,6 +39,9 @@ func _show_settings() -> void:
 	_body.add_child(_toggle_row("music", "Music", "music_on"))
 	_body.add_child(_toggle_row("sound", "Sound effects", "sfx_on"))
 	_body.add_child(_toggle_row("vibration", "Vibration", "vibration"))
+	_body.add_child(_toggle_row("cast", "Left-handed", "left_handed", false))
+	_body.add_child(_pad_size_row())
+	_body.add_child(_toggle_row("info", "Share play data", "share_data", false))
 	var line := ColorRect.new()
 	line.color = Color(UiKit.COPPER, 0.35)
 	line.custom_minimum_size = Vector2(0, 2)
@@ -54,15 +57,43 @@ func _show_settings() -> void:
 	_refresh()
 
 
-func _toggle_row(icon: String, text: String, key: String) -> Button:
+## One row that cycles the on-screen pad size (small, normal, large, extra large).
+func _pad_size_row() -> Button:
+	var b := _row_button("leap", "Pad size")
+	var value := UiKit.label(_size_name(), 22, UiKit.COPPER, 4)
+	value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.get_child(0).add_child(value)
+	b.pressed.connect(func() -> void:
+		Game.set_setting("pad_scale", ControlLayout.next_scale(float(Game.save.settings.get("pad_scale", 1.0))))
+		value.text = _size_name()
+	)
+	return b
+
+
+func _size_name() -> String:
+	var k := float(Game.save.settings.get("pad_scale", 1.0))
+	var names := ["S", "M", "L", "XL"]
+	var best := 0
+	for i in ControlLayout.PRESETS.size():
+		if absf(ControlLayout.PRESETS[i] - k) < absf(ControlLayout.PRESETS[best] - k):
+			best = i
+	return names[best]
+
+
+func _toggle_row(icon: String, text: String, key: String, default_on: bool = true) -> Button:
 	var b := _row_button(icon, text)
 	var sw := Switch.new()
 	sw.custom_minimum_size = Vector2(64, 34)
 	sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.get_child(0).add_child(sw)
 	_switches[key] = sw
+	sw.on = _switch_value(key)
 	b.pressed.connect(func() -> void:
-		Game.set_setting(key, not bool(Game.save.settings.get(key, true)))
+		if key == "share_data":
+			Game.set_analytics_consent(Game.analytics_consent() != "yes")
+			_refresh()
+			return
+		Game.set_setting(key, not bool(Game.save.settings.get(key, default_on)))
 		if key == "vibration":
 			Game.vibrate(60)
 		_refresh()
@@ -119,7 +150,13 @@ func _row_button(icon: String, text: String) -> Button:
 
 func _refresh() -> void:
 	for key in _switches:
-		(_switches[key] as Switch).on = bool(Game.save.settings.get(key, true))
+		(_switches[key] as Switch).on = _switch_value(key)
+
+
+func _switch_value(key: String) -> bool:
+	if key == "share_data":
+		return Game.analytics_consent() == "yes"
+	return bool(Game.save.settings.get(key, key != "left_handed"))
 
 
 ## A flat on/off switch: a jade track with the knob right when on, grey when off.

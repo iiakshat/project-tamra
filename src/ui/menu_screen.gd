@@ -22,6 +22,7 @@ var _book_button: Button
 ## 0 while the intro holds the camera on Tamra, 1 for the normal title view.
 var _reveal := 1.0
 static var _intro_shown := false
+static var _consent_asked := false  # at most once per app launch
 const HERO_AT := Vector2(520, 700)  # Tamra on the cliff, in key-art pixels
 
 
@@ -39,6 +40,7 @@ func _ready() -> void:
 		_intro_shown = true
 		_play_intro()
 	_process(0.0)
+	_ask_for_consent.call_deferred()
 	Game.jyoti_changed.connect(func(_t: int) -> void: _refresh())
 	Sfx.scene("menu")
 
@@ -58,6 +60,21 @@ func _play_intro() -> void:
 		tw.parallel().tween_property(_ui_root, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT))
 
 
+## The one-time data-sharing card, shown over the title once the launch intro is done.
+## Not shown in debug runs that open a specific screen.
+func _ask_for_consent() -> void:
+	if _consent_asked or Game.analytics_consent() != "ask" or _panel != null:
+		return
+	if OS.is_debug_build() and not OS.get_cmdline_user_args().is_empty():
+		return
+	if _reveal < 1.0:
+		await get_tree().create_timer(3.2).timeout
+		if not is_inside_tree() or _panel != null:
+			return
+	_consent_asked = true
+	_open(ConsentPanel.new())
+
+
 ## Debug and deep-link entry: "levels"/"map", "daily", "shop", "settings", "book".
 func open_panel(name: String) -> void:
 	match name:
@@ -69,6 +86,8 @@ func open_panel(name: String) -> void:
 			_open(ShopPanel.new())
 		"settings":
 			_open(SettingsPanel.new())
+		"consent":
+			_open(ConsentPanel.new())
 		"book":
 			open_book()
 

@@ -52,6 +52,7 @@ func setup(id: String, start_x: float = -1.0, mod: String = "") -> void:
 	level_id = id
 	_start_x = start_x
 	trial_mod = mod
+	Services.analytics.set_context("level", id)
 
 
 func _ready() -> void:

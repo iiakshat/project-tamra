@@ -11,3 +11,4 @@ Sound: foley by Kenney (kenney.nl), CC0. Other effects synthesized for this game
 Art and voices: generated with Google Gemini; mantra calls voiced with Sarvam AI.
 Font: Yatra One, The Yatra Project Authors, SIL Open Font License 1.1 (OFL.txt).
 Engine: Godot Engine, MIT License (GODOT_LICENSE.txt).
+Analytics and crash reports (release build): Godotx Firebase plugin by Paulo Coutinho, MIT License (GODOTX_FIREBASE_LICENSE.txt); Firebase Android SDK, Apache License 2.0.
