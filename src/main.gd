@@ -6,6 +6,8 @@ extends Node
 ##   --x=2500           drop the hero at this x
 ##   --story=c1_intro   open a story screen
 ##   --ending=1         show the "To be continued" card
+##   --pad_scale=1.4    pad size for this run only (0.8 to 1.4, not saved)
+##   --lefty=1          left-handed pads for this run only (not saved)
 ##   --firstrun=1       behave as a brand-new player when the save is empty (otherwise any arg disables it)
 ##   --hold=move_right  hold an input action
 ##   --cast=line        draw this mantra glyph after --cast_frame frames (default 60)
@@ -21,6 +23,10 @@ var _screen: Node
 func _ready() -> void:
 	GameLog.log_renderer()
 	var args := _debug_args()
+	if args.has("pad_scale"):
+		Game.save.settings["pad_scale"] = float(args["pad_scale"])
+	if args.has("lefty"):
+		Game.save.settings["left_handed"] = args["lefty"] == "1"
 	if (args.is_empty() or args.has("firstrun")) and StoryFlow.is_first_run(Game.save, StoryScreen.seen_key("c1_intro")):
 		# Brand-new player: no launch curtain, straight into the story and then level 1.
 		# The curtain is skipped for the rest of this session too; it shows from the next launch.
