@@ -44,11 +44,17 @@ classpaths = ("        classpath 'com.google.gms:google-services:4.4.4'\n"
               "        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'\n")
 if "com.google.gms:google-services" not in text:
     m = re.search(r"buildscript\s*\{.*?dependencies\s*\{\n", text, re.S)
-    if not m:
-        sys.exit("no buildscript { dependencies { block found in build.gradle")
-    text = text[:m.end()] + classpaths + text[m.end():]
+    if m:
+        text = text[:m.end()] + classpaths + text[m.end():]
+    else:
+        # Godot 4.7's template uses the plugins {} DSL and has no buildscript block; Gradle
+        # accepts one in front of it.
+        block = ("buildscript {\n    repositories {\n        google()\n        mavenCentral()\n    }\n"
+                 "    dependencies {\n" + classpaths + "    }\n}\n\n")
+        text = block + text
 text = text.rstrip("\n") + ("\n\napply plugin: 'com.google.gms.google-services'\n"
                             "apply plugin: 'com.google.firebase.crashlytics'\n")
 open(path, "w", encoding="utf-8").write(text)
 PY
+echo "--- head of $gradle ---"; head -20 "$gradle"; echo "--- tail ---"; tail -4 "$gradle"
 echo "Firebase plugin ${TAG} installed (core, analytics, crashlytics)"
