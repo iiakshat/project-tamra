@@ -91,7 +91,8 @@ jobs:
         env:
           GS: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
         run: |
-          pkg=$(grep -m1 '^package/unique_name=' export_presets.cfg | cut -d'"' -f2)
+          pkg=$(awk '/^\[preset.1.options\]/{f=1} f && /^package\/unique_name=/{print; exit}' export_presets.cfg | cut -d'"' -f2)
+          echo "Release package: $pkg"
           if [ "$DRY_RUN" = "true" ]; then
             cat > google-services.json <<JSON
           {
@@ -128,6 +129,8 @@ jobs:
             echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$KU" >> "$GITHUB_ENV"
             echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$KP" >> "$GITHUB_ENV"
             echo "::add-mask::$KP"
+            keytool -list -keystore ~/keys/release.keystore -storepass "$KP" -alias "$KU" > /dev/null \
+              || { echo "::error::The upload keystore does not open with the stored alias and password"; exit 1; }
           fi
           echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$HOME/keys/release.keystore" >> "$GITHUB_ENV"
 

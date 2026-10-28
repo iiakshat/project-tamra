@@ -2,6 +2,14 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-28 — Owner decisions for release: name Tamra, personal Play account, 13+, release package ID
+- **Name: Tamra** (owner: "keep Tamra"). The trademark search (IP India public search, classes 9 and 41, plus Play Store search) still has to be done by the owner in a browser; a quick web search found no existing "Tamra" game, which is not a legal check.
+- **Package ID for the release build: `com.iiakshat.tamra`.** The debug preset keeps `com.iiakshat.projecttamra` so test installs still update in place, and the two can sit side by side on a phone. **Permanent after the first Play upload.** Firebase's Android app must be registered with this exact ID. The release CI job now reads the ID from the release preset (it had been reading the first preset in the file).
+- **Play account: personal.** So the closed test (12+ testers opted in for 14 continuous days, per app) is required before production.
+- **Target audience: 13+.** Choose only the 13-15, 16-17 and 18+ bands in Play Console. Risk to watch: the hero is a 12-year-old and the art is a friendly painted style, so Google may judge the game as appealing to children anyway, which would bring the Families policy into play. If Play flags it, the answer is either to accept the Families requirements or to adjust the store presentation, not to hide it.
+- **Upload signing key** created locally outside the repo (C:/Users/Akshat/tamra-signing/, with a KEEP-SAFE.txt holding the password) and stored as three GitHub secrets (UPLOAD_KEYSTORE_B64, UPLOAD_KEYSTORE_USER, UPLOAD_KEYSTORE_PASSWORD). It is a PKCS12 keystore made with Python's cryptography library, because the laptop has no Java; the release job opens it with keytool before building, so a bad key fails early. Play App Signing must be turned on so a lost upload key can be reset.
+- **Still missing:** GOOGLE_SERVICES_JSON_B64 (needs the Firebase project, browser only), the hosted privacy policy URL, and the low-end phone check (owner expects it to be fine; Play's free pre-launch report tests on real devices and will tell).
+
 ## 2026-10-28 — Release prep: consent-gated Firebase analytics, control options, release bundle job, launch rules
 Context: a market review found discovery and retention are the real risks and that controls and gesture recognition are the top complaint magnets for this kind of game. The owner said to go to production.
 - **Analytics = Firebase (Analytics + Crashlytics) through the MIT "Godotx Firebase" plugin, release builds only.** Why: free, gives D1/D7, drop-off and crash-free rate with no server, and it is the SDK the parent plan names. The plugin and gradle template are installed by CI (`tools/ci/*.sh`) and are not in the repo, so debug builds, tests and the 55 MB debug APK are unchanged. Game code still only calls `Services.analytics`; `FirebaseAnalytics` wraps the log and does nothing when the plugin is absent.
