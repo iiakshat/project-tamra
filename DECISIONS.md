@@ -2,6 +2,13 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-10-28 — Trademark search for TAMRA (IP India public search, owner-run) and what it means
+Search: wordmark, classes 9 and 41 (exports `WordMarkReport*.xlsx`). Findings, read by Claude, not a legal opinion:
+- **No TAMRA mark for games, apps or entertainment.** Class 41 has no TAMRA itself; the hits are education brands built on other words (TAMRAPARNI, TAMRALIPTA ..., PREETAM RAJASTHAN).
+- **Class 9 has TAMRA marks for unrelated goods:** TAMRA / TAMRA (label) by Tamra Dhatu Udyog (electric wires and cables; one registered to 2036, one objected), TAMRA by Neena Ajmani (sunglasses, eyeglasses, laptop cases; objected), SF SONIC TAMRA by Exide (batteries), TAMRA by PSC Electronics (telephones; shows validity to 2000, so probably lapsed), TAMRA GOLD POLY (electrical; valid to 2023). "Tamra" is the Hindi word for copper, which is why metal and electrical firms use it.
+- **Risk read:** low for a game, because the goods and services differ. It is not zero: class 9 is broad (it includes downloadable software) and a later filing by the owner could draw an objection or opposition from a same-name registrant. Phonetic variants (for example Tamara) were not searched; the Play Store and web were not searched by Claude beyond one quick pass.
+- **Practical rules:** use "Tamra" only for the game (never for hardware or merchandise like cables, batteries, eyewear), keep the Devanagari ताम्र and the art as part of the brand, and consider filing the owner's own application in classes 9 and 41 (fee and timing to confirm on the IP India site) once the game is live. A trademark attorney can give a real opinion for a small fee if the game takes off.
+
 ## 2026-10-28 — Owner decisions for release: name Tamra, personal Play account, 13+, release package ID
 - **Name: Tamra** (owner: "keep Tamra"). The trademark search (IP India public search, classes 9 and 41, plus Play Store search) still has to be done by the owner in a browser; a quick web search found no existing "Tamra" game, which is not a legal check.
 - **Package ID for the release build: `com.iiakshat.tamra`.** The debug preset keeps `com.iiakshat.projecttamra` so test installs still update in place, and the two can sit side by side on a phone. **Permanent after the first Play upload.** Firebase's Android app must be registered with this exact ID. The release CI job now reads the ID from the release preset (it had been reading the first preset in the file).

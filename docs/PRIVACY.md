@@ -1,6 +1,6 @@
 # Tamra: Privacy Policy
 
-NOT PUBLISHED YET. Intended home: a small public GitHub Pages repo (private repos cannot use free Pages), for example https://iiakshat.github.io/tamra-privacy/. This file is the source of truth; the hosted page is a copy, so update both. Keep it in step with what the game really sends (see `src/platform/firebase_analytics.gd` and the consent card in `src/ui/consent_panel.gd`). Not legal advice; have it read once by someone who knows India's DPDP Act before the production launch.
+Published at https://iiakshat.github.io/tamra-privacy/ (public repo iiakshat/tamra-privacy, since private repos cannot use free Pages). This file is the source of truth; the hosted page is a copy, so update both. Keep it in step with what the game really sends (see `src/platform/firebase_analytics.gd` and the consent card in `src/ui/consent_panel.gd`). Not legal advice; have it read once by someone who knows India's DPDP Act before the production launch.
 
 **Tamra** is a single-player offline game by Akshat, an independent developer in India. Contact: jakshat569@gmail.com. Last updated: 28 October 2026.
 

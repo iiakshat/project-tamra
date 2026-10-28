@@ -27,8 +27,10 @@ The release bundle (AAB) is built by `.github/workflows/release-aab.yml`. It ins
 | Play account | Personal (12 testers, 14 days). |
 | Target audience | 13+ |
 | Upload signing key | Done. In `C:/Users/Akshat/tamra-signing/` (outside the repo) and in GitHub Secrets. **Back up that folder in two places** (the password is in KEEP-SAFE.txt). |
-| GitHub secrets | `UPLOAD_KEYSTORE_B64`, `UPLOAD_KEYSTORE_USER`, `UPLOAD_KEYSTORE_PASSWORD` done. **`GOOGLE_SERVICES_JSON_B64` missing** (needs Firebase, see B). |
-| Privacy policy | Text final in `docs/PRIVACY.md`; not hosted yet (see C). |
+| GitHub secrets | All four done (`UPLOAD_KEYSTORE_B64`, `UPLOAD_KEYSTORE_USER`, `UPLOAD_KEYSTORE_PASSWORD`, `GOOGLE_SERVICES_JSON_B64`). Firebase project `tamra-3e246`, Android app `com.iiakshat.tamra`. |
+| Privacy policy | Live at https://iiakshat.github.io/tamra-privacy/ (paste this URL into Play Console). |
+| Real release bundle | Built 2026-10-28 by the "Release bundle" workflow (dry run off): signed with the upload key (checked), real package and Firebase project inside, 99 MB. Local copy: `../builds/tamra-release-0.6.0/tamra-release.aab`. |
+| Trademark search | Done by the owner on IP India, results in DECISIONS.md. No conflicting mark found in games or software. Not a legal opinion. |
 | Low-end phone test | Pending. Play Console's free pre-launch report also tests on real devices after the first upload. |
 
 ### Browser-only steps for the owner
