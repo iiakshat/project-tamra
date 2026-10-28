@@ -19,16 +19,38 @@ The release bundle (AAB) is built by `.github/workflows/release-aab.yml`. It ins
 - Consent-gated analytics and crash reports, a data-sharing card and a Settings switch (see DECISIONS.md, 2026-10-28).
 - A **dry-run** mode: push a branch named `release/<anything>` (or run the workflow by hand with "Dry run" ticked). It signs with a throwaway key and a placeholder Firebase config and proves the whole chain works. Its bundle is not uploadable.
 
-### What only the owner can do (in this order)
-1. **Pick the name** and check it (IP India public search, Play Store search, a web search). Then set `package/unique_name` in **both** presets in `export_presets.cfg` and `package/name`. **The package ID is permanent after the first Play upload.** Do not use anything with `RaOne`.
-2. **Decide the Play account type** (personal needs the 12 testers for 14 days; organization is exempt but needs business verification, in India usually a D-U-N-S number). Re-check Google's current rule on the day you start: https://support.google.com/googleplay/android-developer/answer/14151465
-3. **Create the Firebase project** at console.firebase.google.com (free Spark plan): add an Android app with the final package ID, turn on Analytics, download `google-services.json`. Never commit it (it is git-ignored). Encode it: `base64 -w0 google-services.json` (on Windows: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("google-services.json"))`).
-4. **Create the upload key**, outside the repo: `keytool -genkeypair -v -keystore upload.keystore -alias upload -keyalg RSA -keysize 2048 -validity 10000`. Back it up in two places. Turn on **Play App Signing** in Play Console so a lost upload key can be reset.
-5. **Add four GitHub repository secrets** (Settings > Secrets and variables > Actions): `UPLOAD_KEYSTORE_B64` (the keystore, base64), `UPLOAD_KEYSTORE_USER` (the alias, `upload`), `UPLOAD_KEYSTORE_PASSWORD`, `GOOGLE_SERVICES_JSON_B64`.
-6. **Host the privacy policy**: finish `docs/PRIVACY.md` (name, contact email), publish it with GitHub Pages, and paste the URL into Play Console.
-7. **Run the workflow** (Actions > Release bundle > Run workflow, untick "Dry run"). Download `tamra-release-aab`. It refuses to run if a secret is missing or `google-services.json` is for a different package.
-8. **Play Console:** create the app, upload the AAB to **Closed testing**, add 15-20 testers (12 must stay opted in for 14 continuous days), fill in the forms below, and start the clock.
-9. Bump `version/code` (+1 for every upload, in both presets) and `version/name` for each new build. `project.godot` `config/version` should match.
+### Status of the release steps (2026-10-28)
+| Step | State |
+|---|---|
+| Name | Tamra (owner). Trademark search still to do, see A below. |
+| Release package ID | `com.iiakshat.tamra`, set in the `Android Release` preset. Permanent after the first Play upload. |
+| Play account | Personal (12 testers, 14 days). |
+| Target audience | 13+ |
+| Upload signing key | Done. In `C:/Users/Akshat/tamra-signing/` (outside the repo) and in GitHub Secrets. **Back up that folder in two places** (the password is in KEEP-SAFE.txt). |
+| GitHub secrets | `UPLOAD_KEYSTORE_B64`, `UPLOAD_KEYSTORE_USER`, `UPLOAD_KEYSTORE_PASSWORD` done. **`GOOGLE_SERVICES_JSON_B64` missing** (needs Firebase, see B). |
+| Privacy policy | Text final in `docs/PRIVACY.md`; not hosted yet (see C). |
+| Low-end phone test | Pending. Play Console's free pre-launch report also tests on real devices after the first upload. |
+
+### Browser-only steps for the owner
+
+**A. Trademark check (10 minutes).** Go to tmrsearch.ipindia.gov.in, choose "Wordmark", type TAMRA, Class 9 and again Class 41, and look at the results. Then search "Tamra" in the Play Store and on the web. Anything live in games or software under the same name is a problem; an unrelated word in another field is usually not.
+
+**B. Create the Firebase project (about 10 minutes, free plan).**
+1. Open console.firebase.google.com and sign in with a Google account (one you will keep).
+2. **Create a project**, name it `Tamra`. Leave Gemini assistance off if asked. Keep **Google Analytics enabled**, pick or create an Analytics account, choose India as the location, and **untick every data-sharing option** (Google products, benchmarking, technical support, account specialists), so it matches the privacy policy.
+3. Open the project, click the **Android icon** ("Add app"). Package name: `com.iiakshat.tamra` (exactly). Nickname: `Tamra`. Leave the SHA-1 box empty. Click Register app.
+4. **Download `google-services.json`**. Skip the "add the SDK" screens (they do not apply to Godot) and finish.
+5. Save the file in the game folder (`Gems/RaOne/google-services.json`; git ignores it) and tell Claude. Claude then stores it as the `GOOGLE_SERVICES_JSON_B64` secret and runs the real release build.
+6. In the left menu open **Release & Monitor > Crashlytics** and click **Enable** if it offers to.
+
+**C. Host the privacy policy.** Private repos cannot use free GitHub Pages, so the page needs a tiny *public* repo (for example `iiakshat/tamra-privacy`) containing only the policy. It will show the contact email `jakshat569@gmail.com`. Either create that repo yourself and tell Claude, or tell Claude it may create it. The policy URL then goes into Play Console.
+
+**D. Play Console (after B and a real build).** Create the app (name Tamra, game, free), turn **Play App Signing** on, upload the AAB to **Closed testing**, add 15-20 tester emails (12 must stay opted in for 14 continuous days), and fill the forms below. Re-check Google's current rule on the day you start: https://support.google.com/googleplay/android-developer/answer/14151465
+
+**E. Each new build:** bump `version/code` (+1 per upload) and `version/name` in **both** presets, and `config/version` in `project.godot`.
+
+### Running the real release build
+Actions tab > "Release bundle" > Run workflow > untick "Dry run". It refuses to run if a secret is missing, if the keystore does not open, or if `google-services.json` is for a different package. Download `tamra-release-aab` and upload it to Play yourself; nothing here publishes anything.
 
 ### Forms and answers to prepare
 - **Data safety** must match what the game really does. With Firebase: App activity (in-app events), App info and performance (crash logs, diagnostics), Device or other IDs (Firebase app instance ID). Data is collected only if the player agrees, is encrypted in transit, is not shared with third parties for ads, and can be deleted on request. No ads ID, no location, no contacts, no account.
