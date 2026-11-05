@@ -3,7 +3,7 @@
 Answers to give in Play Console, based on what the game really does today. If the game changes (ads, purchases, accounts), revisit the marked rows. Google's wording and screens change; where a screen differs from this sheet, answer truthfully and ask.
 
 ## The file to upload
-`Gems/builds/tamra-release-0.6.0/tamra-release.aab` (built by the "Release bundle" workflow, signed with the upload key). Package `com.iiakshat.tamra`, version name 0.6.0, version code 6. The package name is read from the file on upload; it is never typed into Play Console. Each later upload needs a higher version code (7, 8, ...).
+`Gems/builds/tamra-release-0.6.1/tamra-release.aab` (built by the "Release bundle" workflow on 2026-11-05, signed with the upload key; no advertising ID permission; has the age screen). Package `com.iiakshat.tamra`, version name 0.6.1, version code 7. The old 0.6.0 build is in `builds/tamra-release-0.6.0-OLD-DO-NOT-UPLOAD`. The package name is read from the file on upload; it is never typed into Play Console. Each later upload needs a higher version code (7, 8, ...).
 
 ## Create app
 | Field | Answer |
