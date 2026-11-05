@@ -18,7 +18,8 @@ var story_choices := {}          # choice id -> option index, for flavour callba
 var daily := {}                  # see DailyRules; plain data
 var settings := {"vibration": true, "quality": "high", "music": 0.8, "sfx": 1.0, "music_on": true, "sfx_on": true,
 	"pad_scale": 1.0, "left_handed": false,
-	"share_data": "ask"}  # "ask" until the player answers, then "yes" or "no"
+	"share_data": "ask",  # "ask" until the player answers, then "yes" or "no"
+	"age_gate": "ask"}  # "ask", then "ok" (13 or older) or "under"; the birth year is never stored
 
 
 func to_dict() -> Dictionary:

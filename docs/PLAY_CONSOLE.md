@@ -22,10 +22,10 @@ Answers to give in Play Console, based on what the game really does today. If th
 | App access | All functionality is available without logging in |
 | Ads | No ads today. Change to Yes when rewarded video is added |
 | Target audience | 13-15, 16-17, 18+ only. Do not tick anything under 13 |
-| Appeals to children? | Answer honestly. The hero is a 12-year-old, so this is the one to think about, not rush |
+| Appeals to children? | Answer honestly. The hero is a 12-year-old, so this is the one to think about, not rush. The game has a neutral age screen (birth year, not stored) before any data sharing, which is the safeguard Google describes for mixed audiences |
 | Content rating (IARC) | Category: Game. Fantasy violence yes (stylised, no blood or gore). No sex, profanity, drugs, gambling, user chat, location sharing or purchases |
 | News app, government app, financial features, health | No to all |
-| Advertising ID | The bundle contains the AD_ID permission (added by Firebase). Either answer Yes with purpose Analytics, or rebuild without the permission and answer No. Pending decision |
+| Advertising ID | **No.** From version 0.6.1 the release build removes the AD_ID permissions Firebase adds (`tools/ci/tamra_manifest`), and the release job fails if they come back. Do not upload the older 0.6.0 bundle: it still has the permission |
 
 ## Data safety
 Collection is optional (the player chooses on the first-run card). Declare:

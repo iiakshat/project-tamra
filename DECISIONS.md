@@ -2,6 +2,14 @@
 
 Newest first. One entry per notable decision: what, why, and what would change it.
 
+## 2026-11-05 — Neutral age screen before data sharing, advertising ID permissions removed (v0.6.1)
+Context: the hero is a 12-year-old in a friendly painted style, so Google may judge Tamra as appealing to children even with a 13+ target. Its Families guidance for mixed audiences is a neutral age screen, and SDKs not approved for child-directed use should sit behind it.
+- **Age screen** (`AgePanel`, logic in `AgeGate`, tested): asks for a birth year starting from 2000 (deliberately not near the cut-off), stores only "ok" or "under" (never the year), and leans cautious: only a birth year at least 14 years ago counts as certainly 13 or older. Under 13: data sharing is switched off for good, the data card and the Settings switch never appear, and the game plays the same. Dismissing without answering leaves the question open until next launch. Existing testers see it once. Re-asking after "under" is blocked by storing the result, so retrying does not unlock sharing; a reinstall still resets it, which is accepted.
+- **Rule:** `Game.sharing_allowed()` is true only when age is "ok" and consent is "yes"; analytics is switched on or off from that alone. Settings > Share play data is shown only to players found to be 13 or older.
+- **Advertising ID:** `tools/ci/tamra_manifest` (a tiny export plugin, release build only) removes `com.google.android.gms.permission.AD_ID` and `android.permission.ACCESS_ADSERVICES_AD_ID`, which Firebase adds. The release job fails if "AD_ID" is still in the manifest. Why: the game never reads the advertising ID and denies ad storage; with the permission gone the Play Console question is answered No and the privacy policy line stays true. If a rewarded-ad SDK is added later, this must be revisited (ads normally need it).
+- Version 0.6.1 (code 7). The 0.6.0 bundle in `../builds/tamra-release-0.6.0/` still has the permission and no age screen: do not upload it.
+- Privacy policy updated (live page and `docs/PRIVACY.md`).
+
 ## 2026-10-28 — Trademark search for TAMRA (IP India public search, owner-run) and what it means
 Search: wordmark, classes 9 and 41 (exports `WordMarkReport*.xlsx`). Findings, read by Claude, not a legal opinion:
 - **No TAMRA mark for games, apps or entertainment.** Class 41 has no TAMRA itself; the hits are education brands built on other words (TAMRAPARNI, TAMRALIPTA ..., PREETAM RAJASTHAN).

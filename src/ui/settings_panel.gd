@@ -41,7 +41,8 @@ func _show_settings() -> void:
 	_body.add_child(_toggle_row("vibration", "Vibration", "vibration"))
 	_body.add_child(_toggle_row("cast", "Left-handed", "left_handed", false))
 	_body.add_child(_pad_size_row())
-	_body.add_child(_toggle_row("info", "Share play data", "share_data", false))
+	if Game.age_gate() == "ok":  # asked only of players the age screen found to be 13 or older
+		_body.add_child(_toggle_row("info", "Share play data", "share_data", false))
 	var line := ColorRect.new()
 	line.color = Color(UiKit.COPPER, 0.35)
 	line.custom_minimum_size = Vector2(0, 2)

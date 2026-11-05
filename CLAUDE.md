@@ -2,7 +2,7 @@
 
 > Live file. Claude keeps this current: update it whenever a decision, status or rule changes, in the same session. The parent file `../CLAUDE.md` holds the business strategy and general rules. This file holds project specifics. If they conflict, the owner's live instructions win, then this file, then the parent.
 
-Last updated: 2026-10-28
+Last updated: 2026-11-05
 
 ## What this is
 
@@ -20,6 +20,8 @@ Design detail: `docs/GDD.md`. Build, test and release steps: `docs/RELEASE.md`.
 The folder is still called `RaOne`. That name came from the discarded prototype and is a trademark risk (Ra.One / G.One are film IP). Do not use it in anything player-facing, in the package ID, or in the store listing. Rename the folder once the real name is chosen.
 
 ## Status
+
+- **Round 8 (2026-11-05, v0.6.1):** neutral **age screen** before the data card (`src/ui/age_panel.gd`, `src/core/age_gate.gd`, tested; stores only `age_gate` = ask/ok/under, never the birth year; under 13 means no data sharing ever and no Share row in Settings) and the release build **removes the advertising ID permissions** (`tools/ci/tamra_manifest`; the release job fails if AD_ID returns). Also: Play Console answer sheet `docs/PLAY_CONSOLE.md`, store text `docs/STORE_LISTING.md`, store images in `../builds/store-listing/`. Developer account name is **axnex** (personal; identity verification pending as of 2026-11-05, Create app blocked until it finishes). **Do not upload the 0.6.0 bundle**; use the 0.6.1 one. Debug arg `--panel=age`.
 
 - **Round 7 (2026-10-28, v0.6.0): release prep**, after a market review (see DECISIONS.md 2026-10-28). (1) **Control options:** Settings > Pad size (S/M/L/XL) and Left-handed; geometry in `src/core/control_layout.gd` (tested). (2) **Analytics with consent:** `FirebaseAnalytics` (`src/platform/firebase_analytics.gd`) wraps the log service and sends to Firebase only when the Godotx Firebase plugin is in the build (release job only) **and** the player said yes on the one-time data card (`src/ui/consent_panel.gd`) or in Settings > Share play data (`share_data` = ask/yes/no). Events are cleaned to Firebase limits (`AnalyticsSanitizer`); `session_start` now carries phone model, Android version, GPU and screen; crash reports carry the level id. **Real release bundle built 2026-10-28** (Release bundle workflow, dry run off; Firebase project `tamra-3e246`; signed with the upload key; copy in `../builds/tamra-release-0.6.0/`). Analytics has **not** been seen working on a real phone yet. Privacy policy is live at https://iiakshat.github.io/tamra-privacy/. All four release secrets are in GitHub. (3) **Release bundle:** `Android Release` preset (AAB) and `.github/workflows/release-aab.yml` with a no-secrets dry-run; the owner-only steps are listed in `docs/RELEASE.md`. (4) `docs/PRIVACY.md` is a draft with `[...]` blanks. (5) Proposed kill/fix launch rules are in DECISIONS.md and need the owner's confirmation. **CI dry run verified 2026-10-28** (branch `release/round7-dryrun`): tests, gradle template, Firebase plugin (core, analytics, crashlytics), AAB export all succeed; the manifest has INTERNET and Firebase collection defaulted off. The dry-run AAB is 99 MB (arm64 + armv7, art and voice dominate), so size is worth watching. 92 tests pass.
 

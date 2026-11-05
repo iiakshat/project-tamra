@@ -30,7 +30,10 @@ if grep -q '^\[editor_plugins\]' project.godot; then
   echo "project.godot already has [editor_plugins]; edit it by hand" >&2
   exit 1
 fi
-printf '\n[editor_plugins]\n\nenabled=PackedStringArray("res://addons/godotx_firebase/plugin.cfg")\n' >> project.godot
+# Tamra's own export plugin strips the advertising ID permissions that Firebase adds.
+rm -rf addons/tamra_manifest
+cp -r tools/ci/tamra_manifest addons/tamra_manifest
+printf '\n[editor_plugins]\n\nenabled=PackedStringArray("res://addons/godotx_firebase/plugin.cfg", "res://addons/tamra_manifest/plugin.cfg")\n' >> project.godot
 
 # Gradle edits from the plugin README: the classpaths go in the first buildscript block, the
 # plugins are applied at the very end.

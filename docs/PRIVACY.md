@@ -6,7 +6,8 @@ Published at https://iiakshat.github.io/tamra-privacy/ (public repo iiakshat/tam
 
 ## The short version
 - The game works fully offline. There is no account, and the game never asks for your name, email, phone number, contacts or location.
-- The first time you open the game it asks whether you want to share **anonymous play data**. If you say no, nothing is sent. You can change your mind at any time in **Settings > Share play data**.
+- The first time you open the game it asks which year you were born. The year is not kept; the game only remembers whether you are 13 or older. If you are under 13, the game never asks to share data and collects nothing.
+- Players who are 13 or older are then asked whether they want to share **anonymous play data**. If you say no, nothing is sent. You can change your mind at any time in **Settings > Share play data**.
 - This data is never used for advertising and is not sold.
 
 ## What is collected, only if you say yes
@@ -28,7 +29,7 @@ Your save (levels, settings, drawn signs) stays on your phone. Uninstalling the 
 - To ask for data from your install to be deleted, email jakshat569@gmail.com with your phone model and roughly when you played. The data is anonymous, so it may not be findable without those details.
 
 ## Children
-Tamra is intended for players aged 13 and over. We do not knowingly collect data from children under 13. If you believe a child under 13 has shared data, email us and we will delete it.
+Tamra is intended for players aged 13 and over. The game asks for a birth year once; if the answer shows a player may be under 13, data sharing is switched off for good and nothing is collected from them. The game itself plays the same. If you believe a child under 13 has shared data, email us and we will delete it.
 
 ## Changes
 If this policy changes in a way that matters, the game will ask you again before sharing anything.

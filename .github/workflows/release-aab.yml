@@ -155,6 +155,10 @@ jobs:
       - name: Check the bundle
         run: |
           test -s build/tamra-release.aab
+          # Hard check: the advertising ID permissions must be gone (the Play form says the app does not use it).
+          if unzip -p build/tamra-release.aab base/manifest/AndroidManifest.xml | strings | grep -q "AD_ID"; then
+            echo "::error::An advertising ID permission is still in the bundle"; exit 1
+          fi
           # Informational: what ended up inside.
           unzip -l build/tamra-release.aab | grep -E "base/(manifest/AndroidManifest.xml|lib/)" | head || true
           unzip -p build/tamra-release.aab base/manifest/AndroidManifest.xml | strings | grep -iE "firebase|measurement|INTERNET" | head -8 || true

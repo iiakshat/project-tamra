@@ -13,6 +13,7 @@ export_credentials.cfg
 # Installed only by the release job (tools/ci), never committed
 /android/
 /addons/godotx_firebase/
+/addons/tamra_manifest/
 
 # Build output
 build/

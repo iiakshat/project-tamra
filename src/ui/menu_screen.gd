@@ -60,10 +60,13 @@ func _play_intro() -> void:
 		tw.parallel().tween_property(_ui_root, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT))
 
 
-## The one-time data-sharing card, shown over the title once the launch intro is done.
+## The one-time neutral age screen and then the data-sharing card, shown over the title once
+## the launch intro is done.
 ## Not shown in debug runs that open a specific screen.
 func _ask_for_consent() -> void:
-	if _consent_asked or Game.analytics_consent() != "ask" or _panel != null:
+	var need_age := Game.age_gate() == "ask"
+	var need_consent := Game.age_gate() != "under" and Game.analytics_consent() == "ask"
+	if _consent_asked or _panel != null or not (need_age or need_consent):
 		return
 	if OS.is_debug_build() and not OS.get_cmdline_user_args().is_empty():
 		return
@@ -72,7 +75,16 @@ func _ask_for_consent() -> void:
 		if not is_inside_tree() or _panel != null:
 			return
 	_consent_asked = true
-	_open(ConsentPanel.new())
+	if not need_age:
+		_open(ConsentPanel.new())
+		return
+	# Age first; the data-sharing card follows only for players found to be 13 or older.
+	var age := AgePanel.new()
+	age.answered.connect(func(is_13_or_older: bool) -> void:
+		if is_13_or_older and Game.analytics_consent() == "ask":
+			_open.call_deferred(ConsentPanel.new())
+	)
+	_open(age)
 
 
 ## Debug and deep-link entry: "levels"/"map", "daily", "shop", "settings", "book".
@@ -88,6 +100,8 @@ func open_panel(name: String) -> void:
 			_open(SettingsPanel.new())
 		"consent":
 			_open(ConsentPanel.new())
+		"age":
+			_open(AgePanel.new())
 		"book":
 			open_book()
 
