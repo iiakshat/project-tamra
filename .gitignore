@@ -15,6 +15,9 @@ export_credentials.cfg
 /addons/godotx_firebase/
 /addons/tamra_manifest/
 
+# Local work files, release bundles and scratch (large, Tamra-only; has a .gdignore)
+/_local/
+
 # Build output
 build/
 *.apk

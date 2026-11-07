@@ -29,7 +29,7 @@ The release bundle (AAB) is built by `.github/workflows/release-aab.yml`. It ins
 | Upload signing key | Done. In `C:/Users/Akshat/tamra-signing/` (outside the repo) and in GitHub Secrets. **Back up that folder in two places** (the password is in KEEP-SAFE.txt). |
 | GitHub secrets | All four done (`UPLOAD_KEYSTORE_B64`, `UPLOAD_KEYSTORE_USER`, `UPLOAD_KEYSTORE_PASSWORD`, `GOOGLE_SERVICES_JSON_B64`). Firebase project `tamra-3e246`, Android app `com.iiakshat.tamra`. |
 | Privacy policy | Live at https://iiakshat.github.io/tamra-privacy/ (paste this URL into Play Console). |
-| Real release bundle | Built 2026-10-28 by the "Release bundle" workflow (dry run off): signed with the upload key (checked), real package and Firebase project inside, 99 MB. Local copy: `../builds/tamra-release-0.6.0/tamra-release.aab`. |
+| Real release bundle | Built 2026-10-28 by the "Release bundle" workflow (dry run off): signed with the upload key (checked), real package and Firebase project inside, 99 MB. Local copy: `_local/builds/tamra-release-0.6.0/tamra-release.aab`. |
 | Trademark search | Done by the owner on IP India, results in DECISIONS.md. No conflicting mark found in games or software. Not a legal opinion. |
 | Low-end phone test | Pending. Play Console's free pre-launch report also tests on real devices after the first upload. |
 
@@ -42,7 +42,7 @@ The release bundle (AAB) is built by `.github/workflows/release-aab.yml`. It ins
 2. **Create a project**, name it `Tamra`. Leave Gemini assistance off if asked. Keep **Google Analytics enabled**, pick or create an Analytics account, choose India as the location, and **untick every data-sharing option** (Google products, benchmarking, technical support, account specialists), so it matches the privacy policy.
 3. Open the project, click the **Android icon** ("Add app"). Package name: `com.iiakshat.tamra` (exactly). Nickname: `Tamra`. Leave the SHA-1 box empty. Click Register app.
 4. **Download `google-services.json`**. Skip the "add the SDK" screens (they do not apply to Godot) and finish.
-5. Save the file in the game folder (`Gems/RaOne/google-services.json`; git ignores it) and tell Claude. Claude then stores it as the `GOOGLE_SERVICES_JSON_B64` secret and runs the real release build.
+5. Save the file in the game folder (`Gems/Tamra/google-services.json`; git ignores it) and tell Claude. Claude then stores it as the `GOOGLE_SERVICES_JSON_B64` secret and runs the real release build.
 6. In the left menu open **Release & Monitor > Crashlytics** and click **Enable** if it offers to.
 
 **C. Host the privacy policy.** Private repos cannot use free GitHub Pages, so the page needs a tiny *public* repo (for example `iiakshat/tamra-privacy`) containing only the policy. It will show the contact email `jakshat569@gmail.com`. Either create that repo yourself and tell Claude, or tell Claude it may create it. The policy URL then goes into Play Console.

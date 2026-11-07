@@ -5,7 +5,7 @@ For each beat with a `voice` id that has no audio/voice/<id>.ogg yet:
   2. trim leading/trailing silence, convert to OGG Vorbis (q4) in audio/voice/,
   3. ask Gemini to listen (tools/voice_check.py) and retry up to twice when the take
      reads a tag aloud, whispers, sounds like the wrong age, or drops words.
-Work files live in ../voice_work (outside the repo). Writes a report to ../voice_work/report.jsonl.
+Work files live in _local/voice_work (git-ignored). Writes a report to _local/voice_work/report.jsonl.
 
 Usage: python -I tools/tts_story.py [--only st_c1_02,st_c1_03a] [--force]
 """
@@ -22,7 +22,7 @@ from voice_check import check  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 FFMPEG = ROOT.parent / "_tools" / "ffmpeg" / "ffmpeg.exe"
-WORK = ROOT.parent / "voice_work"
+WORK = ROOT / "_local" / "voice_work"
 OUT = ROOT / "audio" / "voice"
 TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
         "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.12,areverse")

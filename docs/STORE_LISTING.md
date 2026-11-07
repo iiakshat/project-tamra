@@ -1,6 +1,6 @@
 # Play Store listing text for Tamra
 
-Images are in `Gems/builds/store-listing/` (outside the repo): `feature_graphic_1024x500.png`, `screenshot_1..6_*.jpg` (1920x1080). Icon: `assets/icon/icon_512.png`. Rules: never name gods; say "plays fully offline", not "no internet permission"; only claim what the build does.
+Images are in `Gems/Tamra/_local/builds/store-listing/` (git-ignored): `feature_graphic_1024x500.png`, `screenshot_1..6_*.jpg` (1920x1080). Icon: `assets/icon/icon_512.png`. Rules: never name gods; say "plays fully offline", not "no internet permission"; only claim what the build does.
 
 ## App name (30 max)
 Tamra
