@@ -8,7 +8,6 @@ signal stroke_started
 signal stroke_finished(points: PackedVector2Array)
 
 const ACTIONS := {"left": "move_left", "right": "move_right", "jump": "jump", "strike": "attack"}
-const RADIUS := {"left": 78.0, "right": 78.0, "jump": 92.0, "strike": 68.0}
 const HIT_SLOP := 1.25
 const TRAIL_POINTS := 90
 
@@ -28,6 +27,7 @@ func _ready() -> void:
 	UiKit.full_rect(_pad)
 	_pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_pad)
+	Game.settings_changed.connect(_pad.queue_redraw)
 	_trail = Line2D.new()
 	_trail.width = 12.0
 	_trail.default_color = Color(0.75, 1.0, 0.92)
@@ -43,14 +43,14 @@ func _ready() -> void:
 	add_child(_trail)
 
 
+## Pad centres and radii for the current screen, size and handedness (Settings).
+func layout() -> Dictionary:
+	return ControlLayout.compute(get_viewport().get_visible_rect().size,
+		float(Game.save.settings.get("pad_scale", 1.0)), bool(Game.save.settings.get("left_handed", false)))
+
+
 func centers() -> Dictionary:
-	var s := get_viewport().get_visible_rect().size
-	return {
-		"left": Vector2(115, s.y - 115),
-		"right": Vector2(285, s.y - 115),
-		"jump": Vector2(s.x - 130, s.y - 130),
-		"strike": Vector2(s.x - 300, s.y - 92),
-	}
+	return layout()["centers"]
 
 
 func is_pressed(role: String) -> bool:
@@ -70,9 +70,9 @@ func release_all() -> void:
 func _role_at(pos: Vector2) -> String:
 	if hud != null and hud.blocks(pos):
 		return "blocked"
-	var c := centers()
-	for role in c:
-		if pos.distance_to(c[role]) <= RADIUS[role] * HIT_SLOP:
+	var l := layout()
+	for role in l["centers"]:
+		if pos.distance_to(l["centers"][role]) <= float(l["radii"][role]) * HIT_SLOP:
 			return role
 	return ""
 
@@ -146,11 +146,11 @@ class PadView extends Control:
 	var controls: TouchControls
 
 	func _draw() -> void:
-		var c := controls.centers()
-		for role in c:
+		var l := controls.layout()
+		for role in l["centers"]:
 			var pressed := controls.is_pressed(role)
-			var r: float = TouchControls.RADIUS[role]
-			var center: Vector2 = c[role]
+			var r: float = l["radii"][role]
+			var center: Vector2 = l["centers"][role]
 			# Themed like the HUD: an indigo disc with a copper rim (jade while held).
 			draw_circle(center, r, Color(0.06, 0.05, 0.16, 0.5 if pressed else 0.3))
 			draw_arc(center, r, 0.0, TAU, 56, Color(UiKit.ACCENT if pressed else UiKit.COPPER, 0.85 if pressed else 0.5), 3.0, true)

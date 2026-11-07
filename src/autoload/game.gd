@@ -30,8 +30,13 @@ func _ready() -> void:
 	grimoire.shop = shop_cfg
 	daily = DailyRules.new(save)
 	daily.refresh(today())
+	Services.analytics.set_consent(sharing_allowed())
+	# Device facts (model, Android version, screen) show which phones struggle; nothing personal.
+	var screen := DisplayServer.screen_get_size()
 	Services.analytics.log_event("session_start", {"version": str(ProjectSettings.get_setting("application/config/version", "")),
-		"learned": save.learned.size(), "jyoti": save.jyoti, "stars": save.total_stars()})
+		"learned": save.learned.size(), "jyoti": save.jyoti, "stars": save.total_stars(),
+		"model": OS.get_model_name(), "os": OS.get_version(), "gpu": RenderingServer.get_video_adapter_name(),
+		"screen": "%dx%d" % [screen.x, screen.y]})
 	apply_audio_settings.call_deferred()
 
 
@@ -232,6 +237,41 @@ func set_setting(key: String, value: Variant) -> void:
 	persist()
 	apply_audio_settings()
 	settings_changed.emit()
+
+
+## "ask" until the player answers the data card, then "yes" or "no".
+func analytics_consent() -> String:
+	var v := str(save.settings.get("share_data", "ask"))
+	return v if v == "yes" or v == "no" else "ask"
+
+
+func set_analytics_consent(granted: bool) -> void:
+	set_setting("share_data", "yes" if granted else "no")
+	Services.analytics.set_consent(sharing_allowed())
+	if sharing_allowed():  # Never send anything once the player has said no, or is under 13.
+		Services.analytics.log_event("consent_granted")
+
+
+## "ask" until the neutral age screen is answered, then "ok" (13 or older) or "under".
+func age_gate() -> String:
+	var v := str(save.settings.get("age_gate", "ask"))
+	return v if v == "ok" or v == "under" else "ask"
+
+
+## True only when the age is ok and the player agreed to share anonymous play data.
+func sharing_allowed() -> bool:
+	return AgeGate.sharing_allowed(age_gate(), analytics_consent())
+
+
+## Stores only the result of the age screen ("ok" or "under"), never the birth year.
+## Under 13: sharing is switched off for good.
+func answer_age(birth_year: int) -> String:
+	var state := AgeGate.state_for(birth_year, int(Time.get_date_dict_from_system()["year"]))
+	set_setting("age_gate", state)
+	if state == "under":
+		set_setting("share_data", "no")
+	Services.analytics.set_consent(sharing_allowed())
+	return state
 
 
 func apply_audio_settings() -> void:

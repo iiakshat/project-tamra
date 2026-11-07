@@ -1,0 +1,171 @@
+# Builds the signed Play bundle (AAB) with Firebase analytics and crash reports.
+#
+# Two modes:
+#  - DRY RUN (the default, and always for pushes to release/** branches): signs with a throwaway
+#    key and a placeholder Firebase config. It proves the whole chain (gradle template, Firebase
+#    plugin, AAB export) works. The result is NOT uploadable to Play.
+#  - REAL: run by hand from the Actions tab with "dry_run" unchecked. Needs these repository
+#    secrets (see docs/RELEASE.md): UPLOAD_KEYSTORE_B64, UPLOAD_KEYSTORE_USER,
+#    UPLOAD_KEYSTORE_PASSWORD, GOOGLE_SERVICES_JSON_B64.
+# Upload the resulting AAB to Play Console yourself; nothing here publishes anything.
+
+name: Release bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (throwaway key, placeholder Firebase config, not uploadable)"
+        type: boolean
+        default: true
+  push:
+    branches: ["release/**"]
+
+env:
+  GODOT_VERSION: "4.7.2"
+  DRY_RUN: ${{ github.event_name == 'push' || inputs.dry_run }}
+
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Check secrets (real builds only)
+        if: env.DRY_RUN != 'true'
+        env:
+          KS: ${{ secrets.UPLOAD_KEYSTORE_B64 }}
+          KU: ${{ secrets.UPLOAD_KEYSTORE_USER }}
+          KP: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          GS: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        run: |
+          for name in KS KU KP GS; do
+            if [ -z "${!name}" ]; then echo "::error::A release secret is missing (see docs/RELEASE.md)"; exit 1; fi
+          done
+
+      - name: Cache Godot and Android templates
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-android
+
+      - name: Install Godot and Android export templates
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          cd /tmp
+          curl -fsSL -o SHA512-SUMS.txt "$base/SHA512-SUMS.txt"
+          curl -fsSL -O "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSL -O "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          grep -E "Godot_v${GODOT_VERSION}-stable_(linux.x86_64.zip|export_templates.tpz)$" SHA512-SUMS.txt | sha512sum -c -
+          mkdir -p ~/godot
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$dest"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_export_templates.tpz" "templates/android_*" "templates/version.txt" -d tpl
+          mv tpl/templates/* "$dest/"
+
+      - name: Import project and run tests
+        run: |
+          ~/godot/godot --headless --path . --import
+          ~/godot/godot --headless --path . --script res://tests/run_tests.gd
+
+      - name: Install Android build template and Firebase plugin
+        run: |
+          bash tools/ci/install_android_template.sh
+          bash tools/ci/install_firebase.sh
+          ~/godot/godot --headless --path . --import
+
+      - name: Firebase config
+        env:
+          GS: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        run: |
+          pkg=$(awk '/^\[preset.1.options\]/{f=1} f && /^package\/unique_name=/{print; exit}' export_presets.cfg | cut -d'"' -f2)
+          echo "Release package: $pkg"
+          if [ "$DRY_RUN" = "true" ]; then
+            cat > google-services.json <<JSON
+          {
+            "project_info": {"project_number": "000000000000", "project_id": "dry-run", "storage_bucket": "dry-run.appspot.com"},
+            "client": [{
+              "client_info": {"mobilesdk_app_id": "1:000000000000:android:0000000000000000", "android_client_info": {"package_name": "$pkg"}},
+              "oauth_client": [],
+              "api_key": [{"current_key": "dry-run-not-a-real-key"}],
+              "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+            }],
+            "configuration_version": "1"
+          }
+          JSON
+          else
+            echo "$GS" | base64 -d > google-services.json
+            grep -q "\"package_name\": *\"$pkg\"" google-services.json || { echo "::error::google-services.json is for a different package than $pkg"; exit 1; }
+          fi
+
+      - name: Signing key
+        env:
+          KS: ${{ secrets.UPLOAD_KEYSTORE_B64 }}
+          KU: ${{ secrets.UPLOAD_KEYSTORE_USER }}
+          KP: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+        run: |
+          mkdir -p ~/keys
+          if [ "$DRY_RUN" = "true" ]; then
+            keytool -genkeypair -v -keystore ~/keys/release.keystore -storepass dryrun123 \
+              -alias dryrun -keypass dryrun123 -keyalg RSA -keysize 2048 -validity 30 \
+              -dname "CN=Dry Run,O=Dry Run,C=IN"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=dryrun" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=dryrun123" >> "$GITHUB_ENV"
+          else
+            echo "$KS" | base64 -d > ~/keys/release.keystore
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$KU" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$KP" >> "$GITHUB_ENV"
+            echo "::add-mask::$KP"
+            keytool -list -keystore ~/keys/release.keystore -storepass "$KP" -alias "$KU" > /dev/null \
+              || { echo "::error::The upload keystore does not open with the stored alias and password"; exit 1; }
+          fi
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$HOME/keys/release.keystore" >> "$GITHUB_ENV"
+
+      - name: Configure Android export
+        run: |
+          settings="[gd_resource type=\"EditorSettings\" format=3]
+
+          [resource]
+          export/android/android_sdk_path = \"$ANDROID_SDK_ROOT\"
+          export/android/java_sdk_path = \"$JAVA_HOME\"
+          "
+          mkdir -p ~/.config/godot
+          echo "$settings" > ~/.config/godot/editor_settings-4.tres
+          echo "$settings" > ~/.config/godot/editor_settings-${GODOT_VERSION%.*}.tres
+
+      - name: Export release bundle
+        run: |
+          mkdir -p build
+          ~/godot/godot --headless --verbose --path . --export-release "Android Release" build/tamra-release.aab
+          ls -lh build/
+
+      - name: Check the bundle
+        run: |
+          test -s build/tamra-release.aab
+          # Hard check: the advertising ID permissions must be gone (the Play form says the app does not use it).
+          if unzip -p build/tamra-release.aab base/manifest/AndroidManifest.xml | strings | grep -q "AD_ID"; then
+            echo "::error::An advertising ID permission is still in the bundle"; exit 1
+          fi
+          # Informational: what ended up inside.
+          unzip -l build/tamra-release.aab | grep -E "base/(manifest/AndroidManifest.xml|lib/)" | head || true
+          unzip -p build/tamra-release.aab base/manifest/AndroidManifest.xml | strings | grep -iE "firebase|measurement|INTERNET" | head -8 || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DRY_RUN == 'true' && 'tamra-dry-run-aab' || 'tamra-release-aab' }}
+          path: build/tamra-release.aab
+          retention-days: 14
+          if-no-files-found: error

@@ -10,6 +10,8 @@ var store: StoreService
 
 func _init() -> void:
 	storage = FileStorage.new("user://")
-	analytics = DebugAnalytics.new()
+	# Local log always; Firebase only when the release build carries the plugin (and the
+	# player has agreed, see Game.set_analytics_consent).
+	analytics = FirebaseAnalytics.create(DebugAnalytics.new())
 	ads = AdsService.new()  # No ads until a real SDK is added behind this interface.
 	store = StoreService.new()  # No purchases until Play Billing is added behind this.
